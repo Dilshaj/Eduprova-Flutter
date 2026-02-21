@@ -138,12 +138,12 @@ class _TorchPainter extends CustomPainter {
     final radius = 10.0;
 
     final path = Path()
-      ..moveTo(size.width * 0.25 + radius, size.height - 5)
+      ..moveTo(size.width * 0.25 + radius, size.height)
       // bottom line
-      ..lineTo(size.width * 0.75 - radius, size.height - 5)
+      ..lineTo(size.width * 0.75 - radius, size.height)
       // bottom-right corner radius
       ..arcToPoint(
-        Offset(size.width * 0.75, size.height - 5 - radius),
+        Offset(size.width * 0.75, size.height - radius),
         radius: Radius.circular(radius),
         clockwise: false,
       )
@@ -152,10 +152,10 @@ class _TorchPainter extends CustomPainter {
       // top line
       ..lineTo(0, 0)
       // left side down
-      ..lineTo(size.width * 0.25, size.height - 5 - radius)
+      ..lineTo(size.width * 0.25, size.height - radius)
       // bottom-left corner radius
       ..arcToPoint(
-        Offset(size.width * 0.25 + radius, size.height - 5),
+        Offset(size.width * 0.25 + radius, size.height),
         radius: Radius.circular(radius),
         clockwise: false,
       )

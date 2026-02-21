@@ -25,7 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = isDark
         ? Colors.black.withValues(alpha: 0.8)
-        : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
+        : const Color.fromARGB(255, 235, 235, 235).withValues(alpha: 0.7);
     final double blur = isDark ? 30 : 20;
     return Scaffold(
       key: _scaffoldKey,
