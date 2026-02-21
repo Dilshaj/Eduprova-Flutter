@@ -115,19 +115,19 @@ class _PostState extends ConsumerState<Post> {
                 padding: const EdgeInsets.symmetric(horizontal: padding),
                 child: Row(
                   children: [
-                    _buildActionItem(
-                      HugeIcons.strokeRoundedBadmintonShuttle,
-                      'Likes',
-                    ),
-                    const SizedBox(width: 24),
-                    _buildActionItem(HugeIcons.strokeRoundedTv01, 'Comments'),
+                    _buildActionItem(HugeIcons.strokeRoundedFavourite, 'Likes'),
                     const SizedBox(width: 24),
                     _buildActionItem(
-                      HugeIcons.strokeRoundedPoundSend,
-                      'Repost',
+                      HugeIcons.strokeRoundedComment02,
+                      'Comments',
                     ),
                     const SizedBox(width: 24),
-                    _buildActionItem(HugeIcons.strokeRoundedPoundSend, 'Share'),
+                    _buildActionItem(HugeIcons.strokeRoundedRepeat, 'Repost'),
+                    const SizedBox(width: 24),
+                    _buildActionItem(
+                      HugeIcons.strokeRoundedLinkForward,
+                      'Share',
+                    ),
                     const Spacer(),
                     Text(
                       '12k Likes',

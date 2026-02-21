@@ -7,6 +7,7 @@ import 'package:edupurva/features/home/status/status_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -40,8 +41,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         child: CustomScrollView(
           slivers: [
+            // show profile image, title, icons
             SliverAppBar(
-              title: const Text("Surya"),
+              // apply graient color title text
+              title: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 20,
+                    backgroundImage: AssetImage('assets/avatars/1.png'),
+                  ),
+                  const SizedBox(width: 12),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFF1766FF), Color(0xFFD757FD)],
+                    ).createShader(bounds),
+                    child: const Text(
+                      "EduProva",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white, // required
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.notifications),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu11),
+                ),
+              ],
               centerTitle: false,
               backgroundColor: Colors.transparent,
               elevation: 0,
