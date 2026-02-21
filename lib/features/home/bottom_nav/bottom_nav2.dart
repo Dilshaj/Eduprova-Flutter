@@ -19,10 +19,11 @@ class BottomNav2 extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: BottomAppBar(
           color: color,
-          elevation: 0,
+          elevation: 0.5,
           notchMargin: 12.0, // Increased margin to match padding
           padding: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
+          height: 70,
           shape: const _SharpNotchedRectangle(),
           child: Container(
             decoration: const BoxDecoration(
@@ -128,16 +129,36 @@ class _TorchPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     // final path = Path()
-    //   ..moveTo(size.width * 0.2, size.height * 0.3)
-    //   ..lineTo(size.width * 0.8, size.height * 0.3)
-    //   ..lineTo(size.width * 0.6, size.height * 0.7)
-    //   ..lineTo(size.width * 0.4, size.height * 0.7)
+    //   ..moveTo(size.width * 0.3, size.height - 5) // bottom left point
+    //   ..lineTo(size.width * 0.7, size.height - 5) // bottom right point
+    //   ..lineTo(size.width, size.height * 0) // top right point
+    //   ..lineTo(0, size.height * 0) // top left point
     //   ..close();
+
+    final radius = 10.0;
+
     final path = Path()
-      ..moveTo(size.width * 0.3, size.height) // bottom left point
-      ..lineTo(size.width * 0.7, size.height) // bottom right point
-      ..lineTo(size.width * 1, size.height * 0) // top right point
-      ..lineTo(size.width * 0.0, size.height * 0) // top left point
+      ..moveTo(size.width * 0.3 + radius, size.height - 5)
+      // bottom line
+      ..lineTo(size.width * 0.7 - radius, size.height - 5)
+      // bottom-right corner radius
+      ..arcToPoint(
+        Offset(size.width * 0.7, size.height - 5 - radius),
+        radius: Radius.circular(radius),
+        clockwise: false,
+      )
+      // right side to top
+      ..lineTo(size.width, 0)
+      // top line
+      ..lineTo(0, 0)
+      // left side down
+      ..lineTo(size.width * 0.3, size.height - 5 - radius)
+      // bottom-left corner radius
+      ..arcToPoint(
+        Offset(size.width * 0.3 + radius, size.height - 5),
+        radius: Radius.circular(radius),
+        clockwise: false,
+      )
       ..close();
 
     canvas.drawPath(path, paint);
