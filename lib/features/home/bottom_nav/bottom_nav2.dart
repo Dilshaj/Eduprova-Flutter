@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -6,45 +7,59 @@ class BottomNav2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final isDark = Theme.of(context).brightness == Brightness.dark;
-    // final color = isDark
-    //     ? Colors.black.withValues(alpha: 0.8)
-    //     : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
-    // final double blur = isDark ? 30 : 20;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDark
+        ? Colors.black.withValues(alpha: 0.8)
+        : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.75);
+    final double blur = isDark ? 30 : 20;
 
-    return BottomAppBar(
-      color: Theme.of(context).cardColor,
-      elevation: 10,
-      notchMargin: 12.0, // Increased margin to match padding
-      padding: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      shape: const _SharpNotchedRectangle(),
-      child: SizedBox(
-        height: 70,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(context, HugeIcons.strokeRoundedHome01, "Home", true),
-            _buildNavItem(
-              context,
-              HugeIcons.strokeRoundedBookOpen01,
-              "Courses",
-              false,
+    return ClipPath(
+      clipper: const _NotchedClipper(_SharpNotchedRectangle()),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: BottomAppBar(
+          color: color,
+          elevation: 0,
+          notchMargin: 12.0, // Increased margin to match padding
+          padding: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          shape: const _SharpNotchedRectangle(),
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Colors.white24)),
             ),
-            const SizedBox(width: 48), // gap for FAB
-            _buildNavItem(
-              context,
-              HugeIcons.strokeRoundedComment01,
-              "Messages",
-              false,
+            height: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  context,
+                  HugeIcons.strokeRoundedHome01,
+                  "Home",
+                  true,
+                ),
+                _buildNavItem(
+                  context,
+                  HugeIcons.strokeRoundedBookOpen01,
+                  "Courses",
+                  false,
+                ),
+                const SizedBox(width: 48), // gap for FAB
+                _buildNavItem(
+                  context,
+                  HugeIcons.strokeRoundedComment01,
+                  "Messages",
+                  false,
+                ),
+                _buildNavItem(
+                  context,
+                  HugeIcons.strokeRoundedJobSearch,
+                  "Jobs",
+                  false,
+                ),
+              ],
             ),
-            _buildNavItem(
-              context,
-              HugeIcons.strokeRoundedJobSearch,
-              "Jobs",
-              false,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -123,6 +138,30 @@ class _TorchPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _NotchedClipper extends CustomClipper<Path> {
+  final NotchedShape shape;
+  const _NotchedClipper(this.shape);
+
+  @override
+  Path getClip(Size size) {
+    // We assume the host is the full size of the bottom app bar footprint
+    // and we roughly estimate the FAB placement based on standard heights.
+    // BottomAppBar itself internally computes the actual rects, but to clip it correctly
+    // for the BackdropFilter we must provide the hole.
+    final host = Rect.fromLTWH(0, 0, size.width, size.height);
+    // Standard floating action button size + margins
+    final guest = Rect.fromCenter(
+      center: Offset(size.width / 2.0, 20.0), // match our transform offset!
+      width: 56.0 + 24.0, // FAB width (56) + total margin around it (12*2)
+      height: 56.0 + 24.0,
+    );
+    return shape.getOuterPath(host, guest);
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
 }
 
 class _SharpNotchedRectangle extends NotchedShape {
