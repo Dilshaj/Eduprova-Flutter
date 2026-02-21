@@ -16,7 +16,7 @@ class GradientBtn extends StatelessWidget {
     this.width,
     this.height,
     this.fontSize = 16,
-    this.borderRadius = 12,
+    this.borderRadius = 10,
     this.padding,
     this.elevation = 6,
     super.key,
@@ -28,7 +28,7 @@ class GradientBtn extends StatelessWidget {
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(borderRadius),
       elevation: elevation,
-      shadowColor: Colors.black.withOpacity(0.25),
+      shadowColor: Colors.black.withValues(alpha: 0.25),
       child: Ink(
         width: width,
         height: height,
@@ -48,7 +48,7 @@ class GradientBtn extends StatelessWidget {
           child: Padding(
             padding:
                 padding ??
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: Center(
               child: Text(
                 title,
@@ -66,3 +66,34 @@ class GradientBtn extends StatelessWidget {
     );
   }
 }
+
+  // Widget _buildAddButton(bool isDark) {
+  //   return GestureDetector(
+  //     onTap: _pickMoreImages,
+  //     child: Container(
+  //       padding: const EdgeInsets.symmetric(vertical: 16),
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(12),
+  //         border: Border.all(color: Colors.grey.shade300, width: 1),
+  //         color: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
+  //       ),
+  //       // Simple faux-dashed look by just using a regular outline but styled gently.
+  //       // The dotted_decoration package is in pubspec, we can use it!
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Icon(Icons.add, color: Colors.grey.shade600, size: 20),
+  //           const SizedBox(width: 8),
+  //           Text(
+  //             'Add',
+  //             style: TextStyle(
+  //               color: Colors.grey.shade600,
+  //               fontSize: 16,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }

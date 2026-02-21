@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:edupurva/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -156,7 +157,7 @@ class _CreateStoryScreenState extends ConsumerState<CreateStoryScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    '\${index + 1}',
+                    '${index + 1}',
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 12,
@@ -190,34 +191,7 @@ class _CreateStoryScreenState extends ConsumerState<CreateStoryScreen> {
   }
 
   Widget _buildAddButton(bool isDark) {
-    return GestureDetector(
-      onTap: _pickMoreImages,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300, width: 1),
-          color: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
-        ),
-        // Simple faux-dashed look by just using a regular outline but styled gently.
-        // The dotted_decoration package is in pubspec, we can use it!
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add, color: Colors.grey.shade600, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Add',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return GradientBtn(title: 'Add', onTap: _pickMoreImages);
   }
 
   Widget _buildBottomBar(bool isDark) {

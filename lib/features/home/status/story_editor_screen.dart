@@ -39,7 +39,9 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
         ),
         configs: ProImageEditorConfigs(
           designMode: ImageEditorDesignMode.material,
+          paintEditor: const PaintEditorConfigs(enableZoom: true),
           mainEditor: MainEditorConfigs(
+            enableZoom: true,
             widgets: MainEditorWidgets(
               wrapBody: (editor, rebuildStream, content) {
                 return ReactiveWidget(
@@ -53,7 +55,6 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
                           right: 16,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.black45,
                               borderRadius: BorderRadius.circular(30),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -61,30 +62,24 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.auto_awesome,
-                                    color: Colors.white,
-                                  ),
+                                  icon: const Icon(Icons.tune),
+                                  onPressed: editor.openTuneEditor, // Tune
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.auto_awesome),
                                   onPressed: editor.openFilterEditor, // Filters
                                 ),
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.white,
-                                  ),
+                                  icon: const Icon(Icons.edit),
                                   onPressed: editor.openPaintEditor, // Doodle
                                 ),
                                 IconButton(
-                                  icon: const Icon(
-                                    Icons.text_fields,
-                                    color: Colors.white,
-                                  ),
+                                  icon: const Icon(Icons.text_fields),
                                   onPressed: editor.openTextEditor, // Text
                                 ),
                                 IconButton(
                                   icon: const Icon(
                                     Icons.sentiment_satisfied_alt,
-                                    color: Colors.white,
                                   ),
                                   onPressed: editor.openEmojiEditor, // Emoji
                                 ),
@@ -100,8 +95,9 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
                 return ReactiveWidget(
                   stream: rebuildStream,
                   builder: (_) {
-                    if (editor.isSubEditorOpen)
+                    if (editor.isSubEditorOpen) {
                       return SizedBox.shrink(key: key);
+                    }
                     return _buildCustomBottomBar(editor, key);
                   },
                 );

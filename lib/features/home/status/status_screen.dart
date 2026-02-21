@@ -60,12 +60,7 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
               top: 12.0,
               bottom: 12.0,
             ),
-            child: GradientBtn(
-              title: "Next",
-              onTap: () {},
-              fontSize: 14,
-              height: 32,
-            ),
+            child: GradientBtn(title: "Next", onTap: () {}, fontSize: 14),
           ),
         ],
       ),

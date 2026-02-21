@@ -17,6 +17,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _showBars = true;
 
   @override
@@ -27,8 +28,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
     final double blur = isDark ? 30 : 20;
     return Scaffold(
+      key: _scaffoldKey,
       extendBody: true,
       extendBodyBehindAppBar: true,
+      endDrawer: _buildDrawer(context, isDark),
 
       body: NotificationListener<UserScrollNotification>(
         onNotification: (notification) {
@@ -73,7 +76,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onPressed: () {},
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _scaffoldKey.currentState?.openEndDrawer();
+                  },
                   icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu11),
                 ),
               ],
@@ -180,6 +185,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         opacity: _showBars ? 1 : 0,
         child: child,
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, bool isDark) {
+    return Drawer(
+      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundImage: AssetImage('assets/avatars/1.png'),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "EduProva User",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "@eduprova",
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bookmark_border),
+              title: const Text('Saved'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            const Spacer(),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
