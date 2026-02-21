@@ -121,16 +121,23 @@ class _TorchPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
         colors: [color.withValues(alpha: 0.25), color.withValues(alpha: 0.0)],
+        stops: const [0.1, 0.55],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
+    // final path = Path()
+    //   ..moveTo(size.width * 0.2, size.height * 0.3)
+    //   ..lineTo(size.width * 0.8, size.height * 0.3)
+    //   ..lineTo(size.width * 0.6, size.height * 0.7)
+    //   ..lineTo(size.width * 0.4, size.height * 0.7)
+    //   ..close();
     final path = Path()
-      ..moveTo(size.width * 0.35, 0)
-      ..lineTo(size.width * 0.65, 0)
-      ..lineTo(size.width * 0.95, size.height)
-      ..lineTo(size.width * 0.05, size.height)
+      ..moveTo(size.width * 0.3, size.height) // bottom left point
+      ..lineTo(size.width * 0.7, size.height) // bottom right point
+      ..lineTo(size.width * 1, size.height * 0) // top right point
+      ..lineTo(size.width * 0.0, size.height * 0) // top left point
       ..close();
 
     canvas.drawPath(path, paint);
