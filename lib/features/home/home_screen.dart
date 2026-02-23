@@ -2,12 +2,15 @@ import 'dart:ui';
 
 import 'package:edupurva/features/home/bottom_nav/bottom_nav1.dart';
 import 'package:edupurva/features/home/bottom_nav/bottom_nav2.dart';
+import 'package:edupurva/features/home/bottom_nav/bottom_nav3.dart';
 import 'package:edupurva/features/home/posts/post.dart';
 import 'package:edupurva/features/home/status/status_row.dart';
+import 'package:edupurva/features/courses/screens/courses_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:edupurva/ui/animated_title_header.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -19,13 +22,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _showBars = true;
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = isDark
         ? Colors.black.withValues(alpha: 0.8)
-        : const Color.fromARGB(255, 235, 235, 235).withValues(alpha: 0.7);
+        : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
     final double blur = isDark ? 30 : 20;
     return Scaffold(
       key: _scaffoldKey,
@@ -33,146 +37,168 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       extendBodyBehindAppBar: true,
       endDrawer: _buildDrawer(context, isDark),
 
-      body: NotificationListener<UserScrollNotification>(
-        onNotification: (notification) {
-          if (notification.direction == ScrollDirection.reverse) {
-            if (_showBars) setState(() => _showBars = false);
-          } else if (notification.direction == ScrollDirection.forward) {
-            if (!_showBars) setState(() => _showBars = true);
-          }
-          return true;
-        },
-        child: CustomScrollView(
-          slivers: [
-            // show profile image, title, icons
-            SliverAppBar(
-              // apply graient color title text
-              title: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 20,
-                    backgroundImage: AssetImage('assets/avatars/1.png'),
-                  ),
-                  const SizedBox(width: 12),
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFF1766FF), Color(0xFFD757FD)],
-                    ).createShader(bounds),
-                    child: const Text(
-                      "EduProva",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white, // required
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-                IconButton(
-                  icon: const Icon(Icons.notifications),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  onPressed: () {
-                    _scaffoldKey.currentState?.openEndDrawer();
-                  },
-                  icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu11),
-                ),
-              ],
-              centerTitle: false,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              floating: true,
-              snap: true,
-              flexibleSpace: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-                  child: Container(color: color),
-                ),
-              ),
-            ),
+      body: _buildBody(blur, color),
 
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: StatusRow(),
-              ),
-            ),
-
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Post(
-                  post: PostModel(
-                    id: index.toString(),
-                    name: "Riya Wilson",
-                    designation: "Product Designer",
-                    timeAgo: "3h ago",
-                    content:
-                        "I just built a new design system for my side project using AI and it helped me generate 80% of the design elements!\nWhat do you think about it:",
-                    imageUrl: "https://picsum.photos/seed/${index}abc/600/300",
-                    authorAvatar: "assets/avatars/${index % 12 + 1}.png",
-                    createdAt: DateTime.now(),
-                  ),
-                ),
-
-                // (context, index) => const Padding(
-                //   padding: EdgeInsets.all(16),
-                //   child: Text("Hello"),
-                // ),
-                childCount: 100,
-              ),
-            ),
-          ],
+      // floatingActionButton: AnimatedSlide(
+      //   duration: const Duration(milliseconds: 250),
+      //   offset: _showBars ? Offset.zero : const Offset(0, 2),
+      //   curve: Curves.easeIn,
+      //   child: AnimatedOpacity(
+      //     duration: const Duration(milliseconds: 200),
+      //     opacity: _showBars ? 1 : 0,
+      //     child: Transform.translate(
+      //       offset: const Offset(
+      //         0,
+      //         20,
+      //       ), // Move it down completely into the navbar hole
+      //       child: Container(
+      //         height: 60,
+      //         width: 60,
+      //         decoration: BoxDecoration(
+      //           shape: BoxShape.circle,
+      //           boxShadow: [
+      //             BoxShadow(
+      //               color: const Color(0xFF4A8BFF).withValues(alpha: 0.4),
+      //               blurRadius: 10,
+      //               offset: const Offset(0, 4),
+      //             ),
+      //           ],
+      //           gradient: const LinearGradient(
+      //             colors: [Color(0xFF4A8BFF), Color(0xFFFF61D8)],
+      //             begin: Alignment.topCenter,
+      //             end: Alignment.bottomCenter,
+      //           ),
+      //         ),
+      //         child: FloatingActionButton(
+      //           onPressed: () {},
+      //           backgroundColor: Colors.transparent,
+      //           elevation: 0,
+      //           highlightElevation: 0,
+      //           shape: const CircleBorder(),
+      //           child: const Icon(Icons.add, color: Colors.white, size: 32),
+      //         ),
+      //       ),
+      //     ),
+      //   ),
+      // ),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _hideNav(
+        BottomNav1(
+          // currentIndex: _currentIndex,
+          // onTap: (index) {
+          //   setState(() {
+          //     _currentIndex = index;
+          //     // Always show bars when switching tabs
+          //     _showBars = true;
+          //   });
+          // },
         ),
       ),
+    );
+  }
 
-      floatingActionButton: AnimatedSlide(
-        duration: const Duration(milliseconds: 250),
-        offset: _showBars ? Offset.zero : const Offset(0, 2),
-        curve: Curves.easeIn,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 200),
-          opacity: _showBars ? 1 : 0,
-          child: Transform.translate(
-            offset: const Offset(
-              0,
-              20,
-            ), // Move it down completely into the navbar hole
-            child: Container(
-              height: 60,
-              width: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF4A8BFF).withValues(alpha: 0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4A8BFF), Color(0xFFFF61D8)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+  Widget _buildBody(double blur, Color color) {
+    if (_currentIndex == 1) {
+      return const CoursesScreen();
+    }
+
+    // Default Home Screen (Index 0)
+    return NotificationListener<UserScrollNotification>(
+      onNotification: (notification) {
+        if (notification.direction == ScrollDirection.reverse) {
+          if (_showBars) setState(() => _showBars = false);
+        } else if (notification.direction == ScrollDirection.forward) {
+          if (!_showBars) setState(() => _showBars = true);
+        }
+        return true;
+      },
+      child: CustomScrollView(
+        slivers: [
+          // show profile image, title, icons
+          SliverAppBar(
+            // apply graient color title text
+            title: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 20,
+                  backgroundImage: AssetImage('assets/avatars/1.png'),
                 ),
-              ),
-              child: FloatingActionButton(
+                const SizedBox(width: 12),
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFF1766FF), Color(0xFFD757FD)],
+                  ).createShader(bounds),
+                  child: const Text(
+                    "EduProva",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white, // required
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+              IconButton(
+                icon: const Icon(Icons.notifications),
                 onPressed: () {},
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                highlightElevation: 0,
-                shape: const CircleBorder(),
-                child: const Icon(Icons.add, color: Colors.white, size: 32),
+              ),
+              IconButton(
+                onPressed: () {
+                  _scaffoldKey.currentState?.openEndDrawer();
+                },
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu11),
+              ),
+            ],
+            centerTitle: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            floating: true,
+            snap: true,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                child: Container(color: color),
               ),
             ),
           ),
-        ),
+
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: StatusRow(),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: AnimatedTitleHeader(
+              titles: ["Trending", "All", "Title 2", "Title 3"],
+              initialTitle: "Trending",
+            ),
+          ),
+
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => Post(
+                post: PostModel(
+                  id: index.toString(),
+                  name: "Riya Wilson",
+                  designation: "Product Designer",
+                  timeAgo: "3h ago",
+                  content:
+                      "I just built a new design system for my side project using AI and it helped me generate 80% of the design elements!\nWhat do you think about it:",
+                  imageUrl: "https://picsum.photos/seed/${index}abc/600/300",
+                  authorAvatar: "assets/avatars/${index % 12 + 1}.png",
+                  createdAt: DateTime.now(),
+                ),
+              ),
+              childCount: 100,
+            ),
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _hideNav(const BottomNav2()),
     );
   }
 

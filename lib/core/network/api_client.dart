@@ -6,8 +6,8 @@ class ApiClient {
   static final Dio _dio = Dio(
     BaseOptions(
       baseUrl: _getBaseUrl(),
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
     ),
   );
 
@@ -15,7 +15,8 @@ class ApiClient {
 
   static String _getBaseUrl() {
     if (Platform.isAndroid) {
-      return 'http://192.168.1.6:4000';
+      // Reverted to explicit local IP for physical devices or custom networks
+      return 'http://192.168.1.120:4000';
     }
     return 'http://localhost:4000';
   }

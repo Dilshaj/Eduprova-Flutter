@@ -16,7 +16,7 @@ class MainApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: const Color.fromARGB(255, 0, 123, 255),
           brightness: .light,
         ),
         dividerColor: Colors.grey.shade200,
@@ -26,7 +26,7 @@ class MainApp extends ConsumerWidget {
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: const Color.fromARGB(255, 0, 123, 255),
           brightness: .dark,
         ),
         brightness: Brightness.dark,

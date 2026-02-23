@@ -3,7 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 class BottomNav2 extends StatelessWidget {
-  const BottomNav2({super.key});
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const BottomNav2({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,26 +44,30 @@ class BottomNav2 extends StatelessWidget {
                   context,
                   HugeIcons.strokeRoundedHome01,
                   "Home",
-                  true,
+                  currentIndex == 0,
+                  () => onTap(0),
                 ),
                 _buildNavItem(
                   context,
                   HugeIcons.strokeRoundedBookOpen01,
                   "Courses",
-                  false,
+                  currentIndex == 1,
+                  () => onTap(1),
                 ),
                 const SizedBox(width: 48), // gap for FAB
                 _buildNavItem(
                   context,
                   HugeIcons.strokeRoundedComment01,
                   "Messages",
-                  false,
+                  currentIndex == 2,
+                  () => onTap(2),
                 ),
                 _buildNavItem(
                   context,
                   HugeIcons.strokeRoundedJobSearch,
                   "Jobs",
-                  false,
+                  currentIndex == 3,
+                  () => onTap(3),
                 ),
               ],
             ),
@@ -71,6 +82,7 @@ class BottomNav2 extends StatelessWidget {
     dynamic icon,
     String label,
     bool isActive,
+    VoidCallback onTap,
   ) {
     final activeColor = const Color(0xFF4A8BFF);
     final inactiveColor =
@@ -79,7 +91,7 @@ class BottomNav2 extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,

@@ -8,6 +8,7 @@ import 'features/home/status/status_screen.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
+import 'features/courses/screens/course_detail_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -61,6 +62,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/status',
         builder: (context, state) => const StatusScreen(),
+      ),
+      GoRoute(
+        path: '/course/:id',
+        builder: (context, state) {
+          final courseId = state.pathParameters['id']!;
+          return CourseDetailScreen(courseId: courseId);
+        },
       ),
     ],
   );

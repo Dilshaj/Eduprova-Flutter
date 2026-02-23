@@ -18,7 +18,11 @@ dependencies:
   google_sign_in: ^7.2.0
   hugeicons: ^1.1.5
   image_picker: ^1.2.1
+  media_kit: ^1.2.6
+  media_kit_libs_video: ^1.0.7
+  media_kit_video: ^2.0.1
   pro_image_editor: ^12.0.0
+  suryaicons: ^0.0.3
   video_player: ^2.11.0
 
 dev_dependencies:
