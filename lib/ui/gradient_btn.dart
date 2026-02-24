@@ -1,4 +1,6 @@
+import 'package:edupurva/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:edupurva/core/widgets/app_loaders.dart';
 
 class GradientBtn extends StatelessWidget {
   final String title;
@@ -9,6 +11,7 @@ class GradientBtn extends StatelessWidget {
   final double borderRadius;
   final EdgeInsets? padding;
   final double elevation;
+  final bool isLoading;
 
   const GradientBtn({
     required this.title,
@@ -19,6 +22,7 @@ class GradientBtn extends StatelessWidget {
     this.borderRadius = 10,
     this.padding,
     this.elevation = 6,
+    this.isLoading = false,
     super.key,
   });
 
@@ -34,15 +38,16 @@ class GradientBtn extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0066FF), Color(0xFFF15EC9)],
-          ),
+          // gradient: const LinearGradient(
+          //   begin: Alignment.topLeft,
+          //   end: Alignment.bottomRight,
+          //   colors: [Color(0xFF0066FF), Color(0xFFF15EC9)],
+          // ),
+          gradient: kGradient,
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(borderRadius),
-          onTap: onTap,
+          onTap: isLoading ? null : onTap,
           splashColor: Colors.white24,
           highlightColor: Colors.white10,
           child: Padding(
@@ -50,15 +55,17 @@ class GradientBtn extends StatelessWidget {
                 padding ??
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: Center(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                ),
-              ),
+              child: isLoading
+                  ? const TripleDotLoader()
+                  : Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
             ),
           ),
         ),

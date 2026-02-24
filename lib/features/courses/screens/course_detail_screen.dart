@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'package:edupurva/core/widgets/shimmer_loading.dart';
+import 'package:edupurva/core/widgets/app_loaders.dart'; // Added this import
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:edupurva/core/utils/image_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:media_kit/media_kit.dart';
@@ -69,7 +74,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const ShimmerCourseDetail();
     }
     if (errorMessage != null || course == null) {
       return Scaffold(
@@ -85,6 +90,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
         actions: [
           IconButton(
@@ -229,7 +235,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                   children: [
                     _buildAboutTab(isDark),
                     const Center(child: Text("Curriculum Content")),
-                    const Center(child: Text("Instructor Context")),
+                    _buildInstructorTab(isDark),
                     const Center(child: Text("Reviews Content")),
                   ],
                 ),
@@ -363,6 +369,117 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
           _buildChecks('Access to exclusive resource community', isDark),
         ],
       ),
+    );
+  }
+
+  Widget _buildInstructorTab(bool isDark) {
+    final instructor = course!.instructor;
+    if (instructor == null) {
+      return const Center(child: Text("Instructor information not available"));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.grey.shade200,
+                child: ClipOval(
+                  child: _buildImage(
+                    instructor.avatar,
+                    width: 80,
+                    height: 80,
+                    placeholder: const Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      instructor.fullName,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Senior Instructor',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'About Instructor',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            instructor.bio ?? 'No bio available.',
+            style: TextStyle(
+              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage(
+    String? url, {
+    double? width,
+    double? height,
+    Widget? placeholder,
+  }) {
+    if (url == null || url.isEmpty) {
+      return placeholder ?? const Icon(Icons.image, color: Colors.grey);
+    }
+
+    if (url.startsWith('data:')) {
+      try {
+        final base64String = url.split(',').last;
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              placeholder ?? const Icon(Icons.broken_image, color: Colors.grey),
+        );
+      } catch (e) {
+        return placeholder ??
+            const Icon(Icons.broken_image, color: Colors.grey);
+      }
+    }
+
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      cacheManager: CacheManagers.avatarCacheManager,
+      placeholder: (context, url) => placeholder ?? const ShimmerImageLoader(),
+      errorWidget: (context, url, error) =>
+          placeholder ?? const Icon(Icons.broken_image, color: Colors.grey),
     );
   }
 

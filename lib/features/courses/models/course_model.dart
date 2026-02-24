@@ -1,3 +1,5 @@
+import '../../../core/network/api_client.dart';
+
 class CourseModel {
   final String id;
   final String title;
@@ -34,6 +36,14 @@ class CourseModel {
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
+    String? thumbnail = json['thumbnail'];
+    if (thumbnail != null &&
+        thumbnail.isNotEmpty &&
+        !thumbnail.startsWith('http') &&
+        !thumbnail.startsWith('data:')) {
+      thumbnail = '${ApiClient.baseUrl}$thumbnail';
+    }
+
     return CourseModel(
       id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
@@ -44,7 +54,7 @@ class CourseModel {
       description: json['description'] ?? '',
       originalPrice: json['originalPrice'] ?? 0,
       discountedPrice: json['discountedPrice'],
-      thumbnail: json['thumbnail'],
+      thumbnail: thumbnail,
       rating: json['rating'] ?? 0,
       numReviews: json['numReviews'] ?? 0,
       studentCount: json['studentCount'] ?? 0,
@@ -72,11 +82,19 @@ class InstructorModel {
   });
 
   factory InstructorModel.fromJson(Map<String, dynamic> json) {
+    String? avatar = json['avatar'];
+    if (avatar != null &&
+        avatar.isNotEmpty &&
+        !avatar.startsWith('http') &&
+        !avatar.startsWith('data:')) {
+      avatar = '${ApiClient.baseUrl}$avatar';
+    }
+
     return InstructorModel(
       id: json['_id'] ?? json['id'] ?? '',
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
-      avatar: json['avatar'],
+      avatar: avatar,
       bio: json['bio'],
     );
   }

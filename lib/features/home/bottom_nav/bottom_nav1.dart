@@ -2,17 +2,40 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
+final navRoutes = [
+  (route: '/', icon: HugeIcons.strokeRoundedHome01, label: 'Home'),
+  (
+    route: '/courses',
+    icon: HugeIcons.strokeRoundedBookOpen01,
+    label: 'Courses',
+  ),
+  (
+    route: '/messages',
+    icon: HugeIcons.strokeRoundedComment01,
+    label: 'Messages',
+  ),
+  (route: '/jobs', icon: HugeIcons.strokeRoundedJobSearch, label: 'Jobs'),
+];
+
 class BottomNav1 extends StatelessWidget {
-  const BottomNav1({super.key});
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const BottomNav1({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = isDark
         ? Colors.black.withValues(alpha: 0.8)
-        : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
+        : Theme.of(context).cardColor.withValues(alpha: 0.9);
     final double blur = isDark ? 30 : 20;
     final double bottomPadding = max(
       0,
@@ -26,41 +49,23 @@ class BottomNav1 extends StatelessWidget {
           padding: EdgeInsets.only(left: 24, right: 24, bottom: bottomPadding),
           decoration: BoxDecoration(
             color: color,
-            border: const Border(top: BorderSide(color: Colors.white24)),
+            border: Border(
+              top: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildNavItem(
-                context,
-                HugeIcons.strokeRoundedHome01,
-                "Home",
-                true,
-              ),
-              _buildNavItem(
-                context,
-                HugeIcons.strokeRoundedBookOpen01,
-                "Courses",
-                false,
-              ),
-              _buildNavItem(
-                context,
-                HugeIcons.strokeRoundedAdd01,
-                "Add",
-                false,
-              ),
-              _buildNavItem(
-                context,
-                HugeIcons.strokeRoundedComment01,
-                "Messages",
-                false,
-              ),
-              _buildNavItem(
-                context,
-                HugeIcons.strokeRoundedJobSearch,
-                "Jobs",
-                false,
-              ),
+              for (int i = 0; i < navRoutes.length; i++)
+                _buildNavItem(
+                  context,
+                  navRoutes[i].icon,
+                  navRoutes[i].label,
+                  currentIndex == i,
+                  () {
+                    onTap(i);
+                  },
+                ),
             ],
           ),
         ),
@@ -73,15 +78,14 @@ class BottomNav1 extends StatelessWidget {
     dynamic icon,
     String label,
     bool isActive,
+    VoidCallback onTap,
   ) {
-    final activeColor = const Color(0xFF4A8BFF);
-    final inactiveColor =
-        Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ??
-        Colors.grey;
+    final activeColor = Theme.of(context).primaryColor;
+    final inactiveColor = Theme.of(context).unselectedWidgetColor;
 
     return Expanded(
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,

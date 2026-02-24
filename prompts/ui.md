@@ -2,6 +2,10 @@
 UI Rules
 
 - for colors don't use fixed colors, it runes theme, and difficult to change the colors at all places. instead use theme colors (i don't want material type of colors)
+- use the main.dart 
+
+use /lib/main.dart for theming update, use `theme` and `darkTheme` for theme update, even border colors, gray shades use the theme colors, instead of every widget checking isDark and take some fixed colors which causes so much to difficult to later change colors.
+- if u want as need create extensions option in theme for providing custom theme properties and colors.
 
 - for gradient button use lib/ui/gradient_btn.dart
 - create global constant for gradient to use them other places other 

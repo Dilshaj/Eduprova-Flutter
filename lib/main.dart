@@ -1,8 +1,11 @@
 import 'package:edupurva/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   runApp(const ProviderScope(child: MainApp()));
 }
 
@@ -12,6 +15,9 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final darkBg = Color.fromARGB(255, 1, 7, 14);
+    final lightBg = Color(0xFFFFFFFF);
+    // final lightBg = Color(0xFFF8F3FA);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -21,18 +27,34 @@ class MainApp extends ConsumerWidget {
         ),
         dividerColor: Colors.grey.shade200,
         brightness: Brightness.light,
-        cardTheme: CardThemeData(color: Color(0xFFF9F6FF)),
-        scaffoldBackgroundColor: Color(0xFFF8F3FA),
+        cardColor: const Color(0xFFF9F6FF),
+        cardTheme: const CardThemeData(color: Color(0xFFF9F6FF)),
+        scaffoldBackgroundColor: lightBg,
+        appBarTheme: AppBarThemeData(backgroundColor: lightBg, elevation: 0),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 0, 123, 255),
+          seedColor: const Color.fromARGB(255, 95, 115, 137),
           brightness: .dark,
         ),
         brightness: Brightness.dark,
         dividerColor: const Color.fromARGB(255, 39, 38, 46),
-        cardTheme: CardThemeData(color: Color(0xFF0C0B1E)),
-        scaffoldBackgroundColor: Color(0xFF01070E),
+        cardColor: const Color(0xFF0C0B1E),
+        cardTheme: const CardThemeData(color: Color(0xFF0C0B1E)),
+        scaffoldBackgroundColor: darkBg,
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(120),
+            ),
+            textStyle: const TextStyle(color: Colors.white),
+            side: const BorderSide(
+              color: Color.fromARGB(255, 63, 63, 63),
+              width: 1,
+            ),
+          ),
+        ),
+        appBarTheme: AppBarThemeData(backgroundColor: darkBg, elevation: 0),
       ),
       routerConfig: router,
     );

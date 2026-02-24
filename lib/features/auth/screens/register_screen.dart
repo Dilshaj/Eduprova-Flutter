@@ -92,9 +92,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 obscureText: true,
               ),
               const SizedBox(height: 32),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : GradientBtn(title: 'Sign Up', onTap: _register),
+              GradientBtn(
+                title: 'Sign Up',
+                onTap: _register,
+                isLoading: _isLoading,
+              ),
             ],
           ),
         ),

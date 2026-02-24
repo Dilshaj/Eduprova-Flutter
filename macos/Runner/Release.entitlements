@@ -14,5 +14,9 @@
 	<true/>
 	<key>com.apple.security.assets.pictures.read-write</key>
 	<true/>
+	<key>com.apple.security.keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.dilshaj.infotech.edupurva</string>
+	</array>
 </dict>
 </plist>

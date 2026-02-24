@@ -15,7 +15,7 @@ class StatusScreen extends ConsumerStatefulWidget {
 
 class _StatusScreenState extends ConsumerState<StatusScreen> {
   final ImagePicker _picker = ImagePicker();
-  List<XFile> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
 
   Future<void> _pickImages() async {
     try {
@@ -38,7 +38,7 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -71,7 +71,7 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Center(
       child: Column(

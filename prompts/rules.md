@@ -157,5 +157,15 @@ class SampleNotifier extends Notifier<DataType>{
 }    
 ```
 
+# 5. Loaders
+
+- for images use CachedNetworkImage with Shimmer (not Skeletonizer)
+- for loading items/widgets/posts this kind, use Skeletonizer instead of CircularProgressIndicator, Shimmer
+- for buttons use thripple dots animation + disable button
+
+
+
 # Don't use font/text colors
 - it uses light/dark mode seting font color means it ruines in other theme mode.
+
+

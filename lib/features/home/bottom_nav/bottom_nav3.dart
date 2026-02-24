@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:suryaicons/bulk_rounded.dart';
 import 'package:suryaicons/stroke_rounded.dart';
 import 'package:suryaicons/suryaicons.dart';

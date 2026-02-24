@@ -1,4 +1,5 @@
 import 'package:dotted_decoration/dotted_decoration.dart';
+import 'package:edupurva/core/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,9 +19,9 @@ class _StatusRowState extends ConsumerState<StatusRow> {
     final profiles = ref.watch(statusProfilesProvider);
 
     return SizedBox(
-      height: 120,
+      height: 105,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         scrollDirection: Axis.horizontal,
         itemCount: profiles.length + 1,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
@@ -37,7 +38,7 @@ class _StatusRowState extends ConsumerState<StatusRow> {
   Widget _buildAddStoryCard(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        GoRouter.of(context).push('/status');
+        GoRouter.of(context).push(AppRoutes.createStory);
       },
       child: Container(
         width: 80,
@@ -97,12 +98,7 @@ class _StatusRowState extends ConsumerState<StatusRow> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(
-                  profile.statuses.isNotEmpty
-                      ? profile.statuses.first.url
-                      : 'https://picsum.photos/seed/$index/150/200',
-                  fit: BoxFit.cover,
-                ),
+                _buildStatusThumbnail(profile, index),
                 Positioned(
                   left: 6,
                   bottom: 8,
@@ -139,6 +135,40 @@ class _StatusRowState extends ConsumerState<StatusRow> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStatusThumbnail(StatusProfile profile, int index) {
+    if (profile.statuses.isEmpty) {
+      return Image.network(
+        'https://picsum.photos/seed/$index/150/200',
+        fit: BoxFit.cover,
+      );
+    }
+
+    final firstStatus = profile.statuses.first;
+    if (firstStatus.type == StatusType.video) {
+      // For video status, we could show a video icon or a placeholder
+      // For now, let's use a blurred version of the profile picture or a generic gradient
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.black.withValues(alpha: 0.8), Colors.black45],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          ),
+        ),
+        child: const Center(
+          child: Icon(Icons.play_circle_outline, color: Colors.white, size: 30),
+        ),
+      );
+    }
+
+    return Image.network(
+      firstStatus.url,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) =>
+          const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
     );
   }
 }

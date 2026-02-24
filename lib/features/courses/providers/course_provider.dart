@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/course_model.dart';
@@ -32,6 +31,8 @@ class CoursesNotifier extends StateNotifier<CoursesState> {
   }
 
   Future<void> fetchCourses({String? category}) async {
+    if (state.isLoading) return;
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final queryParams = <String, dynamic>{};
@@ -45,6 +46,7 @@ class CoursesNotifier extends StateNotifier<CoursesState> {
         '/courses',
         queryParameters: queryParams,
       );
+      // await Future.delayed(const Duration(seconds: 300));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['courses'];
@@ -52,7 +54,12 @@ class CoursesNotifier extends StateNotifier<CoursesState> {
         state = state.copyWith(isLoading: false, courses: courses);
       }
     } on DioException catch (e) {
-      log('Fetch Courses Error: ${e.message}');
+      log(
+        'Fetch Courses Error: type=${e.type}, message=${e.message}, error=${e.error}',
+      );
+      if (e.response != null) {
+        log('Fetch Courses Response Data: ${e.response?.data}');
+      }
       state = state.copyWith(
         isLoading: false,
         error: e.response?.data?['message'] ?? 'Failed to load courses',

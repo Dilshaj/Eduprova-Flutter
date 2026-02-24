@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../ui/gradient_btn.dart';
 
+import 'package:edupurva/core/widgets/app_loaders.dart';
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -84,12 +86,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 obscureText: true,
               ),
               const SizedBox(height: 24),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : GradientBtn(title: 'Login', onTap: _login),
+              GradientBtn(
+                height: 45,
+                title: 'Login',
+                onTap: _login,
+                isLoading: _isLoading,
+              ),
               const SizedBox(height: 16),
               _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? OutlinedButton(
+                      onPressed: null,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const TripleDotLoader(color: Colors.grey),
+                    )
                   : OutlinedButton.icon(
                       onPressed: _loginWithGoogle,
                       icon: const Icon(

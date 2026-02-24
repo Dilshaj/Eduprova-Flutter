@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:edupurva/core/network/api_client.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -36,7 +35,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _checkStatus();
   }
 
-  static const _storage = FlutterSecureStorage();
+  static const _storage = FlutterSecureStorage(
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   Future<void> _checkStatus() async {
@@ -137,10 +139,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
             '462093645547-jhgrjc5nv2g7kp1fnk2g0o263n9kd9fj.apps.googleusercontent.com',
       );
 
-      final GoogleSignInAccount? googleUser = await _googleSignIn
-          .authenticate();
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      final String email = googleUser!.email;
+      final String email = googleUser.email;
       final String displayName = googleUser.displayName ?? '';
       final String id = googleUser.id;
       final String? photoUrl = googleUser.photoUrl;

@@ -1,8 +1,6 @@
 import 'dart:ui';
 
 import 'package:edupurva/features/home/bottom_nav/bottom_nav1.dart';
-import 'package:edupurva/features/home/bottom_nav/bottom_nav2.dart';
-import 'package:edupurva/features/home/bottom_nav/bottom_nav3.dart';
 import 'package:edupurva/features/home/posts/post.dart';
 import 'package:edupurva/features/home/status/status_row.dart';
 import 'package:edupurva/features/courses/screens/courses_screen.dart';
@@ -22,7 +20,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _showBars = true;
-  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -31,78 +28,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? Colors.black.withValues(alpha: 0.8)
         : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
     final double blur = isDark ? 30 : 20;
+
     return Scaffold(
       key: _scaffoldKey,
       extendBody: true,
       extendBodyBehindAppBar: true,
       endDrawer: _buildDrawer(context, isDark),
-
       body: _buildBody(blur, color),
-
-      // floatingActionButton: AnimatedSlide(
-      //   duration: const Duration(milliseconds: 250),
-      //   offset: _showBars ? Offset.zero : const Offset(0, 2),
-      //   curve: Curves.easeIn,
-      //   child: AnimatedOpacity(
-      //     duration: const Duration(milliseconds: 200),
-      //     opacity: _showBars ? 1 : 0,
-      //     child: Transform.translate(
-      //       offset: const Offset(
-      //         0,
-      //         20,
-      //       ), // Move it down completely into the navbar hole
-      //       child: Container(
-      //         height: 60,
-      //         width: 60,
-      //         decoration: BoxDecoration(
-      //           shape: BoxShape.circle,
-      //           boxShadow: [
-      //             BoxShadow(
-      //               color: const Color(0xFF4A8BFF).withValues(alpha: 0.4),
-      //               blurRadius: 10,
-      //               offset: const Offset(0, 4),
-      //             ),
-      //           ],
-      //           gradient: const LinearGradient(
-      //             colors: [Color(0xFF4A8BFF), Color(0xFFFF61D8)],
-      //             begin: Alignment.topCenter,
-      //             end: Alignment.bottomCenter,
-      //           ),
-      //         ),
-      //         child: FloatingActionButton(
-      //           onPressed: () {},
-      //           backgroundColor: Colors.transparent,
-      //           elevation: 0,
-      //           highlightElevation: 0,
-      //           shape: const CircleBorder(),
-      //           child: const Icon(Icons.add, color: Colors.white, size: 32),
-      //         ),
-      //       ),
-      //     ),
-      //   ),
-      // ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _hideNav(
-        BottomNav1(
-          // currentIndex: _currentIndex,
-          // onTap: (index) {
-          //   setState(() {
-          //     _currentIndex = index;
-          //     // Always show bars when switching tabs
-          //     _showBars = true;
-          //   });
-          // },
-        ),
-      ),
     );
   }
 
   Widget _buildBody(double blur, Color color) {
-    if (_currentIndex == 1) {
-      return const CoursesScreen();
-    }
-
-    // Default Home Screen (Index 0)
     return NotificationListener<UserScrollNotification>(
       onNotification: (notification) {
         if (notification.direction == ScrollDirection.reverse) {
