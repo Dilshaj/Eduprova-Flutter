@@ -16,6 +16,7 @@ class CourseModel {
   final int studentCount;
   final String? duration;
   final InstructorModel? instructor;
+  final bool isOwner;
 
   CourseModel({
     required this.id,
@@ -33,6 +34,7 @@ class CourseModel {
     required this.studentCount,
     this.duration,
     this.instructor,
+    this.isOwner = false,
   });
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
@@ -56,12 +58,13 @@ class CourseModel {
       discountedPrice: json['discountedPrice'],
       thumbnail: thumbnail,
       rating: json['rating'] ?? 0,
-      numReviews: json['numReviews'] ?? 0,
-      studentCount: json['studentCount'] ?? 0,
+      numReviews: (json['numReviews'] as num?)?.toInt() ?? 0,
+      studentCount: (json['studentCount'] as num?)?.toInt() ?? 0,
       duration: json['duration'],
       instructor: json['instructor'] != null
           ? InstructorModel.fromJson(json['instructor'])
           : null,
+      isOwner: json['isOwner'] ?? false,
     );
   }
 }

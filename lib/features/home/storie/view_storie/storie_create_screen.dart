@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:dotted_decoration/dotted_decoration.dart';
 import 'package:edupurva/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
@@ -146,16 +147,21 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
   }
 
   Widget _buildSelectedState(bool isDark) {
-    return Column(
+    return Stack(
       children: [
-        Expanded(
+        // Grid View takes full available space
+        Positioned.fill(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 16,
+              bottom: 120, // Add padding to avoid the floating bottom bar
+            ),
             child: Column(
               children: [
                 _buildGrid(),
                 const SizedBox(height: 18),
-                // GradientBtn(title: 'Add More', onTap: _pickImages),
                 SizedBox(
                   width: double.infinity,
                   child: InkWell(
@@ -170,7 +176,6 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
                         horizontal: 32,
                         vertical: 12,
                       ),
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
                       alignment: .center,
                       child: const Text(
                         "Add More",
@@ -186,7 +191,13 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
             ),
           ),
         ),
-        _buildBottomBar(isDark),
+        // Floating Blur Bottom Bar
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: _buildBottomBar(isDark),
+        ),
       ],
     );
   }
@@ -281,37 +292,47 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
   }
 
   Widget _buildBottomBar(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
-        bottom: 32,
-      ), // safe area buffer
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black : Colors.white,
-        border: Border(
-          top: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 20,
+            bottom: 40, // Expanded safe area buffer
+          ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.6),
+            border: Border(
+              top: BorderSide(
+                color: isDark ? Colors.white12 : Colors.black12,
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildActionBtn(
+                  title: "Collage",
+                  icon: Icons.grid_view_rounded,
+                  onTap: () => _launchEditor(true),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildActionBtn(
+                  title: "Solo",
+                  icon: Icons.copy,
+                  onTap: () => _launchEditor(false),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildActionBtn(
-              title: "Collage",
-              icon: Icons.grid_view_rounded,
-              onTap: () => _launchEditor(true),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildActionBtn(
-              title: "Solo",
-              icon: Icons.copy,
-              onTap: () => _launchEditor(false),
-            ),
-          ),
-        ],
       ),
     );
   }

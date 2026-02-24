@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:io';
 
@@ -6,7 +7,7 @@ class ApiClient {
   static String get baseUrl {
     if (Platform.isAndroid) {
       // Reverted to explicit local IP for physical devices or custom networks
-      return 'http://192.168.1.100:4000';
+      return 'http://192.168.1.104:4000';
     }
     return 'http://localhost:4000';
   }
@@ -30,6 +31,9 @@ class ApiClient {
       _dio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) async {
+            // print path
+            debugPrint('Request: ${options.path}');
+
             final token = await _storage.read(key: 'access_token');
             if (token != null) {
               options.headers['Authorization'] = 'Bearer $token';

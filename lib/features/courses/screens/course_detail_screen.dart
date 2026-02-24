@@ -1,15 +1,16 @@
 import 'dart:convert';
+import 'package:edupurva/core/widgets/app_loaders.dart';
+import 'package:edupurva/core/widgets/app_video_player.dart';
 import 'package:edupurva/core/widgets/shimmer_loading.dart';
-import 'package:edupurva/core/widgets/app_loaders.dart'; // Added this import
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:edupurva/core/utils/image_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
-import '../models/course_model.dart';
-import '../providers/course_provider.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/navigation/app_routes.dart';
+import '../models/course_detail_model.dart';
+import '../providers/course_detail_provider.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   final String courseId;
@@ -23,301 +24,388 @@ class CourseDetailScreen extends ConsumerStatefulWidget {
 class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late final player = Player();
-  late final _controller = VideoController(player);
-
-  CourseModel? course;
-  bool isLoading = true;
-  String? errorMessage;
+  bool _showVideo = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _fetchCourseDetails();
-  }
-
-  Future<void> _fetchCourseDetails() async {
-    // Check if we already have it in the provider list
-    final courses = ref.read(coursesProvider).courses;
-    try {
-      final existing = courses.firstWhere((c) => c.id == widget.courseId);
-      setState(() {
-        course = existing;
-        isLoading = false;
-      });
-      // In a real app, you would fetch /courses/:id here to get curriculum and video URLs.
-      // We will mock playing a default video for demonstration purposes if non is available
-      _loadVideo(
-        'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4',
-      );
-    } catch (e) {
-      // Fallback
-      setState(() {
-        errorMessage = "Course details not found or failed to load.";
-        isLoading = false;
-      });
-    }
-  }
-
-  void _loadVideo(String url) {
-    player.open(Media(url));
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const ShimmerCourseDetail();
-    }
-    if (errorMessage != null || course == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: Center(child: Text(errorMessage ?? 'Not found')),
-      );
-    }
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final courseAsync = ref.watch(courseDetailProvider(widget.courseId));
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
-        actions: [
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedShare01,
-              color: Colors.grey,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const HugeIcon(
-              icon: HugeIcons.strokeRoundedFavourite,
-              color: Colors.grey,
-            ),
-            onPressed: () {},
-          ),
-        ],
+    return courseAsync.when(
+      loading: () => const ShimmerCourseDetail(),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('Error: $error')),
       ),
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header Video / Thumbnail
-                    Container(
-                      height: 260,
-                      width: double.infinity,
-                      color: Colors.black,
-                      // Video widget replacing the placeholder
-                      child: Video(controller: _controller),
-                    ),
+      data: (course) {
+        return Scaffold(
+          backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            toolbarHeight: kToolbarHeight - 8,
+            scrolledUnderElevation: 0,
+            iconTheme: IconThemeData(
+              color: isDark ? Colors.white : Colors.black,
+            ),
+            actions: [
+              IconButton(
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedShare01,
+                  color: Colors.grey,
+                ),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedFavourite,
+                  color: Colors.grey,
+                ),
+                onPressed: () {},
+              ),
+            ],
+          ),
+          // extendBodyBehindAppBar: true,
+          body: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header Video / Thumbnail
+                        SizedBox(
+                          height: 260,
+                          width: double.infinity,
+                          child:
+                              _showVideo &&
+                                  (course.muxPlaybackId != null ||
+                                      course.video != null ||
+                                      course.videoSource?.playbackId != null)
+                              ? AppVideoPlayer(
+                                  muxPlaybackId:
+                                      course.muxPlaybackId ??
+                                      course.videoSource?.playbackId,
+                                  url: course.video,
+                                  autoPlay: true,
+                                )
+                              : Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    _buildImage(
+                                      course.thumbnail,
+                                      width: double.infinity,
+                                      height: 260,
+                                    ),
+                                    if (course.muxPlaybackId != null ||
+                                        course.video != null ||
+                                        course.videoSource?.playbackId != null)
+                                      Container(color: Colors.black26),
+                                    if (course.muxPlaybackId != null ||
+                                        course.video != null ||
+                                        course.videoSource?.playbackId != null)
+                                      Center(
+                                        child: InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              _showVideo = true;
+                                            });
+                                          },
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black54,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.play_arrow_rounded,
+                                                  color: Colors.white,
+                                                  size: 40,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              const Text(
+                                                'Preview Course',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: Colors.black54,
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                        ),
 
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildBadge('BESTSELLER', Colors.blue),
-                              const SizedBox(width: 8),
-                              _buildBadge(
-                                course!.level.toUpperCase(),
-                                Colors.green,
+                              Row(
+                                children: [
+                                  _buildBadge('BESTSELLER', Colors.blue),
+                                  const SizedBox(width: 8),
+                                  _buildBadge(
+                                    course.level.toUpperCase(),
+                                    Colors.orange,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildBadge(course.category, Colors.green),
+                                ],
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            course!.title,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Created by ${course!.instructor?.fullName ?? "Unknown"}',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                color: Colors.orange,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 4),
+                              const SizedBox(height: 12),
                               Text(
-                                course!.rating.toStringAsFixed(1),
+                                course.title,
                                 style: const TextStyle(
+                                  fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(height: 8),
                               Text(
-                                '(${course!.numReviews} ratings)',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 13,
+                                'Created by ${course.instructor?.fullName ?? "Unknown"}',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              const Icon(
-                                Icons.access_time,
-                                color: Colors.grey,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                course!.duration ?? 'Unknown',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 13,
-                                ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    color: Colors.orange,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    course.rating.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(${course.numReviews} ratings)',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Icon(
+                                    Icons.access_time,
+                                    color: Colors.grey,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    course.duration ?? 'Unknown',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Sticky TabBar
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SliverAppBarDelegate(
+                      TabBar(
+                        controller: _tabController,
+                        isScrollable: true,
+                        labelColor: isDark ? Colors.white : Colors.black,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: const Color(0xFF4A8BFF),
+                        indicatorWeight: 3,
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        tabs: const [
+                          Tab(text: 'About'),
+                          Tab(text: 'Curriculum'),
+                          Tab(text: 'Instructor'),
+                          Tab(text: 'Reviews'),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  // TabBarView Content
+                  SliverFillRemaining(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildAboutTab(isDark, course),
+                        _buildCurriculumTab(isDark, course),
+                        _buildInstructorTab(isDark, course),
+                        const Center(child: Text("Reviews Content")),
+                      ],
+                    ),
+                  ),
+                ],
               ),
 
-              // Sticky TabBar
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SliverAppBarDelegate(
-                  TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    labelColor: isDark ? Colors.white : Colors.black,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: const Color(0xFF4A8BFF),
-                    indicatorWeight: 3,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                    tabs: const [
-                      Tab(text: 'About'),
-                      Tab(text: 'Curriculum'),
-                      Tab(text: 'Instructor'),
-                      Tab(text: 'Reviews'),
+              // Bottom Sticky Bar Action
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
+                      ),
                     ],
                   ),
-                ),
-              ),
-
-              // TabBarView Content - Since this is a simple prototype, we'll embed the selected tab inline.
-              // For full complexity TabBarViews in Slivers, nested tab bars often rely on constraints.
-              // To make it fully seamless:
-              SliverFillRemaining(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildAboutTab(isDark),
-                    const Center(child: Text("Curriculum Content")),
-                    _buildInstructorTab(isDark),
-                    const Center(child: Text("Reviews Content")),
-                  ],
+                  child: course.isOwner
+                      ? Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4A8BFF), Color(0xFFFF61D8)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              context.push(AppRoutes.courseLearning(course.id));
+                            },
+                            child: const Text(
+                              'Continue Learning',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                onPressed: () {},
+                                child: Text(
+                                  'Add to Cart',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF4A8BFF),
+                                      Color(0xFFFF61D8),
+                                    ],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () {},
+                                  child: const Text(
+                                    'Buy Now',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ],
           ),
-
-          // Bottom Sticky Bar Action
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF232323) : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      onPressed: () {},
-                      child: Text(
-                        'Add to Cart',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF4A8BFF), Color(0xFFFF61D8)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {},
-                        child: const Text(
-                          'Buy Now',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -339,9 +427,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
     );
   }
 
-  Widget _buildAboutTab(bool isDark) {
+  Widget _buildAboutTab(bool isDark, CourseDetailModel course) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 90),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -351,35 +439,81 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            course!.description,
+            course.description,
             style: TextStyle(
               color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'What you\'ll learn',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          _buildChecks('Build real-world projects from scratch', isDark),
-          _buildChecks('Master core principles and architecture', isDark),
-          _buildChecks('Industry best practices and shortcuts', isDark),
-          _buildChecks('Access to exclusive resource community', isDark),
+          if (course.learningPoints.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            const Text(
+              'What you\'ll learn',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            for (final point in course.learningPoints)
+              _buildChecks(point, isDark),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildInstructorTab(bool isDark) {
-    final instructor = course!.instructor;
+  Widget _buildCurriculumTab(bool isDark, CourseDetailModel course) {
+    if (course.curriculum.isEmpty) {
+      return const Center(child: Text("No curriculum available."));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 90),
+      itemCount: course.curriculum.length,
+      itemBuilder: (context, index) {
+        final chapter = course.curriculum[index];
+        return Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            title: Text(
+              chapter.title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text('${chapter.lectures.length} lectures'),
+            children: chapter.lectures.map((lecture) {
+              return ListTile(
+                leading: const Icon(
+                  Icons.play_circle_outline,
+                  color: Colors.blue,
+                ),
+                title: Text(lecture.title),
+                subtitle: Text('${(lecture.duration / 60).floor()} mins'),
+                trailing: lecture.freePreview
+                    ? const Text(
+                        'Preview',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    : const Icon(Icons.lock, size: 16, color: Colors.grey),
+                onTap: () {
+                  // TODO: Later on handle changing the video player source on tap.
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInstructorTab(bool isDark, CourseDetailModel course) {
+    final instructor = course.instructor;
     if (instructor == null) {
       return const Center(child: Text("Instructor information not available"));
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 90),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'status_provider.dart';
-import 'status_view_screen.dart';
+import 'stories_provider.dart';
+import 'storie_view_screen.dart';
 
 class StatusUsersPager extends ConsumerStatefulWidget {
   final int initialIndex;

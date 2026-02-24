@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/legacy.dart';
-import '../../../../core/network/api_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/course_model.dart';
+import '../repositories/course_repository.dart';
 import 'dart:developer';
 
 class CoursesState {
@@ -25,9 +25,14 @@ class CoursesState {
   }
 }
 
-class CoursesNotifier extends StateNotifier<CoursesState> {
-  CoursesNotifier() : super(CoursesState()) {
-    fetchCourses();
+class CoursesNotifier extends Notifier<CoursesState> {
+  final _repository = CourseRepository.instance;
+
+  @override
+  CoursesState build() {
+    // Initial fetch
+    Future.microtask(() => fetchCourses());
+    return .new();
   }
 
   Future<void> fetchCourses({String? category}) async {
@@ -35,31 +40,11 @@ class CoursesNotifier extends StateNotifier<CoursesState> {
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final queryParams = <String, dynamic>{};
-      if (category != null &&
-          category != 'All Courses' &&
-          category != 'New Trending') {
-        queryParams['category'] = category;
-      }
-
-      final response = await ApiClient.instance.get(
-        '/courses',
-        queryParameters: queryParams,
-      );
-      // await Future.delayed(const Duration(seconds: 300));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['courses'];
-        final courses = data.map((e) => CourseModel.fromJson(e)).toList();
-        state = state.copyWith(isLoading: false, courses: courses);
-      }
+      final courses = await _repository.getCourses(category: category);
+      await Future.delayed(const Duration(seconds: 10));
+      state = state.copyWith(isLoading: false, courses: courses);
     } on DioException catch (e) {
-      log(
-        'Fetch Courses Error: type=${e.type}, message=${e.message}, error=${e.error}',
-      );
-      if (e.response != null) {
-        log('Fetch Courses Response Data: ${e.response?.data}');
-      }
+      log('Fetch Courses Error: ${e.response?.data}');
       state = state.copyWith(
         isLoading: false,
         error: e.response?.data?['message'] ?? 'Failed to load courses',
@@ -71,8 +56,6 @@ class CoursesNotifier extends StateNotifier<CoursesState> {
   }
 }
 
-final coursesProvider = StateNotifierProvider<CoursesNotifier, CoursesState>((
-  ref,
-) {
-  return CoursesNotifier();
-});
+final coursesProvider = NotifierProvider<CoursesNotifier, CoursesState>(
+  CoursesNotifier.new,
+);

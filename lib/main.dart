@@ -21,6 +21,7 @@ class MainApp extends ConsumerWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        extensions: [],
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color.fromARGB(255, 0, 123, 255),
           brightness: .light,

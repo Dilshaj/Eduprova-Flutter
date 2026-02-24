@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import 'status_provider.dart';
+import 'stories_provider.dart';
 import 'status_progress_bar.dart';
 
 class StatusViewScreen extends StatefulWidget {

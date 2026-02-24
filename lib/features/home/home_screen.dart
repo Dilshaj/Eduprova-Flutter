@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:edupurva/features/home/bottom_nav/bottom_nav1.dart';
 import 'package:edupurva/features/home/posts/post.dart';
-import 'package:edupurva/features/home/status/status_row.dart';
+import 'package:edupurva/features/home/storie/view_storie/stories_row.dart';
 import 'package:edupurva/features/courses/screens/courses_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';

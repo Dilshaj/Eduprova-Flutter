@@ -1,12 +1,13 @@
-import 'package:edupurva/features/home/status/status_screen.dart';
-import 'package:edupurva/features/home/status/status_users_pager.dart';
-import 'package:edupurva/features/home/status/status_view_screen.dart';
+import 'package:edupurva/features/home/search/search_screen.dart';
+import 'package:edupurva/features/home/storie/view_storie/storie_create_screen.dart';
+import 'package:edupurva/features/home/storie/view_storie/storie_users_pager.dart';
+import 'package:edupurva/features/jobs/jobs_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:edupurva/core/navigation/app_routes.dart';
 import 'package:edupurva/features/home/home_screen.dart';
-import 'package:edupurva/features/home/search_screen.dart';
+import 'package:edupurva/features/courses/screens/course_learning_screen.dart';
 import 'package:edupurva/features/courses/screens/courses_screen.dart';
 import 'package:edupurva/features/courses/screens/course_detail_screen.dart';
 import 'package:edupurva/features/messages/communities/create_channel_screen.dart';
@@ -15,7 +16,6 @@ import 'package:edupurva/features/messages/messages/chat_screen.dart';
 import 'package:edupurva/features/messages/messages/chat_profile_screen.dart';
 import 'package:edupurva/features/messages/messages/messages_screen.dart';
 import 'package:edupurva/features/home/main_layout.dart';
-import 'package:edupurva/features/home/jobs_screen.dart';
 
 // SplashScreen and Auth imports (only necessary ones)
 import 'features/auth/providers/auth_provider.dart';
@@ -135,6 +135,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final courseId = state.pathParameters['id']!;
           return CourseDetailScreen(courseId: courseId);
+        },
+      ),
+      GoRoute(
+        path: '/course/:id/learn',
+        builder: (context, state) {
+          final courseId = state.pathParameters['id']!;
+          return CourseLearningScreen(courseId: courseId);
         },
       ),
       GoRoute(

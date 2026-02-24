@@ -8,6 +8,7 @@ class AppRoutes {
   // Courses
   static const String courses = '/courses';
   static String courseDetail(String id) => '/course/$id';
+  static String courseLearning(String id) => '/course/$id/learn';
 
   // Messages & Communities
   static const String messages = '/messages';
