@@ -70,11 +70,12 @@ class _StatusRowState extends ConsumerState<StatusRow> {
   ) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => StatusUsersPager(initialIndex: index),
-          ),
-        );
+        // Navigator.of(context).push(
+        //   MaterialPageRoute(
+        //     builder: (context) => StatusUsersPager(initialIndex: index),
+        //   ),
+        // );
+        context.push(AppRoutes.statusPager(index.toString()));
       },
       child: Container(
         width: 80,

@@ -7,8 +7,10 @@ import 'package:edupurva/features/courses/screens/courses_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:edupurva/ui/animated_title_header.dart';
+import 'package:edupurva/features/home/main_layout.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +20,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _showBars = true;
 
   @override
@@ -30,10 +31,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double blur = isDark ? 30 : 20;
 
     return Scaffold(
-      key: _scaffoldKey,
       extendBody: true,
       extendBodyBehindAppBar: true,
-      endDrawer: _buildDrawer(context, isDark),
       body: _buildBody(blur, color),
     );
   }
@@ -52,28 +51,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         slivers: [
           // show profile image, title, icons
           SliverAppBar(
-            // apply graient color title text
-            title: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundImage: AssetImage('assets/avatars/1.png'),
+            leading: IconButton(
+              onPressed: () {
+                mainScaffoldKey.currentState?.openDrawer();
+              },
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu02),
+            ),
+            title: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFF1766FF), Color(0xFFD757FD)],
+              ).createShader(bounds),
+              child: const Text(
+                "EduProva",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white, // required
                 ),
-                const SizedBox(width: 12),
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF1766FF), Color(0xFFD757FD)],
-                  ).createShader(bounds),
-                  child: const Text(
-                    "EduProva",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white, // required
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             actions: [
               IconButton(icon: const Icon(Icons.search), onPressed: () {}),
@@ -81,11 +76,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 icon: const Icon(Icons.notifications),
                 onPressed: () {},
               ),
-              IconButton(
-                onPressed: () {
-                  _scaffoldKey.currentState?.openEndDrawer();
-                },
-                icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu11),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundImage: AssetImage('assets/avatars/1.png'),
+                ),
               ),
             ],
             centerTitle: false,
@@ -147,79 +143,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         opacity: _showBars ? 1 : 0,
         child: child,
-      ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context, bool isDark) {
-    return Drawer(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage('assets/avatars/1.png'),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "EduProva User",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "@eduprova",
-                        style: TextStyle(
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: const Text('Profile'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.bookmark_border),
-              title: const Text('Saved'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            const Spacer(),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
       ),
     );
   }

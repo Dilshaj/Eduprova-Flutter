@@ -1,4 +1,6 @@
 import 'package:edupurva/features/home/status/status_screen.dart';
+import 'package:edupurva/features/home/status/status_users_pager.dart';
+import 'package:edupurva/features/home/status/status_view_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,10 +31,15 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.home,
     redirect: (context, state) {
       final status = authState.status;
@@ -112,7 +119,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
+        path: '/status/:id',
+        builder: (context, state) {
+          final initialIndex = state.pathParameters['id']!;
+          return StatusUsersPager(initialIndex: int.parse(initialIndex));
+        },
+      ),
+      GoRoute(
         path: AppRoutes.createStory,
+        parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const StatusScreen(),
       ),
       GoRoute(

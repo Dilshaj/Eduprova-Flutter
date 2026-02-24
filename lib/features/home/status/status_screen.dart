@@ -39,7 +39,7 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
 
   void _launchEditor(bool isCollage) {
     if (_selectedImages.isEmpty) return;
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) =>
             StoryEditorScreen(images: _selectedImages, isCollage: isCollage),
@@ -74,68 +74,73 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            height: 150,
-            child: SvgPicture.asset('assets/svgs/create-post.svg', width: 200),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Drag & Drop files',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 150,
+              child: SvgPicture.asset(
+                'assets/svgs/create-post.svg',
+                width: 200,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'or click to browse',
-            style: TextStyle(
-              fontSize: 14,
-              color:
-                  Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ??
-                  Colors.grey,
+            const SizedBox(height: 32),
+            Text(
+              'Drag & Drop files',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
+            const SizedBox(height: 8),
+            Text(
+              'or click to browse',
+              style: TextStyle(
+                fontSize: 14,
+                color:
+                    Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ??
+                    Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                    side: const BorderSide(color: Color(0xFF0066FF)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  side: const BorderSide(color: Color(0xFF0066FF)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Color(0xFF0066FF),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Color(0xFF0066FF),
-                    fontWeight: FontWeight.bold,
-                  ),
+                const SizedBox(width: 16),
+                GradientBtn(
+                  height: 40,
+                  title: "Add",
+                  onTap: _pickImages,
+                  width: 100,
                 ),
-              ),
-              const SizedBox(width: 16),
-              GradientBtn(
-                height: 40,
-                title: "Add",
-                onTap: _pickImages,
-                width: 100,
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
