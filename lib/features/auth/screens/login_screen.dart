@@ -16,13 +16,16 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  late final authNotifier = ref.read(authProvider.notifier);
+
   bool _isLoading = false;
 
   void _login() async {
     setState(() => _isLoading = true);
-    await ref
-        .read(authProvider.notifier)
-        .login(_emailController.text.trim(), _passwordController.text.trim());
+    await authNotifier.login(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
     setState(() => _isLoading = false);
 
     final error = ref.read(authProvider).error;
@@ -35,9 +38,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _loginWithGoogle() async {
     setState(() => _isLoading = true);
-    await ref.read(authProvider.notifier).googleSignIn();
+    await authNotifier.googleSignIn();
     setState(() => _isLoading = false);
-
     final error = ref.read(authProvider).error;
     if (error != null && mounted) {
       ScaffoldMessenger.of(
