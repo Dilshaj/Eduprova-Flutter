@@ -1,10 +1,11 @@
 import 'dart:io';
+import 'package:dotted_decoration/dotted_decoration.dart';
 import 'package:edupurva/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
-import 'create_story_screen.dart';
+import 'story_editor_screen.dart';
 
 class StatusScreen extends ConsumerStatefulWidget {
   const StatusScreen({super.key});
@@ -36,64 +37,77 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
     });
   }
 
+  void _launchEditor(bool isCollage) {
+    if (_selectedImages.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            StoryEditorScreen(images: _selectedImages, isCollage: isCollage),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.undo),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Create Post',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          _selectedImages.isEmpty ? 'Create Post' : 'Create Story',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(
-              right: 16.0,
-              top: 12.0,
-              bottom: 12.0,
-            ),
-            child: GradientBtn(title: "Next", onTap: () {}, fontSize: 14),
-          ),
-        ],
       ),
       body: _selectedImages.isEmpty
-          ? _buildEmptyState(context)
-          : _buildSelectedState(context),
+          ? _buildEmptyState()
+          : _buildSelectedState(isDark),
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    // final isDark = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset('assets/svgs/create-post.svg', width: 200),
+          SizedBox(
+            height: 150,
+            child: SvgPicture.asset('assets/svgs/create-post.svg', width: 200),
+          ),
           const SizedBox(height: 32),
           Text(
             'Drag & Drop files',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'or click to browse',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 14,
+              color:
+                  Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ??
+                  Colors.grey,
+            ),
           ),
           const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               OutlinedButton(
-                onPressed: () {},
+                onPressed: () => Navigator.of(context).pop(),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
@@ -105,7 +119,7 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
                   ),
                 ),
                 child: const Text(
-                  'Skip',
+                  'Cancel',
                   style: TextStyle(
                     color: Color(0xFF0066FF),
                     fontWeight: FontWeight.bold,
@@ -113,7 +127,12 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              GradientBtn(title: "Add", onTap: _pickImages, width: 100),
+              GradientBtn(
+                height: 40,
+                title: "Add",
+                onTap: _pickImages,
+                width: 100,
+              ),
             ],
           ),
         ],
@@ -121,132 +140,209 @@ class _StatusScreenState extends ConsumerState<StatusScreen> {
     );
   }
 
-  Widget _buildSelectedState(BuildContext context) {
+  Widget _buildSelectedState(bool isDark) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            children: const [
-              Text(
-                'Selected',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Icon(Icons.keyboard_arrow_down),
-            ],
-          ),
-        ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16.0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: _selectedImages.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return GestureDetector(
-                  onTap: _pickImages,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.grey.withValues(alpha: 0.3),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              children: [
+                _buildGrid(),
+                const SizedBox(height: 18),
+                // GradientBtn(title: 'Add More', onTap: _pickImages),
+                SizedBox(
+                  width: double.infinity,
+                  child: InkWell(
+                    onTap: _pickImages,
+                    child: Container(
+                      decoration: DottedDecoration(
+                        shape: .box,
+                        dash: const [6, 4],
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.add, size: 40, color: Colors.grey),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      alignment: .center,
+                      child: const Text(
+                        "Add More",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                );
-              }
-              final file = _selectedImages[index - 1];
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(File(file.path), fit: BoxFit.cover),
-              );
-            },
+                ),
+              ],
+            ),
           ),
         ),
-        Container(
-          height: 100,
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey.shade900
-                : Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, -5),
+        _buildBottomBar(isDark),
+      ],
+    );
+  }
+
+  Widget _buildGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: _selectedImages.length,
+      itemBuilder: (context, index) {
+        final file = _selectedImages[index];
+        return Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: .center,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _selectedImages.length,
-                  itemBuilder: (context, index) {
-                    final file = _selectedImages[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(file.path),
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: GestureDetector(
-                              onTap: () => _removeImage(index),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 12),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  File(file.path),
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 16),
-              GradientBtn(
-                title: "Next ➔",
-                height: 38,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          CreateStoryScreen(initialImages: _selectedImages),
+            ),
+            // Number Badge
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                  );
-                },
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ],
+            ),
+            // Remove Button
+            Positioned(
+              top: 8,
+              left: 8,
+              child: GestureDetector(
+                onTap: () => _removeImage(index),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 14, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomBar(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 16,
+        bottom: 32,
+      ), // safe area buffer
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black : Colors.white,
+        border: Border(
+          top: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildActionBtn(
+              title: "Collage",
+              icon: Icons.grid_view_rounded,
+              onTap: () => _launchEditor(true),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildActionBtn(
+              title: "Solo",
+              icon: Icons.copy,
+              onTap: () => _launchEditor(false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionBtn({
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0066FF), Color(0xFFF15EC9)],
           ),
         ),
-      ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

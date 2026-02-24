@@ -1,4 +1,4 @@
-import 'package:edupurva/features/home/status/create_story_screen.dart';
+import 'package:edupurva/features/home/status/status_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -113,7 +113,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.createStory,
-        builder: (context, state) => const CreateStoryScreen(initialImages: []),
+        builder: (context, state) => const StatusScreen(),
       ),
       GoRoute(
         path: '/course/:id',
