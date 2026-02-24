@@ -1,5 +1,5 @@
-import 'package:edupurva/core/navigation/app_routes.dart';
-import 'package:edupurva/theme.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
+import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

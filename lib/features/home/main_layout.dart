@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:edupurva/features/home/bottom_nav/bottom_nav1.dart';
+import 'package:eduprova/features/home/bottom_nav/bottom_nav1.dart';
 
 final GlobalKey<ScaffoldState> mainScaffoldKey = GlobalKey<ScaffoldState>();
 

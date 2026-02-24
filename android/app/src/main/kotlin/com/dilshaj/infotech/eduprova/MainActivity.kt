@@ -1,4 +1,4 @@
-package com.dilshaj.infotech.edupurva
+package com.dilshaj.infotech.eduprova
 
 import io.flutter.embedding.android.FlutterActivity
 

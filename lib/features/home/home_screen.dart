@@ -1,16 +1,16 @@
 import 'dart:ui';
 
-import 'package:edupurva/features/home/bottom_nav/bottom_nav1.dart';
-import 'package:edupurva/features/home/posts/post.dart';
-import 'package:edupurva/features/home/storie/view_storie/stories_row.dart';
-import 'package:edupurva/features/courses/screens/courses_screen.dart';
+import 'package:eduprova/features/home/bottom_nav/bottom_nav1.dart';
+import 'package:eduprova/features/home/posts/post.dart';
+import 'package:eduprova/features/home/storie/view_storie/stories_row.dart';
+import 'package:eduprova/features/courses/screens/courses_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:edupurva/ui/animated_title_header.dart';
-import 'package:edupurva/features/home/main_layout.dart';
+import 'package:eduprova/ui/animated_title_header.dart';
+import 'package:eduprova/features/home/main_layout.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

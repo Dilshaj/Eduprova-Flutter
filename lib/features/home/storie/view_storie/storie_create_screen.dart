@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:dotted_decoration/dotted_decoration.dart';
-import 'package:edupurva/ui/gradient_btn.dart';
+import 'package:eduprova/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';

@@ -1,4 +1,4 @@
-import 'package:edupurva/ui/gradient_btn.dart';
+import 'package:eduprova/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

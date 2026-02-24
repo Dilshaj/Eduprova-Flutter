@@ -1,5 +1,5 @@
 import 'package:dotted_decoration/dotted_decoration.dart';
-import 'package:edupurva/core/navigation/app_routes.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

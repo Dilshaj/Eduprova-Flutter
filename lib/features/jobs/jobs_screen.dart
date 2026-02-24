@@ -1,4 +1,4 @@
-import 'package:edupurva/features/dummy_screen.dart';
+import 'package:eduprova/features/dummy_screen.dart';
 import 'package:flutter/material.dart';
 
 class JobsScreen extends StatelessWidget {

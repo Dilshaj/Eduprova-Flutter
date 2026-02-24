@@ -1,3 +1,3 @@
-# edupurva
+# eduprova
 
 A new Flutter project.

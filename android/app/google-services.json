@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:462093645547:android:3591971b37ae186f3630ae",
+        "mobilesdk_app_id": "1:462093645547:android:99fbba797e05efa83630ae",
         "android_client_info": {
-          "package_name": "com.dilshaj.infotech.edupurva"
+          "package_name": "com.dilshaj.infotech.eduprova"
         }
       },
       "oauth_client": [

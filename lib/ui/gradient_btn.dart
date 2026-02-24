@@ -1,6 +1,6 @@
-import 'package:edupurva/constants.dart';
+import 'package:eduprova/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:edupurva/core/widgets/app_loaders.dart';
+import 'package:eduprova/core/widgets/app_loaders.dart';
 
 class GradientBtn extends StatelessWidget {
   final String title;

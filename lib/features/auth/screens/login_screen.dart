@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../ui/gradient_btn.dart';
 
-import 'package:edupurva/core/widgets/app_loaders.dart';
+import 'package:eduprova/core/widgets/app_loaders.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

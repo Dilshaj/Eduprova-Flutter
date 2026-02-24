@@ -7,7 +7,7 @@ class ApiClient {
   static String get baseUrl {
     if (Platform.isAndroid) {
       // Reverted to explicit local IP for physical devices or custom networks
-      return 'http://192.168.1.104:4000';
+      return 'http://192.168.1.5:4000';
     }
     return 'http://localhost:4000';
   }

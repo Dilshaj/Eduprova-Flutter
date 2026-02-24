@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:edupurva/core/utils/image_cache_manager.dart';
-import 'package:edupurva/core/widgets/app_loaders.dart';
-import 'package:edupurva/features/courses/models/course_model.dart';
+import 'package:eduprova/core/utils/image_cache_manager.dart';
+import 'package:eduprova/core/widgets/app_loaders.dart';
+import 'package:eduprova/features/courses/models/course_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
