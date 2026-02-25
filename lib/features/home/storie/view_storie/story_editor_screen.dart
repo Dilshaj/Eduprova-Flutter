@@ -44,7 +44,13 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
           mainEditor: MainEditorConfigs(
             enableZoom: true,
             widgets: MainEditorWidgets(
-              appBar: null, // Hide default app bar
+              // appBar: null, // Hide default app bar
+              appBar: (editor, rebuildStream) => ReactiveAppbar(
+                builder: (context) {
+                  return _buildCustomTopBar(editor);
+                },
+                stream: rebuildStream,
+              ),
               wrapBody: (editor, rebuildStream, content) {
                 return ReactiveWidget(
                   stream: rebuildStream,
@@ -52,16 +58,8 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
                     children: [
                       content,
                       if (!editor.isSubEditorOpen) ...[
-                        // Custom Blurred Top Bar
                         Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: _buildCustomTopBar(editor),
-                        ),
-                        // Custom Blurred Sidebar
-                        Positioned(
-                          top: MediaQuery.paddingOf(context).top + 80,
+                          top: MediaQuery.paddingOf(context).top + 20,
                           right: 16,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(30),
@@ -143,42 +141,26 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
     );
   }
 
-  Widget _buildCustomTopBar(ProImageEditorState editor) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.4),
-          padding: EdgeInsets.only(
-            top: MediaQuery.paddingOf(context).top + 8,
-            bottom: 8,
-            left: 8,
-            right: 8,
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-              const Spacer(),
-              _buildTopAction(
-                icon: Icons.undo,
-                onTap: editor.canUndo ? () => editor.undoAction() : null,
-              ),
-              _buildTopAction(
-                icon: Icons.redo,
-                onTap: editor.canRedo ? () => editor.redoAction() : null,
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.check, color: Colors.white),
-                onPressed: editor.doneEditing,
-              ),
-            ],
-          ),
+  AppBar _buildCustomTopBar(ProImageEditorState editor) {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      actions: [
+        _buildTopAction(
+          icon: Icons.undo,
+          onTap: editor.canUndo ? () => editor.undoAction() : null,
         ),
-      ),
+        _buildTopAction(
+          icon: Icons.redo,
+          onTap: editor.canRedo ? () => editor.redoAction() : null,
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.check, color: Colors.white),
+          onPressed: editor.doneEditing,
+        ),
+      ],
     );
   }
 
@@ -205,7 +187,7 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
           ),
           child: SafeArea(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Crop Button
                 IconButton(
@@ -235,6 +217,7 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
                     }
                   },
                 ),
+                Spacer(),
                 // Layout Button (only show if collage mode)
                 if (widget.isCollage)
                   ElevatedButton.icon(

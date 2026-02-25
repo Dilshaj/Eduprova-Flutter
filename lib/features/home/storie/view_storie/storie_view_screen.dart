@@ -215,6 +215,7 @@ class _StatusViewScreenState extends State<StatusViewScreen>
       backgroundColor: Colors.black,
       body: SafeArea(
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTapDown: _handleTapDown,
           onTapUp: _handleTapUp,
           onTapCancel: _handleTapCancel,
