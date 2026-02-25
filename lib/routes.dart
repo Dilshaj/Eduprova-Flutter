@@ -1,6 +1,8 @@
 import 'package:eduprova/auth/login_screen.dart';
-import 'package:eduprova/features/courses/screens/my-courses/courses_options_screen.dart';
+import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
+import 'package:eduprova/features/courses/screens/my_learning/my_learning_screen.dart';
 import 'package:eduprova/features/courses/screens/my_wishlist_screen.dart';
+import 'package:eduprova/features/courses/screens/profile_settings/profile_settings_screen.dart';
 import 'package:eduprova/features/help_and_support.dart';
 import 'package:eduprova/features/home/main_layout.dart';
 import 'package:eduprova/features/home/search/search_screen.dart';
@@ -12,7 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/home/home_screen.dart';
-import 'package:eduprova/features/courses/screens/course_learning_screen.dart';
+import 'package:eduprova/features/courses/screens/course_learn/course_learning_screen.dart';
 import 'package:eduprova/features/courses/screens/courses_screen.dart';
 import 'package:eduprova/features/courses/screens/course_detail_screen.dart';
 import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
@@ -79,6 +81,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
       ),
+
+      // Bottom Nav Routes
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return MainLayout(navigationShell: navigationShell);
@@ -134,6 +138,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const StatusScreen(),
       ),
+
+      //// Course Routes
       GoRoute(
         path: '/course/:id',
         builder: (context, state) {
@@ -172,7 +178,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           return MyLearningScreen();
         },
       ),
+      GoRoute(
+        path: AppRoutes.billingAndPayments,
+        builder: (context, state) {
+          return BillingPaymentsScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.profileSettings,
+        builder: (context, state) {
+          return ProfileSettingsScreen();
+        },
+      ),
 
+      //// Messages Routes
       GoRoute(
         path: AppRoutes.createCommunity,
         builder: (context, state) => const CreateCommunityScreen(),

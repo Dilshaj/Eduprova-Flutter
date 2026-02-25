@@ -4,19 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../core/navigation/app_routes.dart';
-import '../../../core/utils/image_cache_manager.dart';
-import '../../../core/widgets/app_loaders.dart';
-import '../../../core/widgets/app_video_player.dart';
-import '../models/course_detail_model.dart';
-import '../providers/course_detail_provider.dart';
-import '../../../theme.dart';
+import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/utils/image_cache_manager.dart';
+import '../../../../core/widgets/app_loaders.dart';
+import '../../../../core/widgets/app_video_player.dart';
+import '../../models/course_detail_model.dart';
+import '../../providers/course_detail_provider.dart';
+import '../../../../theme.dart';
 
-import 'my-courses/ask_doubts_screen.dart';
-import 'my-courses/practice_screen.dart';
-import 'my-courses/notes_screen.dart';
-import 'my-courses/resources_screen.dart';
-import 'my-courses/messages_screen.dart';
+import 'tabs/ask_doubts_screen.dart';
+import 'tabs/practice_screen.dart';
+import 'tabs/notes_screen.dart';
+import 'tabs/resources_screen.dart';
+import 'tabs/messages_screen.dart';
 
 class CourseLearningScreen extends ConsumerStatefulWidget {
   final String courseId;

@@ -1,5 +1,6 @@
 import 'package:eduprova/features/home/posts/post.dart';
 import 'package:eduprova/features/home/storie/view_storie/stories_row.dart';
+import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,23 +25,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final double blur = isDark ? 30 : 20;
 
     return Scaffold(
-      extendBody: true,
-      extendBodyBehindAppBar: true,
+      // extendBody: true,
+      // extendBodyBehindAppBar: true,
       body: _buildBody(blur, color),
       // drawer:
     );
   }
 
   Widget _buildBody(double blur, Color color) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     return NotificationListener<UserScrollNotification>(
-      onNotification: (notification) {
-        if (notification.direction == ScrollDirection.reverse) {
-          if (_showBars) setState(() => _showBars = false);
-        } else if (notification.direction == ScrollDirection.forward) {
-          if (!_showBars) setState(() => _showBars = true);
-        }
-        return true;
-      },
+      // onNotification: (notification) {
+      //   if (notification.direction == ScrollDirection.reverse) {
+      //     if (_showBars) setState(() => _showBars = false);
+      //   } else if (notification.direction == ScrollDirection.forward) {
+      //     if (!_showBars) setState(() => _showBars = true);
+      //   }
+      //   return true;
+      // },
       child: CustomScrollView(
         slivers: [
           // show profile image, title, icons
@@ -52,9 +54,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               icon: HugeIcon(icon: HugeIcons.strokeRoundedMenu02),
             ),
             title: ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFF1766FF), Color(0xFFD757FD)],
-              ).createShader(bounds),
+              shaderCallback: (bounds) =>
+                  themeExt.buyNowGradient.createShader(bounds),
               child: const Text(
                 "EduProva",
                 style: TextStyle(
@@ -79,22 +80,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
             centerTitle: false,
-            // backgroundColor: Colors.transparent,
-            // backgroundColor: Colors.white,
             scrolledUnderElevation: 0,
-            surfaceTintColor: Colors.transparent,
             elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            // backgroundColor: themeExt.scaffoldBackgroundColor,
             floating: true,
+            forceMaterialTransparency: false,
             snap: true,
-            flexibleSpace: ClipRect(
-              // child: BackdropFilter(
-              //   filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-              //   child: Container(color: color),
-              // ),
-              child: Container(color: color),
-            ),
           ),
-
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0),

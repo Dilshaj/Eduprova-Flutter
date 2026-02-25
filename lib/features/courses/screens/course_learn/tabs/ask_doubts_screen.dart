@@ -151,6 +151,60 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
     _closeModal();
   }
 
+  Widget buildAskBtn({
+    required IconData icon,
+    required String text,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isActive
+                    ? const Color(0xFF0066FF)
+                    : const Color(0xFF6B7280),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isActive
+                      ? const Color(0xFF0066FF)
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
@@ -176,104 +230,20 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                     children: [
                       // Ask AI Button
                       Expanded(
-                        child: InkWell(
+                        child: buildAskBtn(
+                          icon: Icons.memory,
+                          text: 'Ask AI',
+                          isActive: _activeToggle == 'AI',
                           onTap: () => setState(() => _activeToggle = 'AI'),
-                          borderRadius: BorderRadius.circular(10),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              color: _activeToggle == 'AI'
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _activeToggle == 'AI'
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons
-                                      .memory, // Changed to match prompt's ask AI icon logic if needed, but keeping Icons.memory
-                                  size: 18,
-                                  color: _activeToggle == 'AI'
-                                      ? const Color(0xFF0066FF)
-                                      : const Color(0xFF6B7280),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Ask AI',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: _activeToggle == 'AI'
-                                        ? const Color(0xFF0066FF)
-                                        : const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ),
-                      // Ask Community Button
                       Expanded(
-                        child: InkWell(
+                        child: buildAskBtn(
+                          icon: Icons.people_outline,
+                          text: 'Ask Community',
+                          isActive: _activeToggle == 'COMMUNITY',
                           onTap: () =>
                               setState(() => _activeToggle = 'COMMUNITY'),
-                          borderRadius: BorderRadius.circular(10),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              color: _activeToggle == 'COMMUNITY'
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _activeToggle == 'COMMUNITY'
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.people_outline,
-                                  size: 18,
-                                  color: _activeToggle == 'COMMUNITY'
-                                      ? const Color(0xFF0066FF)
-                                      : const Color(0xFF6B7280),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Ask Community',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: _activeToggle == 'COMMUNITY'
-                                        ? const Color(0xFF0066FF)
-                                        : const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ),
                     ],

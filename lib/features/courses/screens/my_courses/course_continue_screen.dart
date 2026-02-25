@@ -3,11 +3,11 @@ import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 
 // Assuming these paths match the generated dart files structure
-import 'ask_doubts_screen.dart';
-import 'practice_screen.dart';
-import 'notes_screen.dart';
-import 'resources_screen.dart';
-import 'messages_screen.dart';
+import '../course_learn/tabs/ask_doubts_screen.dart';
+import '../course_learn/tabs/practice_screen.dart';
+import '../course_learn/tabs/notes_screen.dart';
+import '../course_learn/tabs/resources_screen.dart';
+import '../course_learn/tabs/messages_screen.dart';
 
 class CourseContinueScreen extends StatefulWidget {
   const CourseContinueScreen({super.key});

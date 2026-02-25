@@ -34,6 +34,7 @@ class MainLayout extends StatelessWidget {
   Widget _buildDrawer(BuildContext context, bool isDark) {
     return Drawer(
       width: 340,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: SingleChildScrollView(
