@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../theme.dart';
 
 class ChatProfileScreen extends StatelessWidget {
   final String id;
@@ -51,7 +50,8 @@ class ChatProfileScreen extends StatelessWidget {
                     child: Container(
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.purpleBlob,
+                        // color: AppTheme.purpleBlob,
+                        color: Colors.purple,
                       ),
                       child: Center(
                         child: Text(
@@ -181,9 +181,9 @@ class ChatProfileScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildMediaThumbnail(AppTheme.purpleBlob),
-                      _buildMediaThumbnail(AppTheme.indigoBlob),
-                      _buildMediaThumbnail(AppTheme.roseBlob),
+                      _buildMediaThumbnail(Colors.purple),
+                      _buildMediaThumbnail(Colors.indigo),
+                      _buildMediaThumbnail(Colors.pink),
                       _buildMediaMoreCount('+24'),
                     ],
                   ),
@@ -272,7 +272,7 @@ class ChatProfileScreen extends StatelessWidget {
     final subTextColor = isDark ? Colors.grey[400]! : Colors.grey.shade500;
     final iconBgColor = isDark
         ? const Color.fromRGBO(251, 252, 255, 0.05)
-        : AppTheme.background;
+        : Colors.black;
 
     return Container(
       padding: const EdgeInsets.all(16),

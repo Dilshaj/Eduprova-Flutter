@@ -2,7 +2,6 @@ import 'package:eduprova/constants.dart';
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../theme.dart';
 import '../communities/communities_view.dart';
 
 class MessagesListScreen extends StatefulWidget {
@@ -23,7 +22,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       name: 'Varahanarasimha Logisa',
       lastMessage: 'Shared: MacBook Pro 16_ - 22...',
       time: '5:38 PM',
-      color: AppTheme.purpleBlob,
+      // color: AppTheme.purpleBlob,
+      color: Colors.purple,
       textStyleColor: Colors.purple,
       isOnline: true,
       isRead: true,
@@ -33,7 +33,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       name: 'Bharath Kumar Kunkipudi',
       lastMessage: 'You: [File: logo.png]',
       time: '4:13 PM',
-      color: AppTheme.roseBlob,
+      // color: AppTheme.roseBlob,
+      color: Colors.pink,
       textStyleColor: Colors.pink,
       isOnline: false,
       isRead: true,
@@ -43,7 +44,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       name: 'Ganesh Tamarana',
       lastMessage: 'Are we still on for the worksho...',
       time: '2:39 PM',
-      color: AppTheme.indigoBlob,
+      // color: AppTheme.indigoBlob,
+      color: Colors.indigo,
       textStyleColor: Colors.indigo,
       isOnline: true,
       isRead: true,
@@ -53,7 +55,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       name: 'Satya Padala',
       lastMessage: 'Let me know when the design ...',
       time: '2:27 PM',
-      color: AppTheme.purpleBlob,
+      // color: AppTheme.purpleBlob,
+      color: Colors.purple,
       textStyleColor: Colors.purple,
       isOnline: false,
       isRead: false,
@@ -64,7 +67,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       name: 'Sanku Surya Teja',
       lastMessage: 'You: Mock interview screens ar...',
       time: '10:06 AM',
-      color: AppTheme.indigoBlob,
+      // color: AppTheme.indigoBlob,
+      color: Colors.indigo,
       textStyleColor: Colors.indigo,
       isOnline: false,
       isRead: true,
@@ -74,7 +78,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       name: 'UI/UX Designers',
       lastMessage: 'Sanku: The prototype is updat...',
       time: 'Yesterday',
-      color: AppTheme.roseBlob,
+      // color: AppTheme.roseBlob,
+      color: Colors.pink,
       textStyleColor: Colors.pink,
       isOnline: true,
       isRead: false,
@@ -116,7 +121,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: AppTheme.purpleBlob,
+                  // backgroundColor: AppTheme.purpleBlob,
+                  backgroundColor: Colors.purple,
                   child: Text(
                     'VL',
                     style: TextStyle(
@@ -206,7 +212,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
           height: 56,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: AppTheme.primaryGradient,
+            // gradient: AppTheme.primaryGradient,
+            color: Colors.purple,
             boxShadow: [
               BoxShadow(
                 color: Colors.purple.withValues(alpha: 0.3),

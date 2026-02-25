@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'stories_provider.dart';
-import 'storie_users_pager.dart';
 
 class StatusRow extends ConsumerStatefulWidget {
   const StatusRow({super.key});

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:eduprova/globals.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:io';
 
 // class ApiClient {
@@ -65,7 +64,8 @@ class ApiClient {
 
   static String get baseUrl {
     if (Platform.isAndroid) {
-      return 'http://192.168.1.5:4000';
+      return 'http://192.168.1.107:4000';
+      // return 'http://10.169.69.6:4000';
     }
     return 'http://localhost:4000';
   }

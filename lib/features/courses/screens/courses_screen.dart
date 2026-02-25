@@ -1,15 +1,20 @@
-import 'package:eduprova/core/widgets/shimmer_loading.dart';
-import 'package:eduprova/features/courses/screens/course_card.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:eduprova/core/utils/image_cache_manager.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:eduprova/core/widgets/app_loaders.dart';
+import 'dart:math';
+
 import 'package:go_router/go_router.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import '../providers/course_provider.dart';
+
+import '../widgets/banner_carousel.dart';
+import '../widgets/category_tabs.dart';
+import '../widgets/courses_header.dart';
+import '../widgets/horizontal_course_row.dart';
+import '../widgets/skeleton_loader.dart';
+
+import '../../../theme.dart';
 import '../models/course_model.dart';
-import 'package:hugeicons/hugeicons.dart';
+import '../providers/course_provider.dart';
 
 class CoursesScreen extends ConsumerStatefulWidget {
   const CoursesScreen({super.key});
@@ -19,344 +24,489 @@ class CoursesScreen extends ConsumerStatefulWidget {
 }
 
 class _CoursesScreenState extends ConsumerState<CoursesScreen> {
-  final List<String> categories = [
-    'New Trending',
-    'All Courses',
-    'Development',
-    'Design',
-    'Business',
-    'Finance & Accounting',
-    'IT & Software',
-  ];
-  String selectedCategory = 'New Trending';
+  bool filterModalVisible = false;
+  bool isPopularDropdownOpen = false;
+  String popularFilterSelection = 'Most Popular';
+  String selectedSort = 'Most Relevant';
+  List<String> selectedDurations = ['3-6 Hours'];
 
-  int _currentBannerIndex = 0;
-  final List<String> dummyBanners = [
-    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
-    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80',
-    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80',
-  ];
+  bool practiceExpanded = true;
+  Map<String, bool> practiceChecks = {
+    'quizzes': false,
+    'coding': false,
+    'practice': false,
+    'role': false,
+  };
+
+  int currentPage = 1;
+  final int rowsPerPage = 5;
+  final int itemsPerRow = 6;
+  late final int titlesPerPage;
 
   @override
   void initState() {
     super.initState();
+    titlesPerPage = rowsPerPage * itemsPerRow;
+    // Initial fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(coursesProvider.notifier).fetchCourses();
     });
   }
 
+  void togglePracticeCheck(String key) {
+    setState(() {
+      practiceChecks[key] = !(practiceChecks[key] ?? false);
+    });
+  }
+
+  List<CourseModel> getCurrentPageCourses(List<CourseModel> allCourses) {
+    int startIndex = (currentPage - 1) * titlesPerPage;
+    int endIndex = startIndex + titlesPerPage;
+    if (startIndex >= allCourses.length) return [];
+    return allCourses.sublist(startIndex, min(endIndex, allCourses.length));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(coursesProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        elevation: 0,
-        title: Text(
-          'Courses',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedSearch01,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedShoppingCart01,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedMoreVerticalCircle01,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            // Category Tabs
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final cat = categories[index];
-                  final isSelected = cat == selectedCategory;
-                  return _buildCategoryChip(cat, isSelected, isDark);
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
+    final coursesState = ref.watch(coursesProvider);
+    final allCourses = coursesState.courses;
+    final isLoading = coursesState.isLoading;
 
-            // Banner Carousel
-            Column(
-              children: [
-                CarouselSlider(
-                  options: CarouselOptions(
-                    height: 185,
-                    viewportFraction: 1.0,
-                    autoPlay: true,
-                    enableInfiniteScroll: true,
-                    onPageChanged: (index, reason) {
-                      setState(() {
-                        _currentBannerIndex = index;
-                      });
-                    },
-                  ),
-                  items: dummyBanners.map((imageUrl) {
-                    return Builder(
-                      builder: (BuildContext context) {
-                        return Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: Colors.grey.shade300,
-                            image: DecorationImage(
-                              image: CachedNetworkImageProvider(
-                                imageUrl,
-                                cacheManager:
-                                    CacheManagers.carouselCacheManager,
+    int totalPages = (allCourses.length / titlesPerPage).ceil();
+    if (totalPages == 0) totalPages = 1;
+
+    List<CourseModel> currentCourses = getCurrentPageCourses(allCourses);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: themeExt.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  const CoursesHeader(),
+                  Expanded(
+                    child: isLoading
+                        ? const CoursesHomeSkeleton()
+                        : RefreshIndicator(
+                            onRefresh: () => ref
+                                .read(coursesProvider.notifier)
+                                .fetchCourses(),
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.only(bottom: 80),
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: BouncingScrollPhysics(),
                               ),
-                              fit: BoxFit.cover,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Top Actions Row
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      20,
+                                      16,
+                                      0,
+                                      16,
+                                    ),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const BouncingScrollPhysics(),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          // All Courses - Gradient
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 12,
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {},
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 10,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  gradient:
+                                                      themeExt.buyNowGradient,
+                                                  // gradient: LinearGradient(
+                                                  //   colors: [
+                                                  //     colorScheme.primary,
+                                                  //     themeExt
+                                                  //         .highestRatedBadgeColor,
+                                                  //   ],
+                                                  //   begin: Alignment.centerLeft,
+                                                  //   end: Alignment.centerRight,
+                                                  // ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                ),
+                                                child: const Text(
+                                                  'All Courses',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // My Learning
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 12,
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                context.push(
+                                                  AppRoutes.myLearning,
+                                                  extra: {'tab': 'Ongoing'},
+                                                );
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 10,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: themeExt.cardColor,
+                                                  border: Border.all(
+                                                    color: themeExt.borderColor,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color:
+                                                          themeExt.shadowColor,
+                                                      blurRadius: 2,
+                                                      offset: const Offset(
+                                                        0,
+                                                        1,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.school_outlined,
+                                                      size: 16,
+                                                      color: themeExt
+                                                          .secondaryText,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      'My Learning',
+                                                      style: TextStyle(
+                                                        color: colorScheme
+                                                            .onSurface,
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // Wishlist
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 20,
+                                            ),
+                                            child: InkWell(
+                                              onTap: () {
+                                                context.push(
+                                                  AppRoutes.myWishlist,
+                                                );
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 10,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: themeExt.cardColor,
+                                                  border: Border.all(
+                                                    color: themeExt.borderColor,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color:
+                                                          themeExt.shadowColor,
+                                                      blurRadius: 2,
+                                                      offset: const Offset(
+                                                        0,
+                                                        1,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.favorite_border,
+                                                      size: 16,
+                                                      color: themeExt
+                                                          .secondaryText,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      'Wishlist',
+                                                      style: TextStyle(
+                                                        color: colorScheme
+                                                            .onSurface,
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                  const CategoryTabs(),
+                                  const BannerCarousel(),
+                                  const SizedBox(height: 10),
+
+                                  // Rows
+                                  if (currentCourses.isEmpty)
+                                    const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(40.0),
+                                        child: Text("No courses found."),
+                                      ),
+                                    )
+                                  else
+                                    ...List.generate(rowsPerPage, (rowIndex) {
+                                      int start = rowIndex * itemsPerRow;
+                                      int end = (rowIndex + 1) * itemsPerRow;
+                                      if (start >= currentCourses.length) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      List<CourseModel> rowCourses =
+                                          currentCourses.sublist(
+                                            start,
+                                            min(end, currentCourses.length),
+                                          );
+                                      if (rowCourses.isEmpty) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return HorizontalCourseRow(
+                                        title: rowIndex == 0
+                                            ? "Featured Courses"
+                                            : "More Courses",
+                                        courses: rowCourses,
+                                        categoryId: "Category-$rowIndex",
+                                      );
+                                    }),
+
+                                  // Pagination
+                                  if (totalPages > 1)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        top: 16,
+                                        bottom: 32,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          InkWell(
+                                            onTap: currentPage > 1
+                                                ? () => setState(
+                                                    () => currentPage--,
+                                                  )
+                                                : null,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                            child: Container(
+                                              width: 40,
+                                              height: 40,
+                                              margin: const EdgeInsets.only(
+                                                right: 16,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: currentPage == 1
+                                                      ? themeExt.borderColor
+                                                      : colorScheme.primary,
+                                                ),
+                                                color: currentPage == 1
+                                                    ? themeExt.skeletonBase
+                                                    : themeExt.cardColor,
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.chevron_left,
+                                                size: 20,
+                                                color: currentPage == 1
+                                                    ? themeExt.secondaryText
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          )
+                                                    : colorScheme.primary,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Page $currentPage of $totalPages',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: currentPage < totalPages
+                                                ? () => setState(
+                                                    () => currentPage++,
+                                                  )
+                                                : null,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                            child: Container(
+                                              width: 40,
+                                              height: 40,
+                                              margin: const EdgeInsets.only(
+                                                left: 16,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color:
+                                                      currentPage == totalPages
+                                                      ? themeExt.borderColor
+                                                      : colorScheme.primary,
+                                                ),
+                                                color: currentPage == totalPages
+                                                    ? themeExt.skeletonBase
+                                                    : themeExt.cardColor,
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.chevron_right,
+                                                size: 20,
+                                                color: currentPage == totalPages
+                                                    ? themeExt.secondaryText
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          )
+                                                    : colorScheme.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  const SizedBox(height: 96),
+                                ],
+                              ),
                             ),
                           ),
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.6),
-                                  Colors.transparent,
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
+                  ),
+                ],
+              ),
+
+              // FILTER MODAL (truncated for readability)
+              if (filterModalVisible)
+                GestureDetector(
+                  onTap: () => setState(() => filterModalVisible = false),
+                  child: Container(
+                    color: Colors.black54,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(20),
+                    child: GestureDetector(
+                      onTap: () {}, // Prevent tap from closing
+                      child: Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: themeExt.cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: themeExt.shadowColor,
+                              spreadRadius: 5,
+                              blurRadius: 10,
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Black Friday Sale\nends today',
+                                Text(
+                                  'Filter',
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
-                                const Text(
-                                  'Get ready for your success...',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                                GestureDetector(
+                                  onTap: () => setState(
+                                    () => filterModalVisible = false,
                                   ),
-                                ),
-                                const SizedBox(height: 12),
-                                ElevatedButton(
-                                  onPressed: () {},
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: Colors.black,
-                                    minimumSize: const Size(100, 36),
-                                  ),
-                                  child: const Text(
-                                    'Save now',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 24,
+                                      color: themeExt.secondaryText,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: dummyBanners.asMap().entries.map((entry) {
-                    return Container(
-                      width: 8.0,
-                      height: 8.0,
-                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: (isDark ? Colors.white : Colors.black)
-                            .withValues(
-                              alpha: _currentBannerIndex == entry.key
-                                  ? 0.9
-                                  : 0.4,
-                            ),
+                            // Filter content can be restored if needed
+                          ],
+                        ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            if (state.isLoading)
-              const ShimmerCoursesScreen()
-            else if (state.error != null)
-              Center(
-                child: Text(
-                  state.error!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              )
-            else ...[
-              _buildSection(
-                title: 'Featured Courses',
-                actionLabel: 'Most Popular',
-                movies: state.courses.take(6).toList(),
-                isDark: isDark,
-              ),
-              const SizedBox(height: 24),
-              _buildSection(
-                title: 'Recommended',
-                movies: state.courses.skip(2).take(6).toList(),
-                isDark: isDark,
-              ),
-              const SizedBox(height: 80), // Padding for the huge navigation bar
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String title, bool isSelected, bool isDark) {
-    if (title == 'New Trending' && isSelected) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFFF61D8)),
-        ),
-        child: Row(
-          children: [
-            const HugeIcon(
-              icon: HugeIcons.strokeRoundedSparkles,
-              color: Color(0xFFFF61D8),
-              size: 18,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFFFF61D8),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: () {
-        setState(() => selectedCategory = title);
-        ref.read(coursesProvider.notifier).fetchCourses(category: title);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade400,
-          ),
-          color: isSelected
-              ? (isDark ? Colors.white : Colors.black)
-              : Colors.transparent,
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected
-                ? (isDark ? Colors.black : Colors.white)
-                : (isDark ? Colors.white70 : Colors.black54),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSection({
-    required String title,
-    String? actionLabel,
-    required List<CourseModel> movies,
-    required bool isDark,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            if (actionLabel != null)
-              Row(
-                children: [
-                  Text(
-                    actionLabel,
-                    style: const TextStyle(
-                      color: Color(0xFF4A8BFF),
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Color(0xFF4A8BFF),
-                    size: 20,
-                  ),
-                ],
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 280,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: movies.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              return CourseCard(course: movies[index], isDark: isDark);
-            },
+                ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

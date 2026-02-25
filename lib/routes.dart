@@ -1,3 +1,7 @@
+import 'package:eduprova/auth/login_screen.dart';
+import 'package:eduprova/features/courses/screens/my-courses/courses_options_screen.dart';
+import 'package:eduprova/features/courses/screens/my_wishlist_screen.dart';
+import 'package:eduprova/features/help_and_support.dart';
 import 'package:eduprova/features/home/main_layout2.dart';
 import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
@@ -16,11 +20,10 @@ import 'package:eduprova/features/messages/communities/create_community_screen.d
 import 'package:eduprova/features/messages/messages/chat_screen.dart';
 import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
 import 'package:eduprova/features/messages/messages/messages_screen.dart';
-import 'package:eduprova/features/home/main_layout.dart';
 
 // SplashScreen and Auth imports (only necessary ones)
 import 'features/auth/providers/auth_provider.dart';
-import 'features/auth/screens/login_screen.dart';
+// import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -145,6 +148,31 @@ final routerProvider = Provider<GoRouter>((ref) {
           return CourseLearningScreen(courseId: courseId);
         },
       ),
+      GoRoute(
+        path: AppRoutes.myCart,
+        builder: (context, state) {
+          return MyWishlistScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.myWishlist,
+        builder: (context, state) {
+          return MyWishlistScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.helpAndSupport,
+        builder: (context, state) {
+          return HelpSupportScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.myLearning,
+        builder: (context, state) {
+          return MyLearningScreen();
+        },
+      ),
+
       GoRoute(
         path: AppRoutes.createCommunity,
         builder: (context, state) => const CreateCommunityScreen(),

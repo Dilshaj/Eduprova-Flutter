@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:eduprova/globals.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:developer';
 

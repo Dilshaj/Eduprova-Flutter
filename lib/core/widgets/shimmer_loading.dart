@@ -1,6 +1,5 @@
 import 'package:eduprova/features/courses/models/course_model.dart';
 import 'package:eduprova/features/courses/screens/course_card.dart';
-import 'package:eduprova/features/courses/screens/courses_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 

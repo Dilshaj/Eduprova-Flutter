@@ -44,9 +44,10 @@ class BottomNav4 extends StatelessWidget {
     // Solid colours — no transparency / blur
     final bgColor = isDark
         ? const Color(0xFF0C0B1E) // matches darkTheme cardColor from main.dart
-        : const Color(
-            0xFFF9F6FF,
-          ); // matches lightTheme cardColor from main.dart
+        // : const Color(
+        //     0xFFF9F6FF,
+        //   ); // matches lightTheme cardColor from main.dart
+        : Colors.white;
 
     final topBorderColor = isDark
         ? const Color.fromARGB(
@@ -107,7 +108,7 @@ class _NavItem extends StatelessWidget {
     // Inactive colour: subdued text colour from theme
     final inactiveColor = isDark
         ? Colors.white.withValues(alpha: 0.35)
-        : Colors.black.withValues(alpha: 0.35);
+        : const Color.fromARGB(255, 148, 148, 148).withValues(alpha: 0.35);
 
     // Subtle pill highlight behind the active icon
     final pillColor = activeColor.withValues(alpha: isDark ? 0.18 : 0.12);

@@ -1,12 +1,7 @@
-import 'dart:ui';
-
-import 'package:eduprova/features/home/bottom_nav/bottom_nav1.dart';
 import 'package:eduprova/features/home/posts/post.dart';
 import 'package:eduprova/features/home/storie/view_storie/stories_row.dart';
-import 'package:eduprova/features/courses/screens/courses_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/ui/animated_title_header.dart';
@@ -25,15 +20,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark
-        ? Colors.black.withValues(alpha: 0.8)
-        : const Color.fromARGB(255, 230, 230, 230).withValues(alpha: 0.8);
+    final color = isDark ? Colors.black.withValues(alpha: 0.8) : Colors.white;
     final double blur = isDark ? 30 : 20;
 
     return Scaffold(
       extendBody: true,
       extendBodyBehindAppBar: true,
       body: _buildBody(blur, color),
+      // drawer:
     );
   }
 
@@ -85,15 +79,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
             centerTitle: false,
-            backgroundColor: Colors.transparent,
+            // backgroundColor: Colors.transparent,
+            backgroundColor: Colors.white,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
             elevation: 0,
             floating: true,
             snap: true,
             flexibleSpace: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-                child: Container(color: color),
-              ),
+              // child: BackdropFilter(
+              //   filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+              //   child: Container(color: color),
+              // ),
+              child: Container(color: color),
             ),
           ),
 

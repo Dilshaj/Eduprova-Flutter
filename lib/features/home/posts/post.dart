@@ -100,9 +100,9 @@ class _PostState extends ConsumerState<Post> {
                   width: double.infinity,
                   height: 200,
                   child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(padding),
-                    ),
+                    // borderRadius: BorderRadius.vertical(
+                    //   top: Radius.circular(padding),
+                    // ),
                     child: Image.network(
                       widget.post.imageUrl!,
                       fit: BoxFit.cover,

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/user_model.dart';
-import 'dart:developer';
 
 class AuthRepository {
   static final AuthRepository instance = AuthRepository._internal();

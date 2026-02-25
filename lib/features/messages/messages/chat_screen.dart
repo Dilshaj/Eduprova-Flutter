@@ -1,5 +1,4 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
-import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -151,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: AppTheme.background,
+                // color: AppTheme.background,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -252,7 +251,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: message.isMe ? null : otherMsgBg,
-                    gradient: message.isMe ? AppTheme.primaryGradient : null,
+                    // gradient: message.isMe ? AppTheme.primaryGradient : null,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
@@ -451,7 +450,7 @@ class _ChatScreenState extends State<ChatScreen> {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: AppTheme.primaryGradient,
+              // gradient: AppTheme.primaryGradient,
               boxShadow: [
                 BoxShadow(
                   color: Colors.purple.withValues(alpha: 0.3),

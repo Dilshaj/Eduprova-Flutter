@@ -9,6 +9,12 @@ class AppRoutes {
   static const String courses = '/courses';
   static String courseDetail(String id) => '/course/$id';
   static String courseLearning(String id) => '/course/$id/learn';
+  static const String myWishlist = '/my-wishlist';
+  static const String myCart = '/my-cart';
+  static const String myLearning = '/my-learning';
+  static const String billingAndPayments = '/billing-payments';
+  static const String profileSettings = '/profile-settings';
+  static const String helpAndSupport = '/help-support';
 
   // Messages & Communities
   static const String messages = '/messages';
