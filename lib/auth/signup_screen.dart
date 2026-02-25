@@ -83,7 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
           // Top Left Logos
           Positioned(
-            top: MediaQuery.of(context).padding.top + 20,
+            top: MediaQuery.of(context).padding.top + 15,
             left: 24,
             child: Row(
               children: [

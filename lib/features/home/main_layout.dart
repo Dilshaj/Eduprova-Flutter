@@ -1,3 +1,4 @@
+import 'package:eduprova/features/home/bottom_nav/bottom_nav4.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:eduprova/features/home/bottom_nav/bottom_nav1.dart';
@@ -18,7 +19,7 @@ class MainLayout extends StatelessWidget {
       extendBody: true,
       drawer: _buildDrawer(context, isDark),
       body: navigationShell,
-      bottomNavigationBar: BottomNav1(
+      bottomNavigationBar: BottomNav4(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) {
           navigationShell.goBranch(

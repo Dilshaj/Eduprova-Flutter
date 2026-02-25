@@ -80,7 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
             centerTitle: false,
             // backgroundColor: Colors.transparent,
-            backgroundColor: Colors.white,
+            // backgroundColor: Colors.white,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
             elevation: 0,

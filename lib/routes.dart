@@ -2,7 +2,7 @@ import 'package:eduprova/auth/login_screen.dart';
 import 'package:eduprova/features/courses/screens/my-courses/courses_options_screen.dart';
 import 'package:eduprova/features/courses/screens/my_wishlist_screen.dart';
 import 'package:eduprova/features/help_and_support.dart';
-import 'package:eduprova/features/home/main_layout2.dart';
+import 'package:eduprova/features/home/main_layout.dart';
 import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
@@ -81,7 +81,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return MainLayout2(navigationShell: navigationShell);
+          return MainLayout(navigationShell: navigationShell);
         },
         branches: [
           StatefulShellBranch(

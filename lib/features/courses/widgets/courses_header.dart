@@ -1,3 +1,5 @@
+import 'package:hugeicons/hugeicons.dart';
+import 'package:eduprova/features/home/main_layout.dart';
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 import 'courses_menu_modal.dart';
@@ -18,6 +20,18 @@ class CoursesHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          InkWell(
+            onTap: () {
+              mainScaffoldKey.currentState?.openDrawer();
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedMenu02,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
           Expanded(
             child: Text(
               'Courses',
