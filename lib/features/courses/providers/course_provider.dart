@@ -41,7 +41,6 @@ class CoursesNotifier extends Notifier<CoursesState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final courses = await _repository.getCourses(category: category);
-      await Future.delayed(const Duration(seconds: 10));
       state = state.copyWith(isLoading: false, courses: courses);
     } on DioException catch (e) {
       log('Fetch Courses Error: ${e.response?.data}');

@@ -27,7 +27,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final courseAsync = ref.watch(courseDetailProvider(widget.courseId));
+    final courseAsync = ref.watch(courseLearnProvider(widget.courseId));
 
     return courseAsync.when(
       loading: () =>

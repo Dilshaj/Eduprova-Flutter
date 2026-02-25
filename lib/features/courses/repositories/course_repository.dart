@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/course_model.dart';
 import '../models/course_detail_model.dart';
@@ -27,40 +28,41 @@ class CourseRepository {
     throw Exception('Failed to load courses');
   }
 
-  Future<CourseDetailModel> getCourseDetails(
-    String id, {
-    bool isAuthenticated = false,
-  }) async {
-    CourseDetailModel course;
+  /// Fetches public course details from GET /courses/{id}.
+  /// This is used by the Course Detail screen (everyone can see this).
+  Future<CourseDetailModel> getCourseDetails(String id) async {
     try {
       final response = await _dio.get('/courses/$id');
       if (response.statusCode == 200) {
         final dynamic data =
             response.data['data'] ?? response.data['course'] ?? response.data;
-        course = CourseDetailModel.fromJson(data);
-
-        // If authenticated and backend indicates ownership, try fetching /learn content
-        if (isAuthenticated && data['isOwner'] == true) {
-          try {
-            final learnResponse = await _dio.get('/courses/$id/learn');
-            if (learnResponse.statusCode == 200) {
-              final dynamic learnData =
-                  learnResponse.data['data'] ??
-                  learnResponse.data['course'] ??
-                  learnResponse.data;
-              return CourseDetailModel.fromJson(learnData);
-            }
-          } catch (e) {
-            log('Failed to fetch /learn upgrade for owned course $id: $e');
-            // Fallback to standard course data if /learn fails
-          }
-        }
-        return course;
+        debugPrint('isOwner: ${data['isOwner']}');
+        return CourseDetailModel.fromJson(data);
       }
       throw Exception('Failed to load course details');
     } on DioException catch (e) {
       throw Exception(
         e.response?.data?['message'] ?? 'Failed to load course details',
+      );
+    }
+  }
+
+  /// Fetches authenticated learning content from GET /courses/{id}/learn.
+  /// Only callable when the user owns the course (isOwner == true).
+  Future<CourseDetailModel> getCourseLearn(String id) async {
+    try {
+      final response = await _dio.get('/courses/$id/learn');
+      if (response.statusCode == 200) {
+        final dynamic data =
+            response.data['data'] ?? response.data['course'] ?? response.data;
+        return CourseDetailModel.fromJson(data);
+      }
+      throw Exception('Failed to load course learning content');
+    } on DioException catch (e) {
+      log('getCourseLearn error for $id: $e');
+      throw Exception(
+        e.response?.data?['message'] ??
+            'Failed to load course learning content',
       );
     }
   }

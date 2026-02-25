@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:eduprova/globals.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -31,10 +32,10 @@ class AuthState {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
-  static const _storage = FlutterSecureStorage(
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-    mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
+  // static const _storage = FlutterSecureStorage(
+  //   iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  //   mOptions: MacOsOptions(accessibility: KeychainAccessibility.first_unlock),
+  // );
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final _repository = AuthRepository.instance;
@@ -48,8 +49,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _checkStatus() async {
     try {
-      final token = await _storage.read(key: 'access_token');
-      final email = await _storage.read(key: 'user_email');
+      // final token = await _storage.read(key: 'access_token');
+      // final email = await _storage.read(key: 'user_email');
+      final token = prefs.getString('access_token');
+      final email = prefs.getString('user_email');
 
       if (token != null && email != null) {
         final user = await _repository.getProfile(email);
@@ -64,8 +67,10 @@ class AuthNotifier extends Notifier<AuthState> {
       log('Session verification failed: $e');
     }
 
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'user_email');
+    // await _storage.delete(key: 'access_token');
+    // await _storage.delete(key: 'user_email');
+    prefs.remove('access_token');
+    prefs.remove('user_email');
     state = state.copyWith(status: .unauthenticated, clearError: true);
   }
 
@@ -73,8 +78,10 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final result = await _repository.login(email, password);
 
-      await _storage.write(key: 'access_token', value: result.token);
-      await _storage.write(key: 'user_email', value: result.user.email);
+      // await _storage.write(key: 'access_token', value: result.token);
+      // await _storage.write(key: 'user_email', value: result.user.email);
+      prefs.setString('access_token', result.token);
+      prefs.setString('user_email', result.user.email);
 
       state = state.copyWith(
         status: .authenticated,
@@ -126,8 +133,10 @@ class AuthNotifier extends Notifier<AuthState> {
         avatar: googleUser.photoUrl,
       );
 
-      await _storage.write(key: 'access_token', value: result.token);
-      await _storage.write(key: 'user_email', value: result.user.email);
+      // await _storage.write(key: 'access_token', value: result.token);
+      // await _storage.write(key: 'user_email', value: result.user.email);
+      prefs.setString('access_token', result.token);
+      prefs.setString('user_email', result.user.email);
 
       state = state.copyWith(
         status: .authenticated,
@@ -146,8 +155,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> logout() async {
     await _googleSignIn.signOut();
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'user_email');
+    // await _storage.delete(key: 'access_token');
+    // await _storage.delete(key: 'user_email');
+    prefs.remove('access_token');
+    prefs.remove('user_email');
     state = state.copyWith(
       status: .unauthenticated,
       user: null,

@@ -1,10 +1,13 @@
+import 'package:eduprova/globals.dart' show prefs;
 import 'package:eduprova/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  prefs = await SharedPreferences.getInstance();
   MediaKit.ensureInitialized();
   runApp(const ProviderScope(child: MainApp()));
 }

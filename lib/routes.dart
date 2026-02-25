@@ -1,3 +1,4 @@
+import 'package:eduprova/features/home/main_layout2.dart';
 import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
@@ -77,7 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return MainLayout(navigationShell: navigationShell);
+          return MainLayout2(navigationShell: navigationShell);
         },
         branches: [
           StatefulShellBranch(
