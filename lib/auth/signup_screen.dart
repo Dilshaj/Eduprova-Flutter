@@ -467,7 +467,7 @@ class _SignupScreenState extends State<SignupScreen> {
     TextInputType? keyboardType,
     int? maxLength,
   }) {
-    final borderClr = const Color.fromARGB(255, 75, 77, 86);
+    final dividerClr = Theme.of(context).dividerColor;
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -498,11 +498,11 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderClr),
+          borderSide: BorderSide(color: dividerClr),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderClr),
+          borderSide: BorderSide(color: dividerClr),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

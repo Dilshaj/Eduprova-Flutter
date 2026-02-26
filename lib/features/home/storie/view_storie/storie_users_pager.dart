@@ -8,7 +8,6 @@ class StatusUsersPager extends ConsumerStatefulWidget {
   final int initialIndex;
 
   const StatusUsersPager({super.key, required this.initialIndex});
-
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
       _StatusUsersPagerState();
@@ -77,8 +76,8 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
           return Transform(
             alignment: value > 0 ? Alignment.centerRight : Alignment.centerLeft,
             transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001) // perspective
-              ..rotateY(-value * (pi / 2)),
+              ..setEntry(3, 2, 0.002) // perspective
+              ..rotateY(value * (pi / 2)),
             child: StatusViewScreen(
               profile: profiles[index],
               pageOffset: value,

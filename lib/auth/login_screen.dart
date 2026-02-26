@@ -155,7 +155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 Text(
                                   'Welcome Back',
                                   style: GoogleFonts.inter(
-                                    fontSize: 28,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                     // color: const Color(0xFF111827),
                                   ),
@@ -441,7 +441,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
   }) {
-    final borderClr = const Color.fromARGB(255, 75, 77, 86);
+    final cs = Theme.of(context).colorScheme;
+    final dividerClr = Theme.of(context).dividerColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -477,11 +478,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: borderClr),
+              borderSide: BorderSide(color: dividerClr),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: borderClr),
+              borderSide: BorderSide(color: dividerClr),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

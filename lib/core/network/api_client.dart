@@ -64,7 +64,7 @@ class ApiClient {
 
   static String get baseUrl {
     if (Platform.isAndroid) {
-      return 'http://192.168.1.107:4000';
+      return 'http://192.168.1.6:4000';
       // return 'http://10.169.69.6:4000';
     }
     return 'http://localhost:4000';
