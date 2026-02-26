@@ -82,17 +82,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final compressedSpacer = size.height * 0.10;
     final currentSpacer = isKeyboardOpen ? compressedSpacer : initialSpacer;
     final cs = Theme.of(context).colorScheme;
+    final isDark = cs.brightness == Brightness.dark;
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     return Scaffold(
-      // backgroundColor: const Color(
-      //   0xFFF0F7FF,
-      // ), // Matching BackgroundOrbits theme
+      backgroundColor: isDark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF8F8F8),
       body: Stack(
         children: [
           // Background Orbits
           const Positioned.fill(child: BackgroundOrbits()),
-
           // Top Left Logos
           Positioned(
             top: MediaQuery.of(context).padding.top + 15,

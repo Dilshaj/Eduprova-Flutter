@@ -19,6 +19,7 @@ class AppTheme {
         onError: Colors.white,
       ),
       scaffoldBackgroundColor: Colors.white,
+      // scaffoldBackgroundColor: const Color.fromARGB(255, 248, 248, 248),
       dividerColor: const Color(0xFFE5E7EB),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,

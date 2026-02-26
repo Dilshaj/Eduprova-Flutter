@@ -81,7 +81,7 @@ class _BackgroundOrbitsState extends State<BackgroundOrbits>
           radius: 145.0 * scale,
           rotationSpeed: 0.20,
           iconData: orbitIcons.sublist(4, 10),
-          reverse: true,
+          reverse: false,
           centerX: centerX,
           centerY: centerY,
         ),
