@@ -441,7 +441,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
   }) {
-    final cs = Theme.of(context).colorScheme;
     final dividerClr = Theme.of(context).dividerColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
