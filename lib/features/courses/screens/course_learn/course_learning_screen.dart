@@ -309,6 +309,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                               onPressed: _handleVideoBackPress,
                             ),
                           ),
+
                           SliverToBoxAdapter(
                             child: SizedBox(
                               height: _videoHeight,
@@ -450,6 +451,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         muxPlaybackId: course.muxPlaybackId ?? course.videoSource?.playbackId,
         url: course.video,
         autoPlay: true,
+        engine: .videoPlayer,
       );
     }
 
