@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -239,6 +240,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     _videoHeight = screenWidth * (9 / 16);
+    final colorScheme = Theme.of(context).colorScheme;
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     final courseAsync = ref.watch(courseLearnProvider(widget.courseId));
@@ -251,115 +253,174 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
       },
       child: Scaffold(
         backgroundColor: themeExt.scaffoldBackgroundColor,
-        appBar: AppBar(
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          automaticallyImplyLeading: false,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: courseAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err')),
-          data: (course) {
-            final curriculum = course.curriculum;
-            if (curriculum.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('No curriculum found'),
-                    TextButton(
-                      onPressed: _handleVideoBackPress,
-                      child: const Text('Go Back'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            // Ensure bounds
-            if (_currentSectionIndex >= curriculum.length) {
-              _currentSectionIndex = 0;
-            }
-            if (_currentLessonIndex >=
-                curriculum[_currentSectionIndex].lectures.length) {
-              _currentLessonIndex = 0;
-            }
-
-            final currentSection = curriculum[_currentSectionIndex];
-            final currentLesson = currentSection.lectures[_currentLessonIndex];
-
-            return Stack(
-              children: [
-                // Video Layer
-                if (!_isLoading)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: _isFullScreen
-                        ? MediaQuery.of(context).size.height
-                        : _videoHeight,
-                    // child: Stack(
-                    //   children: [
-                    //     Positioned.fill(
-                    //       child:
-                    //     ),
-
-                    //     // Custom Back Button Overlay
-                    //   ],
-                    // ),
-                    child: SizedBox(
-                      child: _buildVideoPlayer(course, currentLesson),
-                    ),
+        body: SafeArea(
+          child: courseAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+            data: (course) {
+              final curriculum = course.curriculum;
+              if (curriculum.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('No curriculum found'),
+                      TextButton(
+                        onPressed: _handleVideoBackPress,
+                        child: const Text('Go Back'),
+                      ),
+                    ],
                   ),
+                );
+              }
 
-                // Content Layer
-                if (!_isFullScreen)
-                  SafeArea(
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: _isMini
-                              ? 0
-                              : _videoHeight -
-                                    MediaQuery.of(context).padding.top,
-                        ),
+              // Ensure bounds
+              if (_currentSectionIndex >= curriculum.length) {
+                _currentSectionIndex = 0;
+              }
+              if (_currentLessonIndex >=
+                  curriculum[_currentSectionIndex].lectures.length) {
+                _currentLessonIndex = 0;
+              }
 
-                        if (_isLoading)
-                          const Expanded(
-                            child: Center(child: CircularProgressIndicator()),
-                          )
-                        else
-                          Expanded(
-                            child: _buildContentArea(
-                              curriculum,
+              final currentSection = curriculum[_currentSectionIndex];
+              final currentLesson =
+                  currentSection.lectures[_currentLessonIndex];
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: NestedScrollView(
+                      headerSliverBuilder: (context, innerBoxIsScrolled) {
+                        return [
+                          // Video AppBar
+                          SliverAppBar(
+                            pinned: true,
+                            floating: true,
+                            elevation: 0,
+                            toolbarHeight: math.max(0, kToolbarHeight - 6),
+                            scrolledUnderElevation: 0,
+                            automaticallyImplyLeading: false,
+                            leading: IconButton(
+                              icon: Container(
+                                padding: EdgeInsets.all(8),
+                                child: Icon(Icons.arrow_back_ios_new, size: 18),
+                              ),
+                              onPressed: _handleVideoBackPress,
+                            ),
+                          ),
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: _videoHeight,
+                              child: _buildVideoPlayer(course, currentLesson),
+                            ),
+                          ),
+
+                          // Title Area
+                          SliverToBoxAdapter(
+                            child: _buildTitleArea(
                               currentSection,
                               currentLesson,
                             ),
                           ),
-                      ],
+
+                          // Sticky TabBar
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _SliverAppBarDelegate(
+                              minHeight: 48,
+                              maxHeight: 48,
+                              child: Container(
+                                color: themeExt.scaffoldBackgroundColor,
+                                child: TabBar(
+                                  controller: _mainTabController,
+                                  isScrollable: true,
+                                  tabAlignment: .start,
+                                  dividerHeight: 1,
+                                  dividerColor: themeExt.borderColor,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  indicatorColor: colorScheme.primary,
+                                  indicatorWeight: 3,
+                                  indicatorSize: TabBarIndicatorSize.label,
+                                  labelColor: colorScheme.primary,
+                                  unselectedLabelColor: themeExt.secondaryText,
+                                  tabs: _tabs
+                                      .map((tab) => Tab(text: tab))
+                                      .toList(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ];
+                      },
+                      body: TabBarView(
+                        controller: _mainTabController,
+                        children: [
+                          _buildLessonsList(curriculum),
+                          const AskDoubtsScreen(),
+                          const PracticeScreen(),
+                          const NotesScreen(),
+                          const ResourcesScreen(),
+                          const MessagesScreen(),
+                        ],
+                      ),
                     ),
                   ),
-
-                // Footer Navigation
-                if (!_isFullScreen &&
-                    !_isMini &&
-                    _activeTabIndex == 0 &&
-                    !_isLoading)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: _buildFooter(curriculum, currentLesson),
-                  ),
-              ],
-            );
-          },
+                  // Footer Navigation (Always Visible at bottom)
+                  if (_activeTabIndex == 0 && !_isLoading)
+                    _buildFooter(curriculum, currentLesson),
+                ],
+              );
+            },
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTitleArea(
+    ChapterModel currentSection,
+    LectureModel currentLesson,
+  ) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      decoration: BoxDecoration(color: themeExt.scaffoldBackgroundColor),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            currentLesson.title,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '${currentSection.title.split(':')[0]} • SECTION ${_currentLessonIndex + 1}',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -436,91 +497,6 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
       placeholder: (context, url) => placeholder ?? const ShimmerImageLoader(),
       errorWidget: (context, url, error) =>
           placeholder ?? const Icon(Icons.broken_image, color: Colors.grey),
-    );
-  }
-
-  Widget _buildContentArea(
-    List<ChapterModel> curriculum,
-    ChapterModel currentSection,
-    LectureModel currentLesson,
-  ) {
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title Area
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: themeExt.borderColor)),
-            color: themeExt.scaffoldBackgroundColor,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                currentLesson.title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${currentSection.title.split(':')[0]} • SECTION ${_currentLessonIndex + 1}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Tabs
-        Container(
-          height: 48,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: themeExt.borderColor)),
-            color: themeExt.scaffoldBackgroundColor,
-          ),
-          child: TabBar(
-            controller: _mainTabController,
-            isScrollable: true,
-            tabAlignment: .start,
-            dividerHeight: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            indicatorColor: colorScheme.primary,
-            indicatorWeight: 3,
-            indicatorSize: TabBarIndicatorSize.label,
-            labelColor: colorScheme.primary,
-            unselectedLabelColor: themeExt.secondaryText,
-            tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-          ),
-        ),
-
-        // Content
-        Expanded(
-          child: TabBarView(
-            controller: _mainTabController,
-            children: [
-              _buildLessonsList(curriculum),
-              const AskDoubtsScreen(),
-              const PracticeScreen(),
-              const NotesScreen(),
-              const ResourcesScreen(),
-              const MessagesScreen(),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -640,8 +616,17 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                               ? themeExt.successBackgroundColor
                                               : (isActive
                                                     ? colorScheme.primary
-                                                    : themeExt.skeletonBase),
+                                                    : themeExt.skeletonBase
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          )),
                                           shape: BoxShape.circle,
+                                          border: isActive
+                                              ? null
+                                              : Border.all(
+                                                  color: themeExt.borderColor,
+                                                  width: 1,
+                                                ),
                                         ),
                                         alignment: Alignment.center,
                                         child: isCompleted
@@ -651,7 +636,9 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                                 color: themeExt.successColor,
                                               )
                                             : Icon(
-                                                Icons.play_arrow,
+                                                isActive
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
                                                 size: 16,
                                                 color: isActive
                                                     ? Colors.white
@@ -939,5 +926,39 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         ],
       ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => math.max(maxHeight, minHeight);
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
   }
 }

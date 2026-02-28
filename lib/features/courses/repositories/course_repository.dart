@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/course_model.dart';
 import '../models/course_detail_model.dart';
+import '../models/enrolled_course_model.dart';
 import 'dart:developer';
 
 class CourseRepository {
@@ -63,6 +64,34 @@ class CourseRepository {
       throw Exception(
         e.response?.data?['message'] ??
             'Failed to load course learning content',
+      );
+    }
+  }
+
+  Future<List<OrderModel>> getOrders() async {
+    try {
+      final response = await _dio.get('/orders');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((e) => OrderModel.fromJson(e)).toList();
+      }
+      throw Exception('Failed to load orders');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? 'Failed to load orders');
+    }
+  }
+
+  Future<List<ProgressModel>> getProgress() async {
+    try {
+      final response = await _dio.get('/progress');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.map((e) => ProgressModel.fromJson(e)).toList();
+      }
+      throw Exception('Failed to load progress');
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data?['message'] ?? 'Failed to load progress',
       );
     }
   }

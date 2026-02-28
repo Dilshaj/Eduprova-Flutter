@@ -107,7 +107,8 @@ class AppTheme {
       ),
       extensions: [
         AppDesignExtension(
-          cardColor: const Color(0xFF1F2937),
+          // cardColor: const Color(0xFF1F2937),
+          cardColor: const Color.fromARGB(255, 23, 31, 41),
           borderColor: const Color(0xFF374151),
           secondaryText: const Color(0xFF9CA3AF),
           shadowColor: Colors.black.withValues(alpha: 0.3),
