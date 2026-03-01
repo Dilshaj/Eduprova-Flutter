@@ -45,6 +45,41 @@ class ResourcesScreen extends StatelessWidget {
         'type': 'pdf',
         'icon': Icons.description_outlined,
       },
+      {
+        'id': 4,
+        'title': 'Cheat Sheet - Module 1.pdf',
+        'size': '1.1 MB',
+        'type': 'pdf',
+        'icon': Icons.description_outlined,
+      },
+      {
+        'id': 5,
+        'title': 'Cheat Sheet - Module 1.pdf',
+        'size': '1.1 MB',
+        'type': 'pdf',
+        'icon': Icons.description_outlined,
+      },
+      {
+        'id': 6,
+        'title': 'Cheat Sheet - Module 1.pdf',
+        'size': '1.1 MB',
+        'type': 'pdf',
+        'icon': Icons.description_outlined,
+      },
+      {
+        'id': 7,
+        'title': 'Cheat Sheet - Module 1.pdf',
+        'size': '1.1 MB',
+        'type': 'pdf',
+        'icon': Icons.description_outlined,
+      },
+      {
+        'id': 8,
+        'title': 'Cheat Sheet - Module 1.pdf',
+        'size': '1.1 MB',
+        'type': 'pdf',
+        'icon': Icons.description_outlined,
+      },
     ];
 
     return Scaffold(
@@ -53,6 +88,7 @@ class ResourcesScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
         child: ListView.separated(
           itemCount: resources.length,
+          padding: .only(top: 48),
           separatorBuilder: (context, index) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final item = resources[index];

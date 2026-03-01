@@ -40,6 +40,42 @@ class _MessagesScreenState extends State<MessagesScreen> {
       'color': const Color(0xFF16A34A), // green-600
       'sender': 'other',
     },
+    {
+      'id': 4,
+      'user': 'Kevin J.',
+      'time': '11:02 AM',
+      'text': 'Thanks Priya, that helped a lot.',
+      'initial': 'K',
+      'color': const Color(0xFF16A34A), // green-600
+      'sender': 'other',
+    },
+    {
+      'id': 5,
+      'user': 'Kevin J.',
+      'time': '11:02 AM',
+      'text': 'Thanks Priya, that helped a lot.',
+      'initial': 'K',
+      'color': const Color(0xFF16A34A), // green-600
+      'sender': 'other',
+    },
+    {
+      'id': 6,
+      'user': 'Kevin J.',
+      'time': '11:02 AM',
+      'text': 'Thanks Priya, that helped a lot.',
+      'initial': 'K',
+      'color': const Color(0xFF16A34A), // green-600
+      'sender': 'other',
+    },
+    {
+      'id': 7,
+      'user': 'Kevin J.',
+      'time': '11:02 AM',
+      'text': 'Thanks Priya, that helped a lot.',
+      'initial': 'K',
+      'color': const Color(0xFF16A34A), // green-600
+      'sender': 'other',
+    },
   ];
 
   @override
@@ -134,7 +170,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            padding: const EdgeInsets.fromLTRB(20, 16 + 48, 20, 8),
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
               color: Colors.white,
@@ -356,7 +392,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         boxShadow: [
                           if (_inputController.text.trim().isNotEmpty)
                             BoxShadow(
-                              color: const Color(0xFFA855F7).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFFA855F7,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),

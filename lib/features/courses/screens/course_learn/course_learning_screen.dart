@@ -415,42 +415,51 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                                   currentLesson,
                                                 ),
                                               ),
-                                              SliverPersistentHeader(
-                                                pinned: true,
-                                                delegate: _PinnedHeaderDelegate(
-                                                  height: 48,
-                                                  child: Container(
-                                                    color: themeExt
-                                                        .scaffoldBackgroundColor,
-                                                    child: TabBar(
-                                                      controller:
-                                                          _mainTabController,
-                                                      isScrollable: true,
-                                                      tabAlignment: .start,
-                                                      dividerHeight: 1,
-                                                      dividerColor:
-                                                          themeExt.borderColor,
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 12,
-                                                          ),
-                                                      indicatorColor:
-                                                          colorScheme.primary,
-                                                      indicatorWeight: 3,
-                                                      indicatorSize:
-                                                          TabBarIndicatorSize
-                                                              .label,
-                                                      labelColor:
-                                                          colorScheme.primary,
-                                                      unselectedLabelColor:
-                                                          themeExt
-                                                              .secondaryText,
-                                                      tabs: _tabs
-                                                          .map(
-                                                            (tab) =>
-                                                                Tab(text: tab),
-                                                          )
-                                                          .toList(),
+                                              SliverOverlapAbsorber(
+                                                handle:
+                                                    NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                                      context,
+                                                    ),
+
+                                                // sliver:  MultiSliver( children: []),
+                                                sliver: SliverPersistentHeader(
+                                                  pinned: true,
+                                                  delegate: _PinnedHeaderDelegate(
+                                                    height: 48,
+                                                    child: Container(
+                                                      color: themeExt
+                                                          .scaffoldBackgroundColor,
+                                                      child: TabBar(
+                                                        controller:
+                                                            _mainTabController,
+                                                        isScrollable: true,
+                                                        tabAlignment: .start,
+                                                        dividerHeight: 1,
+                                                        dividerColor: themeExt
+                                                            .borderColor,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 12,
+                                                            ),
+                                                        indicatorColor:
+                                                            colorScheme.primary,
+                                                        indicatorWeight: 3,
+                                                        indicatorSize:
+                                                            TabBarIndicatorSize
+                                                                .label,
+                                                        labelColor:
+                                                            colorScheme.primary,
+                                                        unselectedLabelColor:
+                                                            themeExt
+                                                                .secondaryText,
+                                                        tabs: _tabs
+                                                            .map(
+                                                              (tab) => Tab(
+                                                                text: tab,
+                                                              ),
+                                                            )
+                                                            .toList(),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -465,8 +474,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                               const PracticeScreen(),
                                               const NotesScreen(),
                                               const ResourcesScreen(),
-                                              // const MessagesScreen(),
-                                              const Text("Hello"),
+                                              const MessagesScreen(),
                                             ],
                                           ),
                                         ),
@@ -690,7 +698,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     return Container(
       color: themeExt.scaffoldBackgroundColor,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+        padding: const EdgeInsets.fromLTRB(20, 16 + 48, 20, 100),
         itemCount: curriculum.length,
         itemBuilder: (context, secIdx) {
           final section = curriculum[secIdx];

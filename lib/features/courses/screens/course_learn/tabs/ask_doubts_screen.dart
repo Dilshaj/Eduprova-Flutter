@@ -218,7 +218,7 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
             children: [
               // Header Custom Toggle Buttons (as in Image 2)
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                padding: const EdgeInsets.fromLTRB(24, 24 + 48, 24, 16),
                 child: Container(
                   height: 56,
                   padding: const EdgeInsets.all(4),

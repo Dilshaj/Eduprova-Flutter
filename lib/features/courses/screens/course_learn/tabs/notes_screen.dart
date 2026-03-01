@@ -388,7 +388,7 @@ class _NotesScreenState extends State<NotesScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 20),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,

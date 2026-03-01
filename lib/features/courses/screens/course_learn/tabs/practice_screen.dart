@@ -739,7 +739,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         Scaffold(
           backgroundColor: Colors.white,
           body: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
