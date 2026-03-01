@@ -42,6 +42,33 @@ class CourseLearningScreen extends ConsumerStatefulWidget {
       _CourseLearningScreenState();
 }
 
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _PinnedHeaderDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return height != oldDelegate.height || child != oldDelegate.child;
+  }
+}
+
 class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     with SingleTickerProviderStateMixin {
   late TabController _mainTabController;
@@ -284,191 +311,220 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
               alpha: (1 - _inlineCollapseProgress).clamp(0.0, 1.0),
             ),
             child: courseAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text('Error: $err')),
-            data: (course) {
-              final curriculum = course.curriculum;
-              if (curriculum.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('No curriculum found'),
-                      TextButton(
-                        onPressed: _handleVideoBackPress,
-                        child: const Text('Go Back'),
-                      ),
-                    ],
-                  ),
-                );
-              }
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+              data: (course) {
+                final curriculum = course.curriculum;
+                if (curriculum.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('No curriculum found'),
+                        TextButton(
+                          onPressed: _handleVideoBackPress,
+                          child: const Text('Go Back'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-              // Ensure bounds
-              if (_currentSectionIndex >= curriculum.length) {
-                _currentSectionIndex = 0;
-              }
-              if (_currentLessonIndex >=
-                  curriculum[_currentSectionIndex].lectures.length) {
-                _currentLessonIndex = 0;
-              }
+                // Ensure bounds
+                if (_currentSectionIndex >= curriculum.length) {
+                  _currentSectionIndex = 0;
+                }
+                if (_currentLessonIndex >=
+                    curriculum[_currentSectionIndex].lectures.length) {
+                  _currentLessonIndex = 0;
+                }
 
-              if (!_didApplyResumeLecture &&
-                  widget.resumeLectureId != null &&
-                  widget.resumeLectureId!.isNotEmpty) {
-                for (var s = 0; s < curriculum.length; s++) {
-                  final lectures = curriculum[s].lectures;
-                  for (var l = 0; l < lectures.length; l++) {
-                    if (lectures[l].id == widget.resumeLectureId) {
-                      _currentSectionIndex = s;
-                      _currentLessonIndex = l;
-                      _didApplyResumeLecture = true;
-                      break;
+                if (!_didApplyResumeLecture &&
+                    widget.resumeLectureId != null &&
+                    widget.resumeLectureId!.isNotEmpty) {
+                  for (var s = 0; s < curriculum.length; s++) {
+                    final lectures = curriculum[s].lectures;
+                    for (var l = 0; l < lectures.length; l++) {
+                      if (lectures[l].id == widget.resumeLectureId) {
+                        _currentSectionIndex = s;
+                        _currentLessonIndex = l;
+                        _didApplyResumeLecture = true;
+                        break;
+                      }
                     }
+                    if (_didApplyResumeLecture) break;
                   }
-                  if (_didApplyResumeLecture) break;
                 }
-              }
 
-              final currentSection = curriculum[_currentSectionIndex];
-              final currentLesson =
-                  currentSection.lectures[_currentLessonIndex];
+                final currentSection = curriculum[_currentSectionIndex];
+                final currentLesson =
+                    currentSection.lectures[_currentLessonIndex];
 
-              if (widget.resumeFromMini && !_didTryAdoptGlobalMini) {
-                _didTryAdoptGlobalMini = true;
-                final mini =
-                    GlobalMiniPlayerService.instance.takePendingHandoff() ??
-                    GlobalMiniPlayerService.instance.session.value;
-                final targetUrl = _resolveMediaUrlForLecture(course, currentLesson);
-                if (mini != null &&
-                    targetUrl != null &&
-                    mini.mediaUrl == targetUrl &&
-                    ((mini.engine == AppVideoEngine.mediaKit &&
-                            mini.mediaPlayer != null) ||
-                        (mini.engine == AppVideoEngine.videoPlayer &&
-                            mini.videoPlayerController != null))) {
-                  _adoptedMediaPlayer = mini.mediaPlayer;
-                  _adoptedVideoController = mini.videoPlayerController;
-                  GlobalMiniPlayerService.instance.close();
-                } else {
-                  GlobalMiniPlayerService.instance.restorePendingIfAny();
+                if (widget.resumeFromMini && !_didTryAdoptGlobalMini) {
+                  _didTryAdoptGlobalMini = true;
+                  final mini =
+                      GlobalMiniPlayerService.instance.takePendingHandoff() ??
+                      GlobalMiniPlayerService.instance.session.value;
+                  final targetUrl = _resolveMediaUrlForLecture(
+                    course,
+                    currentLesson,
+                  );
+                  if (mini != null &&
+                      targetUrl != null &&
+                      mini.mediaUrl == targetUrl &&
+                      ((mini.engine == AppVideoEngine.mediaKit &&
+                              mini.mediaPlayer != null) ||
+                          (mini.engine == AppVideoEngine.videoPlayer &&
+                              mini.videoPlayerController != null))) {
+                    _adoptedMediaPlayer = mini.mediaPlayer;
+                    _adoptedVideoController = mini.videoPlayerController;
+                    GlobalMiniPlayerService.instance.close();
+                  } else {
+                    GlobalMiniPlayerService.instance.restorePendingIfAny();
+                  }
                 }
-              }
 
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Column(
-                    children: [
-                      Expanded(
-                        child: AnimatedSlide(
-                          duration: const Duration(milliseconds: 120),
-                          curve: Curves.easeOut,
-                          offset: Offset(0, _inlineCollapseProgress * 0.14),
-                          child: Transform.scale(
-                            scale: 1 - (_inlineCollapseProgress * 0.12),
-                            alignment: Alignment.topCenter,
-                            child: Opacity(
-                              opacity: 1 - _inlineCollapseProgress,
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Padding(
-                                      padding: EdgeInsets.only(top: _videoHeight),
-                                      child: Column(
-                                        children: [
-                                          _buildTitleArea(currentSection, currentLesson),
-                                          Container(
-                                            color: themeExt.scaffoldBackgroundColor,
-                                            child: TabBar(
-                                              controller: _mainTabController,
-                                              isScrollable: true,
-                                              tabAlignment: .start,
-                                              dividerHeight: 1,
-                                              dividerColor: themeExt.borderColor,
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 12,
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Column(
+                      children: [
+                        Expanded(
+                          child: AnimatedSlide(
+                            duration: const Duration(milliseconds: 120),
+                            curve: Curves.easeOut,
+                            offset: Offset(0, _inlineCollapseProgress * 0.14),
+                            child: Transform.scale(
+                              scale: 1 - (_inlineCollapseProgress * 0.12),
+                              alignment: Alignment.topCenter,
+                              child: Opacity(
+                                opacity: 1 - _inlineCollapseProgress,
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                          top: _videoHeight,
+                                        ),
+                                        child: NestedScrollView(
+                                          headerSliverBuilder: (context, innerBoxIsScrolled) {
+                                            return [
+                                              SliverToBoxAdapter(
+                                                child: _buildTitleArea(
+                                                  currentSection,
+                                                  currentLesson,
+                                                ),
                                               ),
-                                              indicatorColor: colorScheme.primary,
-                                              indicatorWeight: 3,
-                                              indicatorSize: TabBarIndicatorSize.label,
-                                              labelColor: colorScheme.primary,
-                                              unselectedLabelColor:
-                                                  themeExt.secondaryText,
-                                              tabs: _tabs
-                                                  .map((tab) => Tab(text: tab))
-                                                  .toList(),
-                                            ),
+                                              SliverPersistentHeader(
+                                                pinned: true,
+                                                delegate: _PinnedHeaderDelegate(
+                                                  height: 48,
+                                                  child: Container(
+                                                    color: themeExt
+                                                        .scaffoldBackgroundColor,
+                                                    child: TabBar(
+                                                      controller:
+                                                          _mainTabController,
+                                                      isScrollable: true,
+                                                      tabAlignment: .start,
+                                                      dividerHeight: 1,
+                                                      dividerColor:
+                                                          themeExt.borderColor,
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                          ),
+                                                      indicatorColor:
+                                                          colorScheme.primary,
+                                                      indicatorWeight: 3,
+                                                      indicatorSize:
+                                                          TabBarIndicatorSize
+                                                              .label,
+                                                      labelColor:
+                                                          colorScheme.primary,
+                                                      unselectedLabelColor:
+                                                          themeExt
+                                                              .secondaryText,
+                                                      tabs: _tabs
+                                                          .map(
+                                                            (tab) =>
+                                                                Tab(text: tab),
+                                                          )
+                                                          .toList(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ];
+                                          },
+                                          body: TabBarView(
+                                            controller: _mainTabController,
+                                            children: [
+                                              _buildLessonsList(curriculum),
+                                              const AskDoubtsScreen(),
+                                              const PracticeScreen(),
+                                              const NotesScreen(),
+                                              const ResourcesScreen(),
+                                              // const MessagesScreen(),
+                                              const Text("Hello"),
+                                            ],
                                           ),
-                                          Expanded(
-                                            child: TabBarView(
-                                              controller: _mainTabController,
-                                              children: [
-                                                _buildLessonsList(curriculum),
-                                                const AskDoubtsScreen(),
-                                                const PracticeScreen(),
-                                                const NotesScreen(),
-                                                const ResourcesScreen(),
-                                                const MessagesScreen(),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  if (_activeTabIndex == 0 && !_isLoading)
-                                    _buildFooter(curriculum, currentLesson),
-                                ],
+                                    if (_activeTabIndex == 0 && !_isLoading)
+                                      _buildFooter(curriculum, currentLesson),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: _videoHeight,
-                    child: _buildVideoPlayer(
-                      course,
-                      currentLesson,
-                      controller: _videoPlayerController,
-                      adoptedMediaPlayer: _adoptedMediaPlayer,
-                      adoptedVideoPlayerController: _adoptedVideoController,
-                      onMiniPlayerChanged: (isMini) {
-                        if (!mounted) return;
-                        setState(() {
-                          _isMiniPlayer = isMini;
-                          _inlineCollapseProgress = isMini ? 1 : 0;
-                        });
-                      },
-                      onInlineCollapseProgressChanged: (progress) {
-                        if (!mounted) return;
-                        setState(() {
-                          _inlineCollapseProgress = progress;
-                        });
-                      },
-                      onInlineMiniPlayerRequest: (snapshot) {
-                        GlobalMiniPlayerService.instance.start(snapshot);
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.pushReplacement(
-                            AppRoutes.myLearning,
-                            extra: {'tab': 'Ongoing'},
-                          );
-                        }
-                        return true;
-                      },
-                      inlineMiniBottomInset:
-                          (_activeTabIndex == 0 && !_isLoading) ? 90 : 0,
+                      ],
                     ),
-                  ),
-                ],
-              );
-            },
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: _videoHeight,
+                      child: _buildVideoPlayer(
+                        course,
+                        currentLesson,
+                        controller: _videoPlayerController,
+                        adoptedMediaPlayer: _adoptedMediaPlayer,
+                        adoptedVideoPlayerController: _adoptedVideoController,
+                        onMiniPlayerChanged: (isMini) {
+                          if (!mounted) return;
+                          setState(() {
+                            _isMiniPlayer = isMini;
+                            _inlineCollapseProgress = isMini ? 1 : 0;
+                          });
+                        },
+                        onInlineCollapseProgressChanged: (progress) {
+                          if (!mounted) return;
+                          setState(() {
+                            _inlineCollapseProgress = progress;
+                          });
+                        },
+                        onInlineMiniPlayerRequest: (snapshot) {
+                          GlobalMiniPlayerService.instance.start(snapshot);
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.pushReplacement(
+                              AppRoutes.myLearning,
+                              extra: {'tab': 'Ongoing'},
+                            );
+                          }
+                          return true;
+                        },
+                        inlineMiniBottomInset:
+                            (_activeTabIndex == 0 && !_isLoading) ? 90 : 0,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
