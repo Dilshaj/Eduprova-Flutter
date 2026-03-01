@@ -32,7 +32,10 @@ class CourseDetailScreen extends ConsumerStatefulWidget {
 class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late final ScrollController _scrollController;
   bool _showVideo = false;
+  bool _showStickyFooter = false;
+  final GlobalKey _buyNowInlineKey = GlobalKey();
 
   // Dummy states for cart & wishlist interaction for UI presentation
   bool _inCart = false;
@@ -42,12 +45,43 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _scrollController = ScrollController()..addListener(_handleScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateStickyFooterVisibility();
+    });
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleScroll() {
+    _updateStickyFooterVisibility();
+  }
+
+  void _updateStickyFooterVisibility() {
+    final ctx = _buyNowInlineKey.currentContext;
+    if (ctx == null || !mounted) return;
+    final renderBox = ctx.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached) return;
+
+    final top = renderBox.localToGlobal(Offset.zero).dy;
+    final bottom = top + renderBox.size.height;
+    final media = MediaQuery.of(context);
+    final viewportTop = media.padding.top + kToolbarHeight;
+    final viewportBottom = media.size.height - media.padding.bottom;
+    final isVisible = bottom > viewportTop && top < viewportBottom;
+    final shouldShow = !isVisible;
+
+    if (shouldShow != _showStickyFooter) {
+      setState(() {
+        _showStickyFooter = shouldShow;
+      });
+    }
   }
 
   AppDesignExtension get themeExt =>
@@ -125,7 +159,27 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: _buildAppBar(),
             body: _buildBody(course),
-            bottomNavigationBar: _buildFooter(context, course),
+            bottomNavigationBar: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(
+                    sizeFactor: animation,
+                    axisAlignment: -1,
+                    child: child,
+                  ),
+                );
+              },
+              child: _showStickyFooter
+                  ? KeyedSubtree(
+                      key: const ValueKey('sticky_footer_visible'),
+                      child: _buildFooter(context, course),
+                    )
+                  : const SizedBox(key: ValueKey('sticky_footer_hidden')),
+            ),
           ),
         );
       },
@@ -266,6 +320,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
 
   Widget _buildBody(CourseDetailModel course) {
     return NestedScrollView(
+      controller: _scrollController,
       headerSliverBuilder: (context, innerBoxIsScrolled) {
         return [
           // Image Header
@@ -438,9 +493,14 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                   const SizedBox(height: 16),
 
                   InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      if (course.isOwner) {
+                        context.push(AppRoutes.courseLearning(course.id));
+                      }
+                    },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
+                      key: _buyNowInlineKey,
                       height: 48,
                       decoration: BoxDecoration(
                         gradient: themeExt.buyNowGradient,
@@ -455,8 +515,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                         ],
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
-                        'Buy Now',
+                      child: Text(
+                        course.isOwner ? 'Continue Learning' : 'Buy Now',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -465,80 +525,80 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            setState(() => _inCart = !_inCart);
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: _inCart
-                                  ? themeExt.successBackgroundColor
-                                  : themeExt.cardColor,
-                              border: Border.all(
+                  if (!course.isOwner) const SizedBox(height: 12),
+                  if (!course.isOwner)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              setState(() => _inCart = !_inCart);
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              height: 48,
+                              decoration: BoxDecoration(
                                 color: _inCart
-                                    ? themeExt.successColor
-                                    : themeExt.borderColor,
+                                    ? themeExt.successBackgroundColor
+                                    : themeExt.cardColor,
+                                border: Border.all(
+                                  color: _inCart
+                                      ? themeExt.successColor
+                                      : themeExt.borderColor,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _inCart ? 'In Cart' : 'Add to cart',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: _inCart
-                                    ? themeExt.successColor
-                                    : colorScheme.onSurface,
+                              alignment: Alignment.center,
+                              child: Text(
+                                _inCart ? 'In Cart' : 'Add to cart',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: _inCart
+                                      ? themeExt.successColor
+                                      : colorScheme.onSurface,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            setState(() => _inWishlist = !_inWishlist);
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: _inWishlist
-                                  ? themeExt.errorBackgroundColor
-                                  : themeExt.cardColor,
-                              border: Border.all(
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              setState(() => _inWishlist = !_inWishlist);
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              height: 48,
+                              decoration: BoxDecoration(
                                 color: _inWishlist
-                                    ? colorScheme.error
-                                    : themeExt.borderColor,
+                                    ? themeExt.errorBackgroundColor
+                                    : themeExt.cardColor,
+                                border: Border.all(
+                                  color: _inWishlist
+                                      ? colorScheme.error
+                                      : themeExt.borderColor,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _inWishlist ? 'Wishlisted' : 'Add to wishlist',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: _inWishlist
-                                    ? colorScheme.error
-                                    : colorScheme.onSurface,
+                              alignment: Alignment.center,
+                              child: Text(
+                                _inWishlist ? 'Wishlisted' : 'Add to wishlist',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: _inWishlist
+                                      ? colorScheme.error
+                                      : colorScheme.onSurface,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                      ],
+                    ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
