@@ -12,13 +12,13 @@ import 'package:eduprova/core/utils/image_cache_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/navigation/app_routes.dart';
-import '../providers/course_detail_provider.dart';
+import '../../../../core/navigation/app_routes.dart';
+import '../../providers/course_detail_provider.dart';
 
-import '../widgets/course_about_tab.dart';
-import '../widgets/course_curriculum_tab.dart';
-import '../widgets/course_instructor_tab.dart';
-import '../widgets/course_reviews_tab.dart';
+import 'tabs/course_about_tab.dart';
+import 'tabs/course_curriculum_tab.dart';
+import 'tabs/course_instructor_tab.dart';
+import 'tabs/course_reviews_tab.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   final String courseId;

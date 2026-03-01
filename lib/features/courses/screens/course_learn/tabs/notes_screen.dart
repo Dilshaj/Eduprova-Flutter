@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:eduprova/theme.dart';
 import 'package:path_provider/path_provider.dart';
 
 // HTML Template Generation
@@ -269,10 +270,14 @@ class _NotesScreenState extends State<NotesScreen> {
         onMessageReceived: (JavaScriptMessage message) {
           _handleMessage(message.message);
         },
-      )
-      ..loadHtmlString(
-        getEditorHtml(_noteContent, false),
-      ); // Hardcoding light mode for initial flutter render to keep it simple, but can read theme.
+      );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    _webViewController.loadHtmlString(getEditorHtml(_noteContent, isDark));
   }
 
   void _handleMessage(String message) {
@@ -381,19 +386,20 @@ class _NotesScreenState extends State<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _isFullScreen ? _buildFullScreen() : _buildInline();
+    return _buildInline();
   }
 
   Widget _buildInline() {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: themeExt.scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 20),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: themeExt.cardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: themeExt.borderColor),
           ),
           child: _buildEditorUI(false),
         ),
@@ -402,13 +408,16 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildFullScreen() {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: themeExt.scaffoldBackgroundColor,
       body: SafeArea(child: _buildEditorUI(true)),
     );
   }
 
   Widget _buildEditorUI(bool isFull) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
     final currentHeading = headingOptions.firstWhere(
       (h) => h.tag.toLowerCase() == _editorState.blockType.toLowerCase(),
       orElse: () => headingOptions[6], // Default to P
@@ -422,10 +431,8 @@ class _NotesScreenState extends State<NotesScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                border: const Border(
-                  bottom: BorderSide(color: Color(0xFFF3F4F6)),
-                ),
+                color: themeExt.skeletonBase,
+                border: Border(bottom: BorderSide(color: themeExt.borderColor)),
                 borderRadius: isFull
                     ? BorderRadius.zero
                     : const BorderRadius.vertical(top: Radius.circular(24)),
@@ -447,25 +454,25 @@ class _NotesScreenState extends State<NotesScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
+                        color: themeExt.skeletonBase,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: themeExt.borderColor),
                       ),
                       child: Row(
                         children: [
                           Text(
                             currentHeading.label,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              color: Color(0xFF374151),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(
+                          Icon(
                             Icons.keyboard_arrow_down,
                             size: 14,
-                            color: Color(0xFF6B7280),
+                            color: themeExt.secondaryText,
                           ),
                         ],
                       ),
@@ -474,7 +481,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   Container(
                     width: 1,
                     height: 20,
-                    color: const Color(0xFFD1D5DB),
+                    color: themeExt.borderColor,
                     margin: const EdgeInsets.symmetric(horizontal: 8),
                   ),
 
@@ -494,7 +501,7 @@ class _NotesScreenState extends State<NotesScreen> {
                             _isListDropdownOpen ||
                                 _editorState.isUnordered ||
                                 _editorState.isOrdered
-                            ? const Color(0xFFE5E7EB)
+                            ? themeExt.borderColor
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -505,15 +512,15 @@ class _NotesScreenState extends State<NotesScreen> {
                         size: 20,
                         color:
                             _editorState.isUnordered || _editorState.isOrdered
-                            ? Colors.black
-                            : const Color(0xFF6B7280),
+                            ? colorScheme.onSurface
+                            : themeExt.secondaryText,
                       ),
                     ),
                   ),
                   Container(
                     width: 1,
                     height: 20,
-                    color: const Color(0xFFD1D5DB),
+                    color: themeExt.borderColor,
                     margin: const EdgeInsets.symmetric(horizontal: 8),
                   ),
 
@@ -525,7 +532,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: _editorState.isBold
-                            ? const Color(0xFFE5E7EB)
+                            ? themeExt.borderColor
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -535,8 +542,8 @@ class _NotesScreenState extends State<NotesScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: _editorState.isBold
-                              ? Colors.black
-                              : const Color(0xFF6B7280),
+                              ? colorScheme.onSurface
+                              : themeExt.secondaryText,
                         ),
                       ),
                     ),
@@ -553,7 +560,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: _editorState.isItalic
-                            ? const Color(0xFFE5E7EB)
+                            ? themeExt.borderColor
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -564,8 +571,8 @@ class _NotesScreenState extends State<NotesScreen> {
                           fontStyle: FontStyle.italic,
                           fontWeight: FontWeight.bold,
                           color: _editorState.isItalic
-                              ? Colors.black
-                              : const Color(0xFF6B7280),
+                              ? colorScheme.onSurface
+                              : themeExt.secondaryText,
                         ),
                       ),
                     ),
@@ -575,22 +582,31 @@ class _NotesScreenState extends State<NotesScreen> {
 
                   // Fullscreen Toggle
                   InkWell(
-                    onTap: () {
-                      setState(() {
-                        _isFullScreen = !_isFullScreen;
-                      });
+                    onTap: () async {
+                      if (isFull) {
+                        Navigator.pop(context);
+                      } else {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => _buildFullScreen(),
+                            fullscreenDialog: true,
+                          ),
+                        );
+                        setState(() {});
+                      }
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE5E7EB),
+                      decoration: BoxDecoration(
+                        color: themeExt.skeletonBase,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         isFull ? Icons.fullscreen_exit : Icons.fullscreen,
                         size: 16,
-                        color: const Color(0xFF374151),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -636,9 +652,9 @@ class _NotesScreenState extends State<NotesScreen> {
               child: Container(
                 width: 200,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: themeExt.cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: themeExt.borderColor),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -652,7 +668,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   padding: EdgeInsets.zero,
                   itemCount: headingOptions.length,
                   separatorBuilder: (context, index) =>
-                      const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                      Divider(height: 1, color: themeExt.borderColor),
                   itemBuilder: (context, index) {
                     final option = headingOptions[index];
                     return InkWell(
@@ -681,7 +697,7 @@ class _NotesScreenState extends State<NotesScreen> {
                                         : (option.style == 'semibold'
                                               ? FontWeight.w600
                                               : FontWeight.normal),
-                                    color: const Color(0xFF1F2937),
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -689,18 +705,18 @@ class _NotesScreenState extends State<NotesScreen> {
                                   children: [
                                     Text(
                                       option.tag,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF3B82F6),
+                                        color: colorScheme.primary,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       option.desc,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 10,
-                                        color: Color(0xFF9CA3AF),
+                                        color: themeExt.secondaryText,
                                       ),
                                     ),
                                   ],
@@ -726,9 +742,9 @@ class _NotesScreenState extends State<NotesScreen> {
               child: Container(
                 width: 180,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: themeExt.cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: themeExt.borderColor),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -751,37 +767,37 @@ class _NotesScreenState extends State<NotesScreen> {
                           vertical: 12,
                         ),
                         color: _editorState.isUnordered
-                            ? const Color(0xFFEFF6FF)
+                            ? colorScheme.primaryContainer
                             : Colors.transparent,
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.format_list_bulleted,
                               size: 18,
-                              color: Color(0xFF374151),
+                              color: colorScheme.onSurface,
                             ),
                             const SizedBox(width: 12),
-                            const Text(
+                            Text(
                               'Bulleted list',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF374151),
+                                color: colorScheme.onSurface,
                               ),
                             ),
                             if (_editorState.isUnordered)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
                                 child: Icon(
                                   Icons.check,
                                   size: 16,
-                                  color: Color(0xFF2563EB),
+                                  color: colorScheme.primary,
                                 ),
                               ),
                           ],
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                    Divider(height: 1, color: themeExt.borderColor),
                     InkWell(
                       onTap: () {
                         _executeCommand('list', 'ol');
@@ -793,30 +809,30 @@ class _NotesScreenState extends State<NotesScreen> {
                           vertical: 12,
                         ),
                         color: _editorState.isOrdered
-                            ? const Color(0xFFEFF6FF)
+                            ? colorScheme.primaryContainer
                             : Colors.transparent,
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.format_list_numbered,
                               size: 18,
-                              color: Color(0xFF374151),
+                              color: colorScheme.onSurface,
                             ),
                             const SizedBox(width: 12),
-                            const Text(
+                            Text(
                               'Numbered list',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF374151),
+                                color: colorScheme.onSurface,
                               ),
                             ),
                             if (_editorState.isOrdered)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
                                 child: Icon(
                                   Icons.check,
                                   size: 16,
-                                  color: Color(0xFF2563EB),
+                                  color: colorScheme.primary,
                                 ),
                               ),
                           ],
@@ -839,24 +855,28 @@ class _NotesScreenState extends State<NotesScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF111827),
+                color: colorScheme.primary,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF111827).withValues(alpha: 0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.save_outlined, color: Colors.white, size: 16),
-                  SizedBox(width: 8),
+                  Icon(
+                    Icons.save_outlined,
+                    color: colorScheme.onPrimary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     'SAVE',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,

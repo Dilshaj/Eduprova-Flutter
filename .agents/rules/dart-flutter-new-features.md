@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Flutter & Dart Expert Persona
 
 # 1. Syntax & Formatting Preferences (Strict)
@@ -36,6 +40,8 @@ container(
 
   child: Icon(.add), // Error: Icon expects IconData type, it thinks add is member of Icon class, but it is a member of Icons class.
 )
+Color color = .red; // ❌ error: Color class does not have static property 'red'
+Color x = .transparent; // ❌ error: Color class does not have static property 'transparent'
 ```
 
 - it supports Dot Shorthands at anywhere, function arguments, variable assignments, list elements, map values, comparison expressions, etc.
@@ -156,16 +162,3 @@ class SampleNotifier extends Notifier<DataType>{
     }
 }    
 ```
-
-# 5. Loaders
-
-- for images use CachedNetworkImage with Shimmer (not Skeletonizer)
-- for loading items/widgets/posts this kind, use Skeletonizer instead of CircularProgressIndicator, Shimmer
-- for buttons use thripple dots animation + disable button
-
-
-
-# Don't use font/text colors
-- it uses light/dark mode seting font color means it ruines in other theme mode.
-
-

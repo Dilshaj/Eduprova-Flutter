@@ -1,3 +1,4 @@
+import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 
 class MessagesScreen extends StatefulWidget {
@@ -128,9 +129,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+      if (!mounted) return;
+      final ctrl = _isFullScreen
+          ? _scrollController
+          : PrimaryScrollController.of(context);
+      if (ctrl.hasClients) {
+        ctrl.animateTo(
+          ctrl.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -149,60 +154,81 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _isFullScreen ? _buildFullScreen() : _buildInline();
+    return _buildInline();
   }
 
   Widget _buildInline() {
-    return Scaffold(backgroundColor: Colors.white, body: _buildUI(false));
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    return Scaffold(
+      backgroundColor: themeExt.scaffoldBackgroundColor,
+      body: _buildUI(false),
+    );
   }
 
   Widget _buildFullScreen() {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: themeExt.scaffoldBackgroundColor,
       body: SafeArea(child: _buildUI(true)),
     );
   }
 
   Widget _buildUI(bool isFull) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      color: Colors.white,
+      color: isFull ? themeExt.scaffoldBackgroundColor : themeExt.cardColor,
       child: Column(
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16 + 48, 20, 8),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-              color: Colors.white,
+            padding: EdgeInsets.fromLTRB(20, isFull ? 16 : 16 + 48, 20, 8),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: themeExt.borderColor)),
+              color: isFull
+                  ? themeExt.scaffoldBackgroundColor
+                  : themeExt.cardColor,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Classroom Chat',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 InkWell(
-                  onTap: () {
-                    setState(() {
-                      _isFullScreen = !_isFullScreen;
-                    });
+                  onTap: () async {
+                    if (isFull) {
+                      Navigator.pop(context);
+                    } else {
+                      _isFullScreen = true;
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => _buildFullScreen(),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                      _isFullScreen = false;
+                      setState(() {});
+                    }
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF3F4F6),
+                    decoration: BoxDecoration(
+                      color: themeExt.skeletonBase,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       isFull ? Icons.fullscreen_exit : Icons.fullscreen,
                       size: 20,
-                      color: const Color(0xFF374151),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -213,7 +239,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
           // Messages List
           Expanded(
             child: ListView.builder(
-              controller: _scrollController,
+              controller: isFull ? _scrollController : null,
+              primary: !isFull,
               padding: const EdgeInsets.all(20),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
@@ -263,19 +290,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 children: [
                                   Text(
                                     item['user'],
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF111827),
+                                      color: colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     item['time'],
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
-                                      color: Color(0xFF9CA3AF),
+                                      color: themeExt.secondaryText,
                                     ),
                                   ),
                                 ],
@@ -289,8 +316,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: isUser
-                                    ? const Color(0xFF9333EA)
-                                    : const Color(0xFFF3F4F6),
+                                    ? colorScheme.primary
+                                    : themeExt.skeletonBase,
                                 borderRadius: BorderRadius.only(
                                   topLeft: const Radius.circular(16),
                                   topRight: const Radius.circular(16),
@@ -303,10 +330,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 ),
                                 border: Border.all(
                                   color: isUser
-                                      ? const Color(0xFF9333EA)
-                                      : const Color(
-                                          0xFFE5E7EB,
-                                        ).withValues(alpha: 0.5),
+                                      ? colorScheme.primary
+                                      : themeExt.borderColor.withValues(
+                                          alpha: 0.5,
+                                        ),
                                 ),
                               ),
                               child: Text(
@@ -315,8 +342,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                   fontSize: 13,
                                   height: 1.5,
                                   color: isUser
-                                      ? Colors.white
-                                      : const Color(0xFF374151),
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -338,14 +365,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
               20,
               12 + (isFull ? 0 : MediaQuery.of(context).padding.bottom),
             ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(
+              color: isFull
+                  ? themeExt.scaffoldBackgroundColor
+                  : themeExt.cardColor,
+              border: Border(top: BorderSide(color: themeExt.borderColor)),
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                color: themeExt.skeletonBase,
+                border: Border.all(color: themeExt.borderColor),
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -357,21 +386,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       maxLines: 4,
                       minLines: 1,
                       onChanged: (text) => setState(() {}),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Message classroom...',
                         hintStyle: TextStyle(
-                          color: Color(0xFF9CA3AF),
+                          color: themeExt.secondaryText,
                           fontSize: 14,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
                         ),
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF111827),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -386,15 +415,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
                         color: _inputController.text.trim().isNotEmpty
-                            ? const Color(0xFF9333EA)
-                            : const Color(0xFFD1D5DB),
+                            ? colorScheme.primary
+                            : themeExt.borderColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           if (_inputController.text.trim().isNotEmpty)
                             BoxShadow(
-                              color: const Color(
-                                0xFFA855F7,
-                              ).withValues(alpha: 0.3),
+                              color: colorScheme.primary.withValues(alpha: 0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),

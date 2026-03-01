@@ -1,3 +1,4 @@
+import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -102,7 +103,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   late TextEditingController _codeController;
   Map<String, dynamic>? _output;
   bool _isRunning = false;
-  bool _isFullScreen = false;
+  // FullScreen state removed as it is handled by the Navigator route
 
   @override
   void initState() {
@@ -250,8 +251,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   void _showLanguageSelector(BuildContext context) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: themeExt.cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -261,12 +266,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Select Language',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -293,13 +298,15 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
-                          color: isSelected ? Colors.black : Colors.black54,
+                          color: isSelected
+                              ? colorScheme.onSurface
+                              : themeExt.secondaryText,
                         ),
                       ),
                       trailing: isSelected
-                          ? const Icon(
+                          ? Icon(
                               Icons.check,
-                              color: Colors.black,
+                              color: colorScheme.onSurface,
                               size: 18,
                             )
                           : null,
@@ -323,11 +330,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   Widget _buildEditor(bool isFull) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: isFull ? const Color(0xFF111827) : Colors.white,
+        color: isFull ? const Color(0xFF111827) : themeExt.cardColor,
         borderRadius: isFull ? BorderRadius.zero : BorderRadius.circular(16),
-        border: isFull ? null : Border.all(color: const Color(0xFFE5E7EB)),
+        border: isFull ? null : Border.all(color: themeExt.borderColor),
       ),
       child: Column(
         children: [
@@ -340,14 +350,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
               8,
             ),
             decoration: BoxDecoration(
-              color: isFull ? const Color(0xFF111111) : Colors.white,
-              border: Border(
-                bottom: BorderSide(
-                  color: isFull
-                      ? const Color(0xFF1F2937)
-                      : const Color(0xFFE5E7EB),
-                ),
-              ),
+              color: themeExt.cardColor,
+              border: Border(bottom: BorderSide(color: themeExt.borderColor)),
               borderRadius: isFull
                   ? BorderRadius.zero
                   : const BorderRadius.vertical(top: Radius.circular(16)),
@@ -364,15 +368,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: isFull
-                          ? const Color(0xFF1F2937)
-                          : const Color(0xFFF3F4F6),
+                      color: themeExt.skeletonBase,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isFull
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
-                      ),
+                      border: Border.all(color: themeExt.borderColor),
                     ),
                     child: Row(
                       children: [
@@ -390,16 +388,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: isFull
-                                ? Colors.white
-                                : const Color(0xFF1F2937),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Icon(
                           Icons.keyboard_arrow_down,
                           size: 16,
-                          color: isFull ? Colors.white70 : Colors.black54,
+                          color: themeExt.secondaryText,
                         ),
                       ],
                     ),
@@ -454,13 +450,33 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       ),
                     const SizedBox(width: 12),
                     InkWell(
-                      onTap: () {
+                      onTap: () async {
                         if (isFull) {
                           Navigator.pop(context);
                         } else {
-                          setState(() {
-                            _isFullScreen = true;
-                          });
+                          // Push the actual full screen dialog route instead of using a stack inside the View
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                backgroundColor:
+                                    themeExt.scaffoldBackgroundColor,
+                                body: SafeArea(
+                                  child: WillPopScope(
+                                    onWillPop: () async {
+                                      // Trigger a rebuild when coming back so state syncs
+                                      setState(() {});
+                                      return true;
+                                    },
+                                    child: _buildEditor(true),
+                                  ),
+                                ),
+                              ),
+                              fullscreenDialog: true,
+                            ),
+                          );
+                          // Ensure we rebuild to show any output/code changes on return
+                          setState(() {});
                         }
                       },
                       child: Padding(
@@ -468,9 +484,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         child: Icon(
                           isFull ? Icons.fullscreen_exit : Icons.fullscreen,
                           size: 20,
-                          color: isFull
-                              ? Colors.white
-                              : const Color(0xFF1F2937),
+                          color: isFull ? Colors.white : colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -482,10 +496,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
           // Code Input Area
           Expanded(
-            flex: isFull ? 6 : 0,
+            flex: 7,
             child: Container(
-              height: isFull ? null : 350,
-              color: isFull ? const Color(0xFF1E1E1E) : Colors.white,
+              color: themeExt.cardColor,
               child: SingleChildScrollView(
                 child: TextField(
                   controller: _codeController,
@@ -495,7 +508,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     fontFamily: 'monospace',
                     fontSize: 14,
                     height: 1.5,
-                    color: isFull ? const Color(0xFFD4D4D4) : Colors.black,
+                    color: colorScheme.onSurface,
                   ),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
@@ -507,170 +520,173 @@ class _PracticeScreenState extends State<PracticeScreen> {
           ),
 
           // Console Area
-          Container(
-            height: isFull ? 200 : 150,
-            decoration: const BoxDecoration(
-              color: Color(0xFF0D1117),
-              border: Border(top: BorderSide(color: Color(0xFF1F2937))),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Color(0x0DFFFFFF),
-                    border: Border(
-                      bottom: BorderSide(color: Color(0x1AFFFFFF)),
+          Expanded(
+            flex: 3,
+            child: Container(
+              decoration: BoxDecoration(
+                color: themeExt.skeletonBase,
+                border: Border(top: BorderSide(color: themeExt.borderColor)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'CONSOLE',
-                        style: TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
+                    decoration: const BoxDecoration(
+                      color: Color(0x0DFFFFFF),
+                      border: Border(
+                        bottom: BorderSide(color: Color(0x1AFFFFFF)),
                       ),
-                      if (_output != null)
-                        InkWell(
-                          onTap: () => setState(() => _output = null),
-                          child: const Text(
-                            'CLEAR',
-                            style: TextStyle(
-                              color: Color(0xFF6B7280),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'CONSOLE',
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                    ],
+                        if (_output != null)
+                          InkWell(
+                            onTap: () => setState(() => _output = null),
+                            child: const Text(
+                              'CLEAR',
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: _isRunning
-                        ? const Row(
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF2563EB),
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Executing container...',
-                                style: TextStyle(
-                                  color: Color(0xFF60A5FA),
-                                  fontSize: 12,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                            ],
-                          )
-                        : _output != null
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (_output!['message'] != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Text(
-                                    _output!['message'],
-                                    style: const TextStyle(
-                                      color: Color(0xFFF87171),
-                                      fontSize: 12,
-                                      fontFamily: 'monospace',
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: _isRunning
+                          ? const Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF2563EB),
+                                    strokeWidth: 2,
                                   ),
                                 ),
-                              if (_output!['stderr'] != null &&
-                                  _output!['stderr'].isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Column(
+                                SizedBox(width: 8),
+                                Text(
+                                  'Executing container...',
+                                  style: TextStyle(
+                                    color: Color(0xFF60A5FA),
+                                    fontSize: 12,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ],
+                            )
+                          : _output != null
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_output!['message'] != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Text(
+                                      _output!['message'],
+                                      style: const TextStyle(
+                                        color: Color(0xFFF87171),
+                                        fontSize: 12,
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                if (_output!['stderr'] != null &&
+                                    _output!['stderr'].isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'STDERR:',
+                                          style: TextStyle(
+                                            color: Color(0xFFEF4444),
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _output!['stderr'],
+                                          style: const TextStyle(
+                                            color: Color(0xFFFECACA),
+                                            fontSize: 12,
+                                            fontFamily: 'monospace',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (_output!['stdout'] != null &&
+                                    _output!['stdout'].isNotEmpty)
+                                  Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       const Text(
-                                        'STDERR:',
+                                        'STDOUT:',
                                         style: TextStyle(
-                                          color: Color(0xFFEF4444),
+                                          color: Color(0xFF22C55E),
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        _output!['stderr'],
+                                        _output!['stdout'],
                                         style: const TextStyle(
-                                          color: Color(0xFFFECACA),
+                                          color: Color(0xFF86EFAC),
                                           fontSize: 12,
                                           fontFamily: 'monospace',
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                              if (_output!['stdout'] != null &&
-                                  _output!['stdout'].isNotEmpty)
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'STDOUT:',
-                                      style: TextStyle(
-                                        color: Color(0xFF22C55E),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _output!['stdout'],
-                                      style: const TextStyle(
-                                        color: Color(0xFF86EFAC),
-                                        fontSize: 12,
-                                        fontFamily: 'monospace',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          )
-                        : const Text(
-                            'Ready to execute.',
-                            style: TextStyle(
-                              color: Color(0xFF4B5563),
-                              fontSize: 12,
-                              fontStyle: FontStyle.italic,
+                              ],
+                            )
+                          : Text(
+                              'Ready to execute.',
+                              style: TextStyle(
+                                color: themeExt.secondaryText,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                          ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           if (!isFull)
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
-                borderRadius: BorderRadius.vertical(
+              decoration: BoxDecoration(
+                color: themeExt.cardColor,
+                border: Border(top: BorderSide(color: themeExt.borderColor)),
+                borderRadius: const BorderRadius.vertical(
                   bottom: Radius.circular(16),
                 ),
               ),
@@ -734,58 +750,25 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: Colors.white,
-          body: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!_isFullScreen)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Color(0xFFF3F4F6)),
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Color(0xFF2563EB),
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      child: const Text(
-                        'CODE PRACTICE',
-                        style: TextStyle(
-                          color: Color(0xFF2563EB),
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: _buildEditor(false),
-                ),
-              ],
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    return Scaffold(
+      backgroundColor: themeExt.scaffoldBackgroundColor,
+      resizeToAvoidBottomInset:
+          false, // Prevent terminal crushing on keyboard open
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: _buildEditor(false),
+              ),
             ),
-          ),
+          ],
         ),
-
-        // Full Screen Editor Overlay
-        if (_isFullScreen)
-          Positioned.fill(
-            child: Container(color: Colors.black, child: _buildEditor(true)),
-          ),
-      ],
+      ),
     );
   }
 }

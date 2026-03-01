@@ -16,7 +16,7 @@ import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/home/home_screen.dart';
 import 'package:eduprova/features/courses/screens/course_learn/course_learning_screen.dart';
 import 'package:eduprova/features/courses/screens/courses_screen.dart';
-import 'package:eduprova/features/courses/screens/course_detail_screen.dart';
+import 'package:eduprova/features/courses/screens/course_detail/course_detail_screen.dart';
 import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
 import 'package:eduprova/features/messages/communities/create_community_screen.dart';
 import 'package:eduprova/features/messages/messages/chat_screen.dart';
@@ -157,7 +157,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           final resumeLectureId = state.uri.queryParameters['lectureId'];
           final resumeFromMini = state.uri.queryParameters['fromMini'] == '1';
           final autoplayParam = state.uri.queryParameters['autoplay'];
-          final resumeAutoPlay = autoplayParam == null ? true : autoplayParam == '1';
+          final resumeAutoPlay = autoplayParam == null
+              ? true
+              : autoplayParam == '1';
           return CustomTransitionPage<void>(
             key: state.pageKey,
             opaque: false,

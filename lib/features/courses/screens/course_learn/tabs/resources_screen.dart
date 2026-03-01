@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:eduprova/theme.dart';
 
 class ResourcesScreen extends StatelessWidget {
   const ResourcesScreen({super.key});
@@ -82,8 +83,11 @@ class ResourcesScreen extends StatelessWidget {
       },
     ];
 
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: themeExt.scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
         child: ListView.separated(
@@ -98,15 +102,16 @@ class ResourcesScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFF3F4F6)),
+                  color: themeExt.cardColor,
+                  border: Border.all(color: themeExt.borderColor),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
+                    if (themeExt.shadowColor != Colors.transparent)
+                      BoxShadow(
+                        color: themeExt.shadowColor,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
                   ],
                 ),
                 child: Row(
@@ -117,15 +122,17 @@ class ResourcesScreen extends StatelessWidget {
                       height: 48,
                       margin: const EdgeInsets.only(right: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        border: Border.all(color: const Color(0xFFDBEAFE)),
+                        color: colorScheme.primary.withValues(alpha: 0.1),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.2),
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
                       child: Icon(
                         item['icon'],
                         size: 24,
-                        color: const Color(0xFF0066FF),
+                        color: colorScheme.primary,
                       ),
                     ),
 
@@ -136,10 +143,10 @@ class ResourcesScreen extends StatelessWidget {
                         children: [
                           Text(
                             item['title'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
+                              color: colorScheme.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -147,10 +154,10 @@ class ResourcesScreen extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             item['size'],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF9CA3AF),
+                              color: themeExt.secondaryText,
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -166,15 +173,15 @@ class ResourcesScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          border: Border.all(color: const Color(0xFFF3F4F6)),
+                          color: themeExt.skeletonBase,
+                          border: Border.all(color: themeExt.borderColor),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
-                        child: const Icon(
+                        child: Icon(
                           Icons.file_download_outlined,
                           size: 20,
-                          color: Color(0xFF6B7280),
+                          color: themeExt.secondaryText,
                         ),
                       ),
                     ),

@@ -107,18 +107,248 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
   }
 
   void _openModal() {
-    setState(() {
-      _modalVisible = true;
-    });
-  }
-
-  void _closeModal() {
-    setState(() {
-      _modalVisible = false;
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.25),
+      builder: (BuildContext dialogContext) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _buildDialogContent(dialogContext),
+          ),
+        );
+      },
+    ).then((_) {
+      // Clear fields when dialog closes
       _doubtTitleController.clear();
       _doubtExplanationController.clear();
       _doubtTagsController.clear();
     });
+  }
+
+  Widget _buildDialogContent(BuildContext dialogContext) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.9,
+      constraints: const BoxConstraints(maxWidth: 480),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Post to Community',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Share your doubt with other students and instructors.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(
+                          context,
+                        ).extension<AppDesignExtension>()!.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              InkWell(
+                onTap: () => Navigator.pop(dialogContext),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).extension<AppDesignExtension>()!.skeletonBase,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Theme.of(
+                      context,
+                    ).extension<AppDesignExtension>()!.secondaryText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Doubt Title *',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _doubtTitleController,
+            decoration: _buildInputDecoration('Briefly describe your doubt...'),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Detailed Explanation *',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _doubtExplanationController,
+            maxLines: 4,
+            decoration: _buildInputDecoration(
+              'Explain your doubt in detail...',
+            ),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tags (Optional)',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _doubtTagsController,
+            decoration: _buildInputDecoration(
+              'e.g. React, Hooks (comma separated)',
+            ),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => Navigator.pop(dialogContext),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).extension<AppDesignExtension>()!.borderColor,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(
+                          context,
+                        ).extension<AppDesignExtension>()!.secondaryText,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    _handlePostDoubt();
+                    Navigator.pop(dialogContext);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Post Doubt',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+        color: Theme.of(context).extension<AppDesignExtension>()!.secondaryText,
+        fontSize: 14,
+      ),
+      filled: true,
+      fillColor: Theme.of(context).scaffoldBackgroundColor,
+      contentPadding: const EdgeInsets.all(14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: Theme.of(context).extension<AppDesignExtension>()!.borderColor,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: Theme.of(context).extension<AppDesignExtension>()!.borderColor,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+      ),
+    );
   }
 
   void _handlePostDoubt() {
@@ -148,15 +378,18 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
     setState(() {
       _doubts.insert(0, newPost);
     });
-    _closeModal();
+    // Fields are cleared when the dialog closes
   }
 
-  Widget buildAskBtn({
+  Widget _buildAskBtn({
     required IconData icon,
     required String text,
     required bool isActive,
     required VoidCallback onTap,
   }) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -165,12 +398,12 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
+            color: isActive ? themeExt.cardColor : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: themeExt.shadowColor,
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -183,9 +416,7 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
               Icon(
                 icon,
                 size: 18,
-                color: isActive
-                    ? const Color(0xFF0066FF)
-                    : const Color(0xFF6B7280),
+                color: isActive ? colorScheme.primary : themeExt.secondaryText,
               ),
               const SizedBox(width: 8),
               Text(
@@ -194,8 +425,8 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: isActive
-                      ? const Color(0xFF0066FF)
-                      : const Color(0xFF6B7280),
+                      ? colorScheme.primary
+                      : themeExt.secondaryText,
                 ),
               ),
             ],
@@ -208,405 +439,52 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
-    final colorSchema = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: colorSchema.surface,
-          body: Column(
-            children: [
-              // Header Custom Toggle Buttons (as in Image 2)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24 + 48, 24, 16),
-                child: Container(
-                  height: 56,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      // Ask AI Button
-                      Expanded(
-                        child: buildAskBtn(
-                          icon: Icons.memory,
-                          text: 'Ask AI',
-                          isActive: _activeToggle == 'AI',
-                          onTap: () => setState(() => _activeToggle = 'AI'),
-                        ),
-                      ),
-                      Expanded(
-                        child: buildAskBtn(
-                          icon: Icons.people_outline,
-                          text: 'Ask Community',
-                          isActive: _activeToggle == 'COMMUNITY',
-                          onTap: () =>
-                              setState(() => _activeToggle = 'COMMUNITY'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    return Scaffold(
+      backgroundColor: themeExt.scaffoldBackgroundColor,
+      body: Column(
+        children: [
+          // Header Custom Toggle Buttons
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24 + 48, 24, 0),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: themeExt.skeletonBase,
+                borderRadius: BorderRadius.circular(14),
               ),
-
-              // Content Area
-              Expanded(
-                child: _activeToggle == 'AI'
-                    ? _buildAskAI()
-                    : _buildAskCommunity(),
+              child: Row(
+                children: [
+                  _buildAskBtn(
+                    icon: Icons.memory,
+                    text: 'Ask AI',
+                    isActive: _activeToggle == 'AI',
+                    onTap: () => setState(() => _activeToggle = 'AI'),
+                  ),
+                  _buildAskBtn(
+                    icon: Icons.people_outline,
+                    text: 'Ask Community',
+                    isActive: _activeToggle == 'COMMUNITY',
+                    onTap: () => setState(() => _activeToggle = 'COMMUNITY'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-
-        // Modal Custom Implementation
-        if (_modalVisible)
-          Positioned.fill(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 250),
-              builder: (context, value, child) {
-                return Stack(
-                  children: [
-                    // Backdrop
-                    Opacity(
-                      opacity: value,
-                      child: ClipRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            color: Colors.black.withValues(alpha: 0.25),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Dialog
-                    Opacity(
-                      opacity: value,
-                      child: Transform.scale(
-                        scale: 0.9 + (0.1 * value),
-                        child: Center(
-                          child: Material(
-                            color: Colors.transparent,
-                            child: SingleChildScrollView(
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.9,
-                                constraints: const BoxConstraints(
-                                  maxWidth: 480,
-                                ),
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.92),
-                                  borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Post to Community',
-                                                style: TextStyle(
-                                                  fontSize: 17,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF111827),
-                                                ),
-                                              ),
-                                              SizedBox(height: 2),
-                                              Text(
-                                                'Share your doubt with other students and instructors.',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF6B7280),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        InkWell(
-                                          onTap: _closeModal,
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFFF3F4F6),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              size: 18,
-                                              color: Color(0xFF374151),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'Doubt Title *',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF374151),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    TextField(
-                                      controller: _doubtTitleController,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            'Briefly describe your doubt...',
-                                        hintStyle: const TextStyle(
-                                          color: Color(0xFF9CA3AF),
-                                          fontSize: 14,
-                                        ),
-                                        filled: true,
-                                        fillColor: const Color(0xFFF9FAFB),
-                                        contentPadding: const EdgeInsets.all(
-                                          14,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE5E7EB),
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE5E7EB),
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFF0066FF),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const Text(
-                                      'Detailed Explanation *',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF374151),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    TextField(
-                                      controller: _doubtExplanationController,
-                                      maxLines: 4,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            'Explain your doubt in detail...',
-                                        hintStyle: const TextStyle(
-                                          color: Color(0xFF9CA3AF),
-                                          fontSize: 14,
-                                        ),
-                                        filled: true,
-                                        fillColor: const Color(0xFFF9FAFB),
-                                        contentPadding: const EdgeInsets.all(
-                                          14,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE5E7EB),
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE5E7EB),
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFF0066FF),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const Text(
-                                      'Tags (Optional)',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF374151),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    TextField(
-                                      controller: _doubtTagsController,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            'e.g. React, Hooks (comma separated)',
-                                        hintStyle: const TextStyle(
-                                          color: Color(0xFF9CA3AF),
-                                          fontSize: 14,
-                                        ),
-                                        filled: true,
-                                        fillColor: const Color(0xFFF9FAFB),
-                                        contentPadding: const EdgeInsets.all(
-                                          14,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE5E7EB),
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE5E7EB),
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFF0066FF),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: InkWell(
-                                            onTap: _closeModal,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 14,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                  color: const Color(
-                                                    0xFFE5E7EB,
-                                                  ),
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: const Text(
-                                                'Cancel',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF374151),
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: InkWell(
-                                            onTap: _handlePostDoubt,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 14,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF2563EB),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: const Color(
-                                                      0xFF3B82F6,
-                                                    ).withValues(alpha: 0.3),
-                                                    blurRadius: 10,
-                                                    offset: const Offset(0, 4),
-                                                  ),
-                                                ],
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: const Text(
-                                                'Post Doubt',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
             ),
           ),
-      ],
+
+          // Content Area
+          Expanded(
+            child: _activeToggle == 'AI' ? _buildAskAI() : _buildAskCommunity(),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildAskAI() {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         Expanded(
@@ -623,45 +501,47 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                       width: 96,
                       height: 96,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF111827),
+                        color: themeExt.cardColor != Colors.transparent
+                            ? colorScheme.onSurface
+                            : themeExt.cardColor,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFF3B82F6,
-                            ).withValues(alpha: 0.2),
+                            color: colorScheme.primary.withValues(alpha: 0.2),
                             blurRadius: 15,
                             spreadRadius: 5,
                             offset: const Offset(0, 5),
                           ),
                         ],
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.sentiment_satisfied_alt,
                           size: 40,
-                          color: Colors.white,
+                          color: themeExt.cardColor != Colors.transparent
+                              ? colorScheme.surface
+                              : Colors.white,
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Instant AI Help',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 32),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: Text(
                         'Get immediate answers to any technical doubts from your AI tutor.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF6B7280),
+                          color: themeExt.secondaryText,
                           height: 1.5,
                         ),
                       ),
@@ -688,14 +568,18 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                         width: 32,
                         height: 32,
                         margin: const EdgeInsets.only(right: 8, bottom: 4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF111827),
+                        decoration: BoxDecoration(
+                          color: themeExt.cardColor != Colors.transparent
+                              ? colorScheme.onSurface
+                              : const Color(0xFF111827),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.sentiment_satisfied_alt,
                           size: 16,
-                          color: Colors.white,
+                          color: themeExt.cardColor != Colors.transparent
+                              ? colorScheme.surface
+                              : Colors.white,
                         ),
                       ),
                     Flexible(
@@ -706,8 +590,8 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: isUser
-                              ? const Color(0xFF2563EB)
-                              : const Color(0xFFF3F4F6),
+                              ? colorScheme.primary
+                              : themeExt.skeletonBase,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(16),
                             topRight: const Radius.circular(16),
@@ -725,7 +609,7 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                             fontSize: 14,
                             color: isUser
                                 ? Colors.white
-                                : const Color(0xFF1F2937),
+                                : colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -743,14 +627,16 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
             20,
             12 + MediaQuery.of(context).padding.bottom,
           ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFF3F4F6), width: 1)),
+          decoration: BoxDecoration(
+            color: themeExt.cardColor,
+            border: Border(
+              top: BorderSide(color: themeExt.skeletonBase, width: 1),
+            ),
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              color: themeExt.scaffoldBackgroundColor,
+              border: Border.all(color: themeExt.borderColor),
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -761,10 +647,10 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                     controller: _aiInputController,
                     maxLines: 4,
                     minLines: 1,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Ask AI tutor something...',
                       hintStyle: TextStyle(
-                        color: Color(0xFF9CA3AF),
+                        color: themeExt.secondaryText,
                         fontSize: 14,
                       ),
                       border: InputBorder.none,
@@ -813,8 +699,11 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
   }
 
   Widget _buildAskCommunity() {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -822,8 +711,8 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 32),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                color: themeExt.skeletonBase,
+                border: Border.all(color: themeExt.borderColor),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -836,10 +725,10 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Confused? Ask the community',
                     style: TextStyle(
-                      color: Color(0xFF6B7280),
+                      color: themeExt.secondaryText,
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
                     ),
@@ -853,8 +742,10 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        color: themeExt.cardColor != Colors.transparent
+                            ? themeExt.cardColor
+                            : colorScheme.surface,
+                        border: Border.all(color: themeExt.borderColor),
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -864,12 +755,12 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                           ),
                         ],
                       ),
-                      child: const Text(
+                      child: Text(
                         'ASK COMMUNITY',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2563EB),
+                          color: colorScheme.primary,
                         ),
                       ),
                     ),
@@ -883,10 +774,12 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
                 'COMMUNITY DOUBTS (${_doubts.length})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF9CA3AF),
+                  color: Theme.of(
+                    context,
+                  ).extension<AppDesignExtension>()!.secondaryText,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -896,13 +789,16 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
             delegate: SliverChildBuilderDelegate((context, index) {
               final doubt = _doubts[index];
               final isOpen = doubt['status'] == 'OPEN';
+              final themeExt = Theme.of(
+                context,
+              ).extension<AppDesignExtension>()!;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFFF3F4F6)),
+                  color: themeExt.cardColor,
+                  border: Border.all(color: themeExt.borderColor),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -924,17 +820,19 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                               width: 32,
                               height: 32,
                               margin: const EdgeInsets.only(right: 12),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFDBEAFE),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 doubt['user']['avatar'],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2563EB),
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -943,17 +841,19 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                               children: [
                                 Text(
                                   doubt['user']['name'],
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF111827),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                   ),
                                 ),
                                 Text(
                                   doubt['time'],
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF9CA3AF),
+                                    color: themeExt.secondaryText,
                                   ),
                                 ),
                               ],
@@ -967,8 +867,10 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: isOpen
-                                ? const Color(0xFFF0FDF4)
-                                : const Color(0xFFFFF7ED),
+                                ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                                : const Color(
+                                    0xFFF97316,
+                                  ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -987,10 +889,10 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                     const SizedBox(height: 12),
                     Text(
                       doubt['title'],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -998,9 +900,9 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                       doubt['description'],
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF4B5563),
+                        color: themeExt.secondaryText,
                         height: 1.5,
                       ),
                     ),
@@ -1016,17 +918,15 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              border: Border.all(
-                                color: const Color(0xFFF3F4F6),
-                              ),
+                              color: themeExt.skeletonBase,
+                              border: Border.all(color: themeExt.borderColor),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               tag,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: Color(0xFF6B7280),
+                                color: themeExt.secondaryText,
                               ),
                             ),
                           );
@@ -1034,8 +934,8 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                       ),
                     ],
                     const SizedBox(height: 12),
-                    const Divider(
-                      color: Color(0xFFF9FAFB),
+                    Divider(
+                      color: themeExt.borderColor,
                       height: 1,
                       thickness: 1,
                     ),
@@ -1045,34 +945,34 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.chat_bubble_outline,
                               size: 14,
-                              color: Color(0xFF9CA3AF),
+                              color: themeExt.secondaryText,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${doubt['comments']} answers',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF6B7280),
+                                color: themeExt.secondaryText,
                               ),
                             ),
                           ],
                         ),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.remove_red_eye_outlined,
                               size: 14,
-                              color: Color(0xFF9CA3AF),
+                              color: themeExt.secondaryText,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${doubt['views']} views',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF6B7280),
+                                color: themeExt.secondaryText,
                               ),
                             ),
                           ],

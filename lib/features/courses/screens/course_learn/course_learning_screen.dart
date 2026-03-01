@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:eduprova/features/courses/screens/course_learn/tabs/ask_doubts_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +16,7 @@ import '../../models/course_detail_model.dart';
 import '../../providers/course_detail_provider.dart';
 import '../../../../theme.dart';
 
-import 'tabs/ask_doubts_screen.dart';
+// import 'tabs/ask_doubts_screen.dart';
 import 'tabs/practice_screen.dart';
 import 'tabs/notes_screen.dart';
 import 'tabs/resources_screen.dart';
@@ -986,7 +987,8 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         20,
         16,
         20,
-        MediaQuery.of(context).padding.bottom + 10,
+        0,
+        // MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: themeExt.cardColor,
