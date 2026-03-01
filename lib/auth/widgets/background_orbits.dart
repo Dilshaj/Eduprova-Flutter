@@ -193,7 +193,7 @@ class _OrbitLayerState extends State<_OrbitLayer>
                     border: Border.all(
                       color: Theme.of(
                         context,
-                      ).colorScheme.outline.withValues(alpha: 0.3),
+                      ).colorScheme.outline.withValues(alpha: 0.05),
                       width: 1,
                     ),
                   ),

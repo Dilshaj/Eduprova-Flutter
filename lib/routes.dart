@@ -37,7 +37,7 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey =
     GlobalKey<NavigatorState>();
 
@@ -45,7 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.home,
     redirect: (context, state) {
       final status = authState.status;
@@ -135,7 +135,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.createStory,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const StatusScreen(),
       ),
 
@@ -149,9 +149,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/course/:id/learn',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final courseId = state.pathParameters['id']!;
-          return CourseLearningScreen(courseId: courseId);
+          final resumeMs = int.tryParse(
+            state.uri.queryParameters['resumeMs'] ?? '',
+          );
+          final resumeLectureId = state.uri.queryParameters['lectureId'];
+          final resumeFromMini = state.uri.queryParameters['fromMini'] == '1';
+          final autoplayParam = state.uri.queryParameters['autoplay'];
+          final resumeAutoPlay = autoplayParam == null ? true : autoplayParam == '1';
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            opaque: false,
+            barrierDismissible: false,
+            child: CourseLearningScreen(
+              courseId: courseId,
+              resumePositionMs: resumeMs,
+              resumeAutoPlay: resumeAutoPlay,
+              resumeLectureId: resumeLectureId,
+              resumeFromMini: resumeFromMini,
+            ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          );
         },
       ),
       GoRoute(

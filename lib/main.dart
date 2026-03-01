@@ -1,6 +1,7 @@
 import 'package:eduprova/globals.dart' show prefs;
 import 'package:eduprova/routes.dart';
 import 'package:eduprova/theme.dart';
+import 'package:eduprova/core/widgets/global_mini_player_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -24,6 +25,14 @@ class MainApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const GlobalMiniPlayerOverlay(),
+          ],
+        );
+      },
       // theme: ThemeData(
       //   extensions: [],
       //   colorScheme: ColorScheme.fromSeed(

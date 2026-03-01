@@ -1,11 +1,13 @@
 import 'dart:convert';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:video_player/video_player.dart' as vp;
 
 import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/services/global_mini_player_service.dart';
 import '../../../../core/utils/image_cache_manager.dart';
 import '../../../../core/widgets/app_loaders.dart';
 import '../../../../core/widgets/app_video_player.dart';
@@ -21,8 +23,19 @@ import 'tabs/messages_screen.dart';
 
 class CourseLearningScreen extends ConsumerStatefulWidget {
   final String courseId;
+  final int? resumePositionMs;
+  final bool resumeAutoPlay;
+  final String? resumeLectureId;
+  final bool resumeFromMini;
 
-  const CourseLearningScreen({super.key, required this.courseId});
+  const CourseLearningScreen({
+    super.key,
+    required this.courseId,
+    this.resumePositionMs,
+    this.resumeAutoPlay = true,
+    this.resumeLectureId,
+    this.resumeFromMini = false,
+  });
 
   @override
   ConsumerState<CourseLearningScreen> createState() =>
@@ -34,12 +47,18 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   late TabController _mainTabController;
   int _activeTabIndex = 0;
   bool _isLoading = true;
-  bool _isMini = false;
-  bool _isFullScreen = false;
   late double _videoHeight;
+  final AppVideoPlayerController _videoPlayerController =
+      AppVideoPlayerController();
+  bool _isMiniPlayer = false;
+  double _inlineCollapseProgress = 0;
 
   int _currentSectionIndex = 0;
   int _currentLessonIndex = 0;
+  bool _didApplyResumeLecture = false;
+  bool _didTryAdoptGlobalMini = false;
+  Player? _adoptedMediaPlayer;
+  vp.VideoPlayerController? _adoptedVideoController;
   List<String> _completedLessonIds = [];
   final List<int> _collapsedSections = [];
   Map<int, String> _moduleExamStatus = {0: 'open', 1: 'locked', 2: 'locked'};
@@ -92,6 +111,10 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   }
 
   void _handleVideoBackPress() {
+    if (_isMiniPlayer) {
+      _videoPlayerController.exitMiniPlayer();
+      return;
+    }
     if (_activeTabIndex != 0) {
       _mainTabController.animateTo(0);
     } else {
@@ -252,9 +275,15 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         _handleVideoBackPress();
       },
       child: Scaffold(
-        backgroundColor: themeExt.scaffoldBackgroundColor,
+        backgroundColor: themeExt.scaffoldBackgroundColor.withValues(
+          alpha: (1 - _inlineCollapseProgress).clamp(0.0, 1.0),
+        ),
         body: SafeArea(
-          child: courseAsync.when(
+          child: ColoredBox(
+            color: themeExt.scaffoldBackgroundColor.withValues(
+              alpha: (1 - _inlineCollapseProgress).clamp(0.0, 1.0),
+            ),
+            child: courseAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Center(child: Text('Error: $err')),
             data: (course) {
@@ -283,98 +312,164 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                 _currentLessonIndex = 0;
               }
 
+              if (!_didApplyResumeLecture &&
+                  widget.resumeLectureId != null &&
+                  widget.resumeLectureId!.isNotEmpty) {
+                for (var s = 0; s < curriculum.length; s++) {
+                  final lectures = curriculum[s].lectures;
+                  for (var l = 0; l < lectures.length; l++) {
+                    if (lectures[l].id == widget.resumeLectureId) {
+                      _currentSectionIndex = s;
+                      _currentLessonIndex = l;
+                      _didApplyResumeLecture = true;
+                      break;
+                    }
+                  }
+                  if (_didApplyResumeLecture) break;
+                }
+              }
+
               final currentSection = curriculum[_currentSectionIndex];
               final currentLesson =
                   currentSection.lectures[_currentLessonIndex];
 
-              return Column(
+              if (widget.resumeFromMini && !_didTryAdoptGlobalMini) {
+                _didTryAdoptGlobalMini = true;
+                final mini =
+                    GlobalMiniPlayerService.instance.takePendingHandoff() ??
+                    GlobalMiniPlayerService.instance.session.value;
+                final targetUrl = _resolveMediaUrlForLecture(course, currentLesson);
+                if (mini != null &&
+                    targetUrl != null &&
+                    mini.mediaUrl == targetUrl &&
+                    ((mini.engine == AppVideoEngine.mediaKit &&
+                            mini.mediaPlayer != null) ||
+                        (mini.engine == AppVideoEngine.videoPlayer &&
+                            mini.videoPlayerController != null))) {
+                  _adoptedMediaPlayer = mini.mediaPlayer;
+                  _adoptedVideoController = mini.videoPlayerController;
+                  GlobalMiniPlayerService.instance.close();
+                } else {
+                  GlobalMiniPlayerService.instance.restorePendingIfAny();
+                }
+              }
+
+              return Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Expanded(
-                    child: NestedScrollView(
-                      headerSliverBuilder: (context, innerBoxIsScrolled) {
-                        return [
-                          // Video AppBar
-                          SliverAppBar(
-                            pinned: true,
-                            floating: true,
-                            elevation: 0,
-                            toolbarHeight: math.max(0, kToolbarHeight - 6),
-                            scrolledUnderElevation: 0,
-                            automaticallyImplyLeading: false,
-                            leading: IconButton(
-                              icon: Container(
-                                padding: EdgeInsets.all(8),
-                                child: Icon(Icons.arrow_back_ios_new, size: 18),
-                              ),
-                              onPressed: _handleVideoBackPress,
-                            ),
-                          ),
-
-                          SliverToBoxAdapter(
-                            child: SizedBox(
-                              height: _videoHeight,
-                              child: _buildVideoPlayer(course, currentLesson),
-                            ),
-                          ),
-
-                          // Title Area
-                          SliverToBoxAdapter(
-                            child: _buildTitleArea(
-                              currentSection,
-                              currentLesson,
-                            ),
-                          ),
-
-                          // Sticky TabBar
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _SliverAppBarDelegate(
-                              minHeight: 48,
-                              maxHeight: 48,
-                              child: Container(
-                                color: themeExt.scaffoldBackgroundColor,
-                                child: TabBar(
-                                  controller: _mainTabController,
-                                  isScrollable: true,
-                                  tabAlignment: .start,
-                                  dividerHeight: 1,
-                                  dividerColor: themeExt.borderColor,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
+                  Column(
+                    children: [
+                      Expanded(
+                        child: AnimatedSlide(
+                          duration: const Duration(milliseconds: 120),
+                          curve: Curves.easeOut,
+                          offset: Offset(0, _inlineCollapseProgress * 0.14),
+                          child: Transform.scale(
+                            scale: 1 - (_inlineCollapseProgress * 0.12),
+                            alignment: Alignment.topCenter,
+                            child: Opacity(
+                              opacity: 1 - _inlineCollapseProgress,
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: _videoHeight),
+                                      child: Column(
+                                        children: [
+                                          _buildTitleArea(currentSection, currentLesson),
+                                          Container(
+                                            color: themeExt.scaffoldBackgroundColor,
+                                            child: TabBar(
+                                              controller: _mainTabController,
+                                              isScrollable: true,
+                                              tabAlignment: .start,
+                                              dividerHeight: 1,
+                                              dividerColor: themeExt.borderColor,
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                              ),
+                                              indicatorColor: colorScheme.primary,
+                                              indicatorWeight: 3,
+                                              indicatorSize: TabBarIndicatorSize.label,
+                                              labelColor: colorScheme.primary,
+                                              unselectedLabelColor:
+                                                  themeExt.secondaryText,
+                                              tabs: _tabs
+                                                  .map((tab) => Tab(text: tab))
+                                                  .toList(),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: TabBarView(
+                                              controller: _mainTabController,
+                                              children: [
+                                                _buildLessonsList(curriculum),
+                                                const AskDoubtsScreen(),
+                                                const PracticeScreen(),
+                                                const NotesScreen(),
+                                                const ResourcesScreen(),
+                                                const MessagesScreen(),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                  indicatorColor: colorScheme.primary,
-                                  indicatorWeight: 3,
-                                  indicatorSize: TabBarIndicatorSize.label,
-                                  labelColor: colorScheme.primary,
-                                  unselectedLabelColor: themeExt.secondaryText,
-                                  tabs: _tabs
-                                      .map((tab) => Tab(text: tab))
-                                      .toList(),
-                                ),
+                                  if (_activeTabIndex == 0 && !_isLoading)
+                                    _buildFooter(curriculum, currentLesson),
+                                ],
                               ),
                             ),
                           ),
-                        ];
-                      },
-                      body: TabBarView(
-                        controller: _mainTabController,
-                        children: [
-                          _buildLessonsList(curriculum),
-                          const AskDoubtsScreen(),
-                          const PracticeScreen(),
-                          const NotesScreen(),
-                          const ResourcesScreen(),
-                          const MessagesScreen(),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: _videoHeight,
+                    child: _buildVideoPlayer(
+                      course,
+                      currentLesson,
+                      controller: _videoPlayerController,
+                      adoptedMediaPlayer: _adoptedMediaPlayer,
+                      adoptedVideoPlayerController: _adoptedVideoController,
+                      onMiniPlayerChanged: (isMini) {
+                        if (!mounted) return;
+                        setState(() {
+                          _isMiniPlayer = isMini;
+                          _inlineCollapseProgress = isMini ? 1 : 0;
+                        });
+                      },
+                      onInlineCollapseProgressChanged: (progress) {
+                        if (!mounted) return;
+                        setState(() {
+                          _inlineCollapseProgress = progress;
+                        });
+                      },
+                      onInlineMiniPlayerRequest: (snapshot) {
+                        GlobalMiniPlayerService.instance.start(snapshot);
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.pushReplacement(
+                            AppRoutes.myLearning,
+                            extra: {'tab': 'Ongoing'},
+                          );
+                        }
+                        return true;
+                      },
+                      inlineMiniBottomInset:
+                          (_activeTabIndex == 0 && !_isLoading) ? 90 : 0,
                     ),
                   ),
-                  // Footer Navigation (Always Visible at bottom)
-                  if (_activeTabIndex == 0 && !_isLoading)
-                    _buildFooter(curriculum, currentLesson),
                 ],
               );
             },
+            ),
           ),
         ),
       ),
@@ -428,8 +523,15 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
 
   Widget _buildVideoPlayer(
     CourseDetailModel course,
-    LectureModel currentLecture,
-  ) {
+    LectureModel currentLecture, {
+    AppVideoPlayerController? controller,
+    Player? adoptedMediaPlayer,
+    vp.VideoPlayerController? adoptedVideoPlayerController,
+    ValueChanged<bool>? onMiniPlayerChanged,
+    ValueChanged<double>? onInlineCollapseProgressChanged,
+    bool Function(AppVideoMiniSnapshot snapshot)? onInlineMiniPlayerRequest,
+    double inlineMiniBottomInset = 0,
+  }) {
     if (currentLecture.muxPlaybackId != null ||
         currentLecture.video != null ||
         currentLecture.videoSource?.playbackId != null) {
@@ -439,7 +541,19 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
             currentLecture.muxPlaybackId ??
             currentLecture.videoSource?.playbackId,
         url: currentLecture.video,
-        autoPlay: true,
+        autoPlay: widget.resumeAutoPlay,
+        initialPosition: widget.resumePositionMs != null
+            ? Duration(milliseconds: widget.resumePositionMs!)
+            : null,
+        adoptedMediaPlayer: adoptedMediaPlayer,
+        adoptedVideoPlayerController: adoptedVideoPlayerController,
+        controller: controller,
+        onMiniPlayerChanged: onMiniPlayerChanged,
+        onInlineCollapseProgress: onInlineCollapseProgressChanged,
+        onInlineMiniPlayerRequest: onInlineMiniPlayerRequest,
+        inlineMiniBottomInset: inlineMiniBottomInset,
+        restoreRouteOnExpand:
+            '/course/${widget.courseId}/learn?lectureId=${Uri.encodeComponent(currentLecture.id)}',
       );
     }
 
@@ -450,8 +564,19 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         key: ValueKey('promo_${course.id}'),
         muxPlaybackId: course.muxPlaybackId ?? course.videoSource?.playbackId,
         url: course.video,
-        autoPlay: true,
-        engine: .videoPlayer,
+        autoPlay: widget.resumeAutoPlay,
+        initialPosition: widget.resumePositionMs != null
+            ? Duration(milliseconds: widget.resumePositionMs!)
+            : null,
+        adoptedMediaPlayer: adoptedMediaPlayer,
+        adoptedVideoPlayerController: adoptedVideoPlayerController,
+        controller: controller,
+        onMiniPlayerChanged: onMiniPlayerChanged,
+        onInlineCollapseProgress: onInlineCollapseProgressChanged,
+        onInlineMiniPlayerRequest: onInlineMiniPlayerRequest,
+        inlineMiniBottomInset: inlineMiniBottomInset,
+        restoreRouteOnExpand:
+            '/course/${widget.courseId}/learn?lectureId=${Uri.encodeComponent(currentLecture.id)}',
       );
     }
 
@@ -929,38 +1054,32 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
       ),
     );
   }
-}
 
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.child,
-  });
-
-  final double minHeight;
-  final double maxHeight;
-  final Widget child;
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => math.max(maxHeight, minHeight);
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
+  String? _resolveMediaUrlForLecture(
+    CourseDetailModel course,
+    LectureModel currentLecture,
   ) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        child != oldDelegate.child;
+    if (currentLecture.muxPlaybackId != null &&
+        currentLecture.muxPlaybackId!.isNotEmpty) {
+      return 'https://stream.mux.com/${currentLecture.muxPlaybackId}.m3u8';
+    }
+    if (currentLecture.videoSource?.playbackId != null &&
+        currentLecture.videoSource!.playbackId!.isNotEmpty) {
+      return 'https://stream.mux.com/${currentLecture.videoSource!.playbackId}.m3u8';
+    }
+    if (currentLecture.video != null && currentLecture.video!.isNotEmpty) {
+      return currentLecture.video;
+    }
+    if (course.muxPlaybackId != null && course.muxPlaybackId!.isNotEmpty) {
+      return 'https://stream.mux.com/${course.muxPlaybackId}.m3u8';
+    }
+    if (course.videoSource?.playbackId != null &&
+        course.videoSource!.playbackId!.isNotEmpty) {
+      return 'https://stream.mux.com/${course.videoSource!.playbackId}.m3u8';
+    }
+    if (course.video != null && course.video!.isNotEmpty) {
+      return course.video;
+    }
+    return null;
   }
 }
