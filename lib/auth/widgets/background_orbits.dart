@@ -71,7 +71,7 @@ class _BackgroundOrbitsState extends State<BackgroundOrbits>
         // Animated orbit layers correctly centered and scaled
         _OrbitLayer(
           radius: 95.0 * scale,
-          rotationSpeed: 0.15,
+          rotationSpeed: 0.25,
           iconData: orbitIcons.sublist(0, 4),
           reverse: false,
           centerX: centerX,
@@ -79,7 +79,7 @@ class _BackgroundOrbitsState extends State<BackgroundOrbits>
         ),
         _OrbitLayer(
           radius: 145.0 * scale,
-          rotationSpeed: 0.20,
+          rotationSpeed: 0.30,
           iconData: orbitIcons.sublist(4, 10),
           reverse: false,
           centerX: centerX,
@@ -87,7 +87,7 @@ class _BackgroundOrbitsState extends State<BackgroundOrbits>
         ),
         _OrbitLayer(
           radius: 195.0 * scale,
-          rotationSpeed: 0.25,
+          rotationSpeed: 0.4,
           iconData: orbitIcons.sublist(10, 20),
           reverse: false,
           centerX: centerX,
