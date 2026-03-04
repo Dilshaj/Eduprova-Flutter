@@ -1,9 +1,14 @@
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import '../providers/wishlist_provider.dart';
+import '../providers/course_provider.dart';
+import '../models/course_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class MyWishlistScreen extends StatelessWidget {
+class MyWishlistScreen extends ConsumerWidget {
   const MyWishlistScreen({super.key});
 
   Widget _buildFooterComponent(
@@ -13,7 +18,7 @@ class MyWishlistScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -88,7 +93,7 @@ class MyWishlistScreen extends StatelessWidget {
                   ),
                 ),
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     const Text(
                       'PREMIUM TRACK OFFER',
@@ -194,10 +199,136 @@ class MyWishlistScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildWishlistItem(
+    BuildContext context,
+    CourseModel item,
+    WidgetRef ref,
+    AppDesignExtension themeExt,
+    ColorScheme colorScheme,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: themeExt.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: .start,
+        children: [
+          // Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: 100,
+              height: 100,
+              color: themeExt.skeletonBase,
+              child: item.thumbnail != null
+                  ? CachedNetworkImage(
+                      imageUrl: item.thumbnail!,
+                      fit: BoxFit.cover,
+                    )
+                  : const Icon(Icons.image_not_supported),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: .start,
+              children: [
+                Row(
+                  crossAxisAlignment: .start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        ref
+                            .read(wishlistProvider.notifier)
+                            .removeFromWishlist(item.id);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Icon(
+                          Icons.favorite,
+                          size: 20,
+                          color: colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.instructor?.fullName ?? 'Unknown Instructor',
+                  style: TextStyle(fontSize: 12, color: themeExt.secondaryText),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '₹${item.discountedPrice ?? item.originalPrice}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    if (item.discountedPrice != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '₹${item.originalPrice}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          decoration: TextDecoration.lineThrough,
+                          color: themeExt.secondaryText,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
+
+    final coursesState = ref.watch(coursesProvider);
+    final wishlistState = ref.watch(wishlistProvider);
+
+    final wishlistCourses = coursesState.courses
+        .where((course) => wishlistState.ids.contains(course.id))
+        .toList();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: Theme.of(context).brightness == Brightness.dark
@@ -235,31 +366,6 @@ class MyWishlistScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Consumer<CoursesProvider>(
-                    //   builder: (context, provider, child) {
-                    // return Column(
-                    //   children: [
-                    //     Text(
-                    //       'My Wishlist',
-                    //       style: TextStyle(
-                    //         fontSize: 18,
-                    //         fontWeight: FontWeight.bold,
-                    //         color: colorScheme.onSurface,
-                    //       ),
-                    //     ),
-                    //     Text(
-                    //       '\${provider.wishlist.length} SAVED COURSES',
-                    //       style: TextStyle(
-                    //         fontSize: 12,
-                    //         fontWeight: FontWeight.bold,
-                    //         letterSpacing: 1,
-                    //         color: colorScheme.primary,
-                    //       ),
-                    //     ),
-                    //   ],
-                    // );
-                    // },
-                    // ),
                     Column(
                       children: [
                         Text(
@@ -271,7 +377,7 @@ class MyWishlistScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '0 SAVED COURSES',
+                          '${wishlistCourses.length} SAVED COURSES',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -298,47 +404,34 @@ class MyWishlistScreen extends StatelessWidget {
               ),
 
               Expanded(
-                // Consumer<CoursesProvider>(
-                //   builder: (context, provider, child) {
-                //     final wishlist = provider.wishlist;
-                //     if (wishlist.isEmpty) {
-                //       return ListView(
-                //         physics: const BouncingScrollPhysics(),
-                //         padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                //         children: [
-                //           _buildEmptyComponent(context, themeExt, colorScheme),
-                //           _buildFooterComponent(themeExt, colorScheme),
-                //         ],
-                //       );
-                //     }
-                //
-                //     return ListView.builder(
-                //       physics: const BouncingScrollPhysics(),
-                //       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                //       itemCount: wishlist.length + 1,
-                //       itemBuilder: (context, index) {
-                //         if (index == wishlist.length) {
-                //           return _buildFooterComponent(themeExt, colorScheme);
-                //         }
-                //         return _buildWishlistItem(
-                //           context,
-                //           wishlist[index],
-                //           provider,
-                //           themeExt,
-                //           colorScheme,
-                //         );
-                //       },
-                //     );
-                //   },
-                // ),
-                child: ListView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                  children: [
-                    _buildEmptyComponent(context, themeExt, colorScheme),
-                    _buildFooterComponent(themeExt, colorScheme),
-                  ],
-                ),
+                child: (wishlistState.isLoading && wishlistCourses.isEmpty)
+                    ? const Center(child: CircularProgressIndicator())
+                    : wishlistCourses.isEmpty
+                    ? ListView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                        children: [
+                          _buildEmptyComponent(context, themeExt, colorScheme),
+                          _buildFooterComponent(themeExt, colorScheme),
+                        ],
+                      )
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                        itemCount: wishlistCourses.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == wishlistCourses.length) {
+                            return _buildFooterComponent(themeExt, colorScheme);
+                          }
+                          return _buildWishlistItem(
+                            context,
+                            wishlistCourses[index],
+                            ref,
+                            themeExt,
+                            colorScheme,
+                          );
+                        },
+                      ),
               ),
             ],
           ),

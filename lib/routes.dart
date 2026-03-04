@@ -1,5 +1,6 @@
 import 'package:eduprova/auth/login_screen.dart';
 import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
+import 'package:eduprova/features/courses/screens/cart/cart_screen.dart';
 import 'package:eduprova/features/courses/screens/my_learning/my_learning_screen.dart';
 import 'package:eduprova/features/courses/screens/my_wishlist_screen.dart';
 import 'package:eduprova/features/courses/screens/profile_settings/profile_settings_screen.dart';
@@ -181,7 +182,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.myCart,
         builder: (context, state) {
-          return MyWishlistScreen();
+          return MyCartScreen();
         },
       ),
       GoRoute(

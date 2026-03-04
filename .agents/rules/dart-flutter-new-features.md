@@ -91,6 +91,19 @@ Column(
 )
 ```
 
+Null Aware Elements in Map
+
+```dart
+num? price = 5;
+
+var x = {
+    'title': 'hi',
+    'price' : ?price, 
+}
+```
+- here it price field only if price variable has non null value.
+   
+
 ## C. Modern Dart Features (Records & Pattern Matching)
 
 Use Dart 3 features to reduce boilerplate.
@@ -144,7 +157,7 @@ String statusMessage = switch (statusCode) {
 
 - Prefer `const` constructors and widgets wherever possible.
 - instead of `MediaQuery.of(context)` use particular property of it
-  - `MediaQuery.sizeOf(context)` , `MediaQuery.paddingOf(context)`, `MediaQuery.viewInsetsOf(context)` etc.
+- `MediaQuery.sizeOf(context)` , `MediaQuery.paddingOf(context)`, `MediaQuery.viewInsetsOf(context)` etc.
 
 
 # 4. Riverpod

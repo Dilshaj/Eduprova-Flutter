@@ -14,6 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../providers/course_detail_provider.dart';
+import '../../providers/cart_provider.dart';
+import '../../providers/wishlist_provider.dart';
 
 import 'tabs/course_about_tab.dart';
 import 'tabs/course_curriculum_tab.dart';
@@ -37,9 +39,13 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   bool _showStickyFooter = false;
   final GlobalKey _buyNowInlineKey = GlobalKey();
 
-  // Dummy states for cart & wishlist interaction for UI presentation
-  bool _inCart = false;
-  bool _inWishlist = false;
+  bool get _inCart => ref
+      .watch(cartProvider)
+      .items
+      .any((item) => item.courseId == widget.courseId);
+
+  bool get _inWishlist =>
+      ref.watch(wishlistProvider).ids.contains(widget.courseId);
 
   @override
   void initState() {
@@ -206,10 +212,12 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
           ),
         ),
         IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.favorite_border,
-            // color: Colors.white,
+          onPressed: () {
+            ref.read(wishlistProvider.notifier).toggleWishlist(widget.courseId);
+          },
+          icon: Icon(
+            _inWishlist ? Icons.favorite : Icons.favorite_border,
+            color: _inWishlist ? colorScheme.error : null,
             size: 22,
           ),
         ),
@@ -260,7 +268,21 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                 Expanded(
                   child: InkWell(
                     onTap: () {
-                      setState(() => _inCart = !_inCart);
+                      if (_inCart) {
+                        ref
+                            .read(cartProvider.notifier)
+                            .removeFromCart(course.id);
+                      } else {
+                        ref
+                            .read(cartProvider.notifier)
+                            .addToCart(
+                              course.id,
+                              price:
+                                  course.discountedPrice ??
+                                  course.originalPrice,
+                              title: course.title,
+                            );
+                      }
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
@@ -532,7 +554,21 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              setState(() => _inCart = !_inCart);
+                              if (_inCart) {
+                                ref
+                                    .read(cartProvider.notifier)
+                                    .removeFromCart(course.id);
+                              } else {
+                                ref
+                                    .read(cartProvider.notifier)
+                                    .addToCart(
+                                      course.id,
+                                      price:
+                                          course.discountedPrice ??
+                                          course.originalPrice,
+                                      title: course.title,
+                                    );
+                              }
                             },
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
@@ -566,7 +602,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              setState(() => _inWishlist = !_inWishlist);
+                              ref
+                                  .read(wishlistProvider.notifier)
+                                  .toggleWishlist(course.id);
                             },
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
