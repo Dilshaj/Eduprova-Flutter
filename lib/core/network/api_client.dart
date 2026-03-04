@@ -60,14 +60,36 @@ import 'dart:io';
 // }
 
 class ApiClient {
+  static const String _overrideUrlKey = 'dev_base_url_override';
   static Dio? _dio;
 
   static String get baseUrl {
+    final override = prefs.getString(_overrideUrlKey);
+    if (override != null && override.isNotEmpty) {
+      return override;
+    }
     if (Platform.isAndroid) {
       return 'http://192.168.1.4:4000';
       // return 'http://10.169.69.6:4000';
     }
     return 'http://localhost:4000';
+  }
+
+  static String? get baseUrlOverride => prefs.getString(_overrideUrlKey);
+
+  static Future<void> setBaseUrlOverride(String value) async {
+    await prefs.setString(_overrideUrlKey, value.trim());
+    _reset();
+  }
+
+  static Future<void> clearBaseUrlOverride() async {
+    await prefs.remove(_overrideUrlKey);
+    _reset();
+  }
+
+  static void _reset() {
+    _dio?.close(force: true);
+    _dio = null;
   }
 
   static Dio get instance {

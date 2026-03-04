@@ -1,7 +1,9 @@
 import 'package:eduprova/features/home/bottom_nav/bottom_nav4.dart';
+import 'package:eduprova/features/auth/providers/auth_provider.dart';
+import 'package:eduprova/core/widgets/dev_server_config_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:eduprova/features/home/bottom_nav/bottom_nav1.dart';
 
 final GlobalKey<ScaffoldState> mainScaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -209,6 +211,49 @@ class MainLayout extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
+              const Text(
+                'App Settings',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.dns_outlined),
+                      title: const Text('Dev API URL'),
+                      subtitle: const Text('Change backend IP for testing'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          final rootContext =
+                              mainScaffoldKey.currentContext ?? context;
+                          showDevServerConfigDialog(rootContext);
+                        });
+                      },
+                    ),
+                    Divider(height: 1, color: Theme.of(context).dividerColor),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        return ListTile(
+                          leading: const Icon(Icons.logout),
+                          title: const Text('Logout'),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await ref.read(authProvider.notifier).logout();
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

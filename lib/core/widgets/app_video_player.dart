@@ -117,18 +117,24 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
   }
 
   void _listenToMediaKit() {
-    _mediaSubscriptions.add(_mediaPlayer.stream.position.listen((value) {
-      _mediaPosition = value;
-      if (mounted) setState(() {});
-    }));
-    _mediaSubscriptions.add(_mediaPlayer.stream.duration.listen((value) {
-      _mediaDuration = value;
-      if (mounted) setState(() {});
-    }));
-    _mediaSubscriptions.add(_mediaPlayer.stream.playing.listen((value) {
-      _mediaPlaying = value;
-      if (mounted) setState(() {});
-    }));
+    _mediaSubscriptions.add(
+      _mediaPlayer.stream.position.listen((value) {
+        _mediaPosition = value;
+        if (mounted) setState(() {});
+      }),
+    );
+    _mediaSubscriptions.add(
+      _mediaPlayer.stream.duration.listen((value) {
+        _mediaDuration = value;
+        if (mounted) setState(() {});
+      }),
+    );
+    _mediaSubscriptions.add(
+      _mediaPlayer.stream.playing.listen((value) {
+        _mediaPlaying = value;
+        if (mounted) setState(() {});
+      }),
+    );
   }
 
   void _initVideo() {
@@ -296,16 +302,21 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
   }
 
   Future<void> _seekBySeconds(int seconds) async {
-    final duration = _duration();
-    if (duration <= Duration.zero) return;
-
     final current = _currentPosition();
-    final target = Duration(
-      milliseconds: (current.inMilliseconds + (seconds * 1000)).clamp(
-        0,
-        duration.inMilliseconds,
-      ),
-    );
+    final duration = _duration();
+    final target = duration <= Duration.zero
+        ? Duration(
+            milliseconds: (current.inMilliseconds + (seconds * 1000)).clamp(
+              0,
+              1 << 31,
+            ),
+          )
+        : Duration(
+            milliseconds: (current.inMilliseconds + (seconds * 1000)).clamp(
+              0,
+              duration.inMilliseconds,
+            ),
+          );
 
     if (widget.engine == AppVideoEngine.mediaKit) {
       await _mediaPlayer.seek(target);
@@ -319,10 +330,14 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
 
   Future<void> _seekTo(Duration target) async {
     final duration = _duration();
-    if (duration <= Duration.zero) return;
-    final normalized = Duration(
-      milliseconds: target.inMilliseconds.clamp(0, duration.inMilliseconds),
-    );
+    final normalized = duration <= Duration.zero
+        ? Duration(milliseconds: target.inMilliseconds.clamp(0, 1 << 31))
+        : Duration(
+            milliseconds: target.inMilliseconds.clamp(
+              0,
+              duration.inMilliseconds,
+            ),
+          );
 
     if (widget.engine == AppVideoEngine.mediaKit) {
       await _mediaPlayer.seek(normalized);
@@ -383,28 +398,24 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
             ),
           );
         },
-        transitionsBuilder: (
-          routeContext,
-          animation,
-          secondaryAnimation,
-          child,
-        ) {
-          final curved = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-            reverseCurve: Curves.easeInCubic,
-          );
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.08),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
+        transitionsBuilder:
+            (routeContext, animation, secondaryAnimation, child) {
+              final curved = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
+              );
+              return FadeTransition(
+                opacity: curved,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.08),
+                    end: Offset.zero,
+                  ).animate(curved),
+                  child: child,
+                ),
+              );
+            },
       ),
     );
 
@@ -446,7 +457,9 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       position: _currentPosition(),
       isPlaying: _isPlaying(),
       volume: _volume,
-      mediaPlayer: widget.engine == AppVideoEngine.mediaKit ? _mediaPlayer : null,
+      mediaPlayer: widget.engine == AppVideoEngine.mediaKit
+          ? _mediaPlayer
+          : null,
       videoPlayerController: widget.engine == AppVideoEngine.videoPlayer
           ? _videoController
           : null,
@@ -493,7 +506,10 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Container(color: Colors.black, child: _buildEngineVideo()),
+                      Container(
+                        color: Colors.black,
+                        child: _buildEngineVideo(),
+                      ),
                       Positioned(
                         top: 6,
                         right: 6,
@@ -610,7 +626,7 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       );
     }
     return Container(
-      color: Colors.black,
+      color: Colors.transparent,
       child: _buildInteractiveLayer(fullscreen: false),
     );
   }
@@ -854,8 +870,11 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
         if (widget.fullscreen && _dragDy < 0) _dragDy = 0;
       });
       if (!widget.fullscreen) {
-        final progressDown = ((_dragDy).clamp(0.0, _dragDistance) / _dragDistance)
-            .clamp(0.0, 1.0);
+        final progressDown =
+            ((_dragDy).clamp(0.0, _dragDistance) / _dragDistance).clamp(
+              0.0,
+              1.0,
+            );
         widget.onInlineCollapseProgressChanged?.call(progressDown);
       }
     }
@@ -865,9 +884,11 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
     final velocity = details.velocity.pixelsPerSecond.dy;
     final progressUp = ((-_dragDy).clamp(0.0, _dragDistance) / _dragDistance)
         .clamp(0.0, 1.0);
-    final progressDown = ((_dragDy).clamp(0.0, _inlineMiniTargetDy) /
-            _inlineMiniTargetDy)
-        .clamp(0.0, 1.0);
+    final progressDown =
+        ((_dragDy).clamp(0.0, _inlineMiniTargetDy) / _inlineMiniTargetDy).clamp(
+          0.0,
+          1.0,
+        );
     if (_gestureMode == _GestureMode.fullscreenDrag) {
       if (!widget.fullscreen && (velocity < -500 || progressUp > 0.28)) {
         widget.onFullscreenRequested();
@@ -965,9 +986,14 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
         final scale = widget.fullscreen
             ? (1 - (dragProgress * 0.18))
             : (_dragDy >= 0
-                  ? lerpDouble(1.0, widget.inlineMiniWidth / constraints.maxWidth, downProgress)!
+                  ? lerpDouble(
+                      1.0,
+                      widget.inlineMiniWidth / constraints.maxWidth,
+                      downProgress,
+                    )!
                   : (1 + (dragProgress * 0.08)));
-        final targetTranslateX = constraints.maxWidth - (constraints.maxWidth * scale) - 12;
+        final targetTranslateX =
+            constraints.maxWidth - (constraints.maxWidth * scale) - 12;
         final translateX = (!widget.fullscreen && _dragDy > 0)
             ? (targetTranslateX * downProgress)
             : 0.0;
@@ -980,7 +1006,8 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
           behavior: HitTestBehavior.opaque,
           onDoubleTapDown: (details) => _onDoubleTap(details, constraints),
           onTap: _toggleControls,
-          onVerticalDragStart: (details) => _handlePanStart(details, constraints),
+          onVerticalDragStart: (details) =>
+              _handlePanStart(details, constraints),
           onVerticalDragUpdate: _handlePanUpdate,
           onVerticalDragEnd: _handlePanEnd,
           child: Transform.translate(
@@ -991,221 +1018,227 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
                   ? Alignment.topLeft
                   : Alignment.center,
               child: Stack(
-              fit: StackFit.expand,
-              children: [
-                widget.child,
-                if (widget.brightness < 1)
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(
-                        alpha: (1 - widget.brightness) * 0.45,
+                fit: StackFit.expand,
+                children: [
+                  widget.child,
+                  if (widget.brightness < 1)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(
+                          alpha: (1 - widget.brightness) * 0.45,
+                        ),
                       ),
                     ),
-                  ),
-                AnimatedOpacity(
-                  opacity: _overlayType == null ? 0 : 1,
-                  duration: const Duration(milliseconds: 160),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(_overlayIcon, color: Colors.white, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            _overlayText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
+                  AnimatedOpacity(
+                    opacity: _overlayType == null ? 0 : 1,
+                    duration: const Duration(milliseconds: 160),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_overlayIcon, color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              _overlayText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                AnimatedOpacity(
-                  opacity: _controlsVisible ? 1 : 0,
-                  duration: const Duration(milliseconds: 180),
-                  child: IgnorePointer(
-                    ignoring: !_controlsVisible,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.36),
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.52),
                           ],
                         ),
                       ),
-                      child: Stack(
-                        children: [
-                          Center(
-                            child: IconButton.filled(
-                              style: IconButton.styleFrom(
-                                backgroundColor: Colors.black.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                              onPressed: () async {
-                                await widget.onTogglePlayPause();
-                                _scheduleControlsHide();
-                              },
-                              iconSize: 30,
-                              icon: Icon(
-                                widget.isPlaying
-                                    ? Icons.pause_rounded
-                                    : Icons.play_arrow_rounded,
-                                color: Colors.white,
-                              ),
-                            ),
+                    ),
+                  ),
+                  AnimatedOpacity(
+                    opacity: _controlsVisible ? 1 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: IgnorePointer(
+                      ignoring: !_controlsVisible,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.36),
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.52),
+                            ],
                           ),
-                          if (!widget.fullscreen) ...[
-                            Positioned(
-                              left: 8,
-                              right: 8,
-                              bottom: 14,
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '${_format(displayPosition)} / ${_format(widget.duration)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: IconButton.filled(
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.5,
                                   ),
-                                  const Spacer(),
-                                  IconButton(
-                                    onPressed: widget.onFullscreenRequested,
-                                    icon: const Icon(
-                                      Icons.fullscreen_rounded,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              bottom: -8,
-                              child: SliderTheme(
-                                data: SliderTheme.of(context).copyWith(
-                                  trackHeight: 2.8,
-                                  thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 5.5,
-                                  ),
-                                  overlayShape: SliderComponentShape.noOverlay,
-                                  trackShape: const RoundedRectSliderTrackShape(),
                                 ),
-                                child: Slider(
-                                  value: sliderValue,
-                                  min: 0,
-                                  max: totalMs,
-                                  onChangeStart: (value) {
-                                    setState(() {
-                                      _isScrubbing = true;
-                                      _scrubMs = value;
-                                    });
-                                  },
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _scrubMs = value;
-                                    });
-                                  },
-                                  onChangeEnd: (value) async {
-                                    await widget.onSeekTo(
-                                      Duration(milliseconds: value.round()),
-                                    );
-                                    setState(() {
-                                      _isScrubbing = false;
-                                    });
-                                    _scheduleControlsHide();
-                                  },
+                                onPressed: () async {
+                                  await widget.onTogglePlayPause();
+                                  _scheduleControlsHide();
+                                },
+                                iconSize: 30,
+                                icon: Icon(
+                                  widget.isPlaying
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
-                          ] else
-                            Positioned(
-                              left: 12,
-                              right: 12,
-                              bottom: 8,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SliderTheme(
-                                    data: SliderTheme.of(context).copyWith(
-                                      trackHeight: 2.8,
-                                      thumbShape: const RoundSliderThumbShape(
-                                        enabledThumbRadius: 6,
+                            if (!widget.fullscreen) ...[
+                              Positioned(
+                                left: 8,
+                                right: 8,
+                                bottom: 14,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      '${_format(displayPosition)} / ${_format(widget.duration)}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
                                       ),
-                                      overlayShape: SliderComponentShape.noOverlay,
                                     ),
-                                    child: Slider(
-                                      value: sliderValue,
-                                      min: 0,
-                                      max: totalMs,
-                                      onChangeStart: (value) {
-                                        setState(() {
-                                          _isScrubbing = true;
-                                          _scrubMs = value;
-                                        });
-                                      },
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _scrubMs = value;
-                                        });
-                                      },
-                                      onChangeEnd: (value) async {
-                                        await widget.onSeekTo(
-                                          Duration(milliseconds: value.round()),
-                                        );
-                                        setState(() {
-                                          _isScrubbing = false;
-                                        });
-                                        _scheduleControlsHide();
-                                      },
+                                    const Spacer(),
+                                    IconButton(
+                                      onPressed: widget.onFullscreenRequested,
+                                      icon: const Icon(
+                                        Icons.fullscreen_rounded,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${_format(displayPosition)} / ${_format(widget.duration)}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      IconButton(
-                                        onPressed: widget.onExitFullscreenRequested,
-                                        icon: const Icon(
-                                          Icons.fullscreen_exit_rounded,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                        ],
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    trackHeight: 2.8,
+                                    thumbShape: const RoundSliderThumbShape(
+                                      enabledThumbRadius: 5.5,
+                                    ),
+                                    overlayShape:
+                                        SliderComponentShape.noOverlay,
+                                    trackShape:
+                                        const RoundedRectSliderTrackShape(),
+                                  ),
+                                  child: Slider(
+                                    value: sliderValue,
+                                    min: 0,
+                                    max: totalMs,
+                                    onChangeStart: (value) {
+                                      setState(() {
+                                        _isScrubbing = true;
+                                        _scrubMs = value;
+                                      });
+                                    },
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _scrubMs = value;
+                                      });
+                                    },
+                                    onChangeEnd: (value) async {
+                                      await widget.onSeekTo(
+                                        Duration(milliseconds: value.round()),
+                                      );
+                                      setState(() {
+                                        _isScrubbing = false;
+                                      });
+                                      _scheduleControlsHide();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ] else
+                              Positioned(
+                                left: 12,
+                                right: 12,
+                                bottom: 8,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                        trackHeight: 2.8,
+                                        thumbShape: const RoundSliderThumbShape(
+                                          enabledThumbRadius: 6,
+                                        ),
+                                        overlayShape:
+                                            SliderComponentShape.noOverlay,
+                                      ),
+                                      child: Slider(
+                                        value: sliderValue,
+                                        min: 0,
+                                        max: totalMs,
+                                        onChangeStart: (value) {
+                                          setState(() {
+                                            _isScrubbing = true;
+                                            _scrubMs = value;
+                                          });
+                                        },
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _scrubMs = value;
+                                          });
+                                        },
+                                        onChangeEnd: (value) async {
+                                          await widget.onSeekTo(
+                                            Duration(
+                                              milliseconds: value.round(),
+                                            ),
+                                          );
+                                          setState(() {
+                                            _isScrubbing = false;
+                                          });
+                                          _scheduleControlsHide();
+                                        },
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${_format(displayPosition)} / ${_format(widget.duration)}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        IconButton(
+                                          onPressed:
+                                              widget.onExitFullscreenRequested,
+                                          icon: const Icon(
+                                            Icons.fullscreen_exit_rounded,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
               ),
             ),
           ),

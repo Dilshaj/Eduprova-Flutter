@@ -617,6 +617,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         onInlineCollapseProgress: onInlineCollapseProgressChanged,
         onInlineMiniPlayerRequest: onInlineMiniPlayerRequest,
         inlineMiniBottomInset: inlineMiniBottomInset,
+        engine: .videoPlayer,
         restoreRouteOnExpand:
             '/course/${widget.courseId}/learn?lectureId=${Uri.encodeComponent(currentLecture.id)}',
       );
@@ -987,8 +988,8 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         20,
         16,
         20,
-        0,
-        // MediaQuery.of(context).padding.bottom,
+        // 0,
+        MediaQuery.of(context).padding.bottom > 0 ? 0 : 12,
       ),
       decoration: BoxDecoration(
         color: themeExt.cardColor,
