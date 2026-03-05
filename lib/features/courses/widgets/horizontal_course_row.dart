@@ -1,4 +1,3 @@
-import 'package:eduprova/features/courses/screens/course_card2.dart';
 import 'package:flutter/material.dart';
 import 'package:eduprova/features/courses/models/course_model.dart';
 import 'package:go_router/go_router.dart';

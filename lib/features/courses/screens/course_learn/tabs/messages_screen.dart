@@ -1,83 +1,24 @@
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 
-class MessagesScreen extends StatefulWidget {
-  const MessagesScreen({super.key});
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eduprova/features/communication/providers/messages_provider.dart';
+
+class MessagesScreen extends ConsumerStatefulWidget {
+  final String courseId;
+
+  const MessagesScreen({super.key, required this.courseId});
 
   @override
-  State<MessagesScreen> createState() => _MessagesScreenState();
+  ConsumerState<MessagesScreen> createState() => _MessagesScreenState();
 }
 
-class _MessagesScreenState extends State<MessagesScreen> {
+class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   bool _isFullScreen = false;
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'id': 1,
-      'user': 'Amit V.',
-      'time': '10:45 AM',
-      'text': 'Is anyone stuck on the final project?',
-      'initial': 'A',
-      'color': const Color(0xFF2563EB), // blue-600
-      'sender': 'other',
-    },
-    {
-      'id': 2,
-      'user': 'Priya K.',
-      'time': '10:47 AM',
-      'text': 'I just finished it! Use the helper function from Lesson 4.',
-      'initial': 'P',
-      'color': const Color(0xFFDB2777), // pink-600
-      'sender': 'other',
-    },
-    {
-      'id': 3,
-      'user': 'Kevin J.',
-      'time': '11:02 AM',
-      'text': 'Thanks Priya, that helped a lot.',
-      'initial': 'K',
-      'color': const Color(0xFF16A34A), // green-600
-      'sender': 'other',
-    },
-    {
-      'id': 4,
-      'user': 'Kevin J.',
-      'time': '11:02 AM',
-      'text': 'Thanks Priya, that helped a lot.',
-      'initial': 'K',
-      'color': const Color(0xFF16A34A), // green-600
-      'sender': 'other',
-    },
-    {
-      'id': 5,
-      'user': 'Kevin J.',
-      'time': '11:02 AM',
-      'text': 'Thanks Priya, that helped a lot.',
-      'initial': 'K',
-      'color': const Color(0xFF16A34A), // green-600
-      'sender': 'other',
-    },
-    {
-      'id': 6,
-      'user': 'Kevin J.',
-      'time': '11:02 AM',
-      'text': 'Thanks Priya, that helped a lot.',
-      'initial': 'K',
-      'color': const Color(0xFF16A34A), // green-600
-      'sender': 'other',
-    },
-    {
-      'id': 7,
-      'user': 'Kevin J.',
-      'time': '11:02 AM',
-      'text': 'Thanks Priya, that helped a lot.',
-      'initial': 'K',
-      'color': const Color(0xFF16A34A), // green-600
-      'sender': 'other',
-    },
-  ];
+  // Messages state removed, now fetched from messagesProvider
 
   @override
   void dispose() {
@@ -90,41 +31,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
 
-    final newMessage = {
-      'id': DateTime.now().millisecondsSinceEpoch,
-      'user': 'You',
-      'time': _formatTime(DateTime.now()),
-      'text': text,
-      'initial': 'Y',
-      'color': const Color(0xFF9333EA), // purple-600
-      'sender': 'user',
-    };
-
-    setState(() {
-      _messages.add(newMessage);
-      _inputController.clear();
-    });
-
+    ref.read(allMessagesProvider.notifier).sendMessage(widget.courseId, text);
+    _inputController.clear();
     _scrollToBottom();
-
-    // Simulate bot reply
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
-      final replyMessage = {
-        'id': DateTime.now().millisecondsSinceEpoch + 1,
-        'user': 'Class Bot',
-        'time': _formatTime(DateTime.now()),
-        'text':
-            'Thanks for your message! An instructor will review it shortly.',
-        'initial': 'B',
-        'color': const Color(0xFF4B5563), // gray-600
-        'sender': 'other',
-      };
-      setState(() {
-        _messages.add(replyMessage);
-      });
-      _scrollToBottom();
-    });
   }
 
   void _scrollToBottom() {
@@ -141,15 +50,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
         );
       }
     });
-  }
-
-  String _formatTime(DateTime time) {
-    int hour = time.hour;
-    int minute = time.minute;
-    String period = hour >= 12 ? 'PM' : 'AM';
-    hour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    String minStr = minute < 10 ? '0$minute' : '$minute';
-    return '$hour:$minStr $period';
   }
 
   @override
@@ -177,6 +77,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
 
+    final messageState = ref.watch(messagesProvider(widget.courseId));
+    final messages = messageState.messages;
+    final isConnected = messageState.isConnected;
+    final viewerCount = messageState.viewerCount;
+
     return Container(
       color: isFull ? themeExt.scaffoldBackgroundColor : themeExt.cardColor,
       child: Column(
@@ -193,13 +98,26 @@ class _MessagesScreenState extends State<MessagesScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Classroom Chat',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: isConnected ? Colors.green : Colors.grey,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Text(
+                      'Classroom Chat ($viewerCount watching)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
                 InkWell(
                   onTap: () async {
@@ -242,10 +160,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
               controller: isFull ? _scrollController : null,
               primary: !isFull,
               padding: const EdgeInsets.all(20),
-              itemCount: _messages.length,
+              itemCount: messages.length,
               itemBuilder: (context, index) {
-                final item = _messages[index];
-                final isUser = item['sender'] == 'user';
+                final item = messages[index];
+                final isUser = item.userId == messageState.currentUserId;
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 24),
@@ -261,12 +179,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           height: 32,
                           margin: const EdgeInsets.only(right: 12, top: 4),
                           decoration: BoxDecoration(
-                            color: item['color'],
+                            // Extract color assuming the format sent like 'bg-blue-600' or default
+                            // to a generic color. For UI simplicity, hardcode a color or derive from initials
+                            color: const Color(0xFF2563EB),
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            item['initial'],
+                            item.initials,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -289,7 +209,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                     : TextDirection.ltr,
                                 children: [
                                   Text(
-                                    item['user'],
+                                    item.user,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -298,7 +218,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    item['time'],
+                                    item.time,
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
@@ -337,7 +257,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 ),
                               ),
                               child: Text(
-                                item['text'],
+                                item.text,
                                 style: TextStyle(
                                   fontSize: 13,
                                   height: 1.5,

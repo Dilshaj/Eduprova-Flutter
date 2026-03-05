@@ -1,4 +1,5 @@
-import 'package:eduprova/auth/login_screen.dart';
+import 'package:eduprova/features/auth/screens/login_screen.dart';
+import 'package:eduprova/features/auth/screens/signup_screen.dart';
 import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
 import 'package:eduprova/features/courses/screens/cart/cart_screen.dart';
 import 'package:eduprova/features/courses/screens/my_learning/my_learning_screen.dart';
@@ -27,7 +28,6 @@ import 'package:eduprova/features/messages/messages/messages_screen.dart';
 // SplashScreen and Auth imports (only necessary ones)
 import 'features/auth/providers/auth_provider.dart';
 // import 'features/auth/screens/login_screen.dart';
-import 'features/auth/screens/register_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -39,8 +39,6 @@ class SplashScreen extends StatelessWidget {
 }
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey =
-    GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -80,7 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.register,
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) => const SignupScreen(),
       ),
 
       // Bottom Nav Routes

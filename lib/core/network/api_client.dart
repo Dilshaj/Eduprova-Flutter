@@ -66,12 +66,16 @@ class ApiClient {
   static String get baseUrl {
     final override = prefs.getString(_overrideUrlKey);
     if (override != null && override.isNotEmpty) {
+      debugPrint('Using override URL: $override');
       return override;
     }
     if (Platform.isAndroid) {
-      return 'http://192.168.1.4:4000';
+      const ip = '192.168.1.4';
+      debugPrint('Using Android URL: http://$ip:4000');
+      return 'http://$ip:4000';
       // return 'http://10.169.69.6:4000';
     }
+    debugPrint('Using iOS URL: http://localhost:4000');
     return 'http://localhost:4000';
   }
 

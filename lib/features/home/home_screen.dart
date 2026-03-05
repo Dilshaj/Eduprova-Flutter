@@ -2,7 +2,6 @@ import 'package:eduprova/features/home/posts/post.dart';
 import 'package:eduprova/features/home/storie/view_storie/stories_row.dart';
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/ui/animated_title_header.dart';
@@ -16,8 +15,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _showBars = true;
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -121,19 +118,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _hideNav(Widget child) {
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 250),
-      offset: _showBars ? Offset.zero : const Offset(0, 1),
-      curve: Curves.easeIn,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: _showBars ? 1 : 0,
-        child: child,
       ),
     );
   }

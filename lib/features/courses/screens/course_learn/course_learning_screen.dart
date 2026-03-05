@@ -14,6 +14,7 @@ import '../../../../core/widgets/app_loaders.dart';
 import '../../../../core/widgets/app_video_player.dart';
 import '../../models/course_detail_model.dart';
 import '../../providers/course_detail_provider.dart';
+import '../../providers/progress_provider.dart';
 import '../../../../theme.dart';
 
 // import 'tabs/ask_doubts_screen.dart';
@@ -87,10 +88,42 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   bool _didTryAdoptGlobalMini = false;
   Player? _adoptedMediaPlayer;
   vp.VideoPlayerController? _adoptedVideoController;
-  List<String> _completedLessonIds = [];
   final List<int> _collapsedSections = [];
-  Map<int, String> _moduleExamStatus = {0: 'open', 1: 'locked', 2: 'locked'};
-  List<int> _unlockedModules = [0];
+  final Map<int, String> _moduleExamStatus = {
+    0: 'open',
+    1: 'locked',
+    2: 'locked',
+  };
+
+  List<String> get _completedLessonIds {
+    return ref
+            .read(courseProgressProvider(widget.courseId))
+            .data
+            ?.completedLectures ??
+        [];
+  }
+
+  bool _isLectureUnlocked(
+    int secIdx,
+    int lessonIdx,
+    List<ChapterModel>? curriculum,
+  ) {
+    if (curriculum == null || curriculum.isEmpty) return true;
+    if (secIdx == 0 && lessonIdx == 0) return true;
+
+    int prevSecIdx = secIdx;
+    int prevLessonIdx = lessonIdx - 1;
+
+    if (prevLessonIdx < 0) {
+      prevSecIdx = secIdx - 1;
+      if (prevSecIdx < 0) return true;
+      if (curriculum[prevSecIdx].lectures.isEmpty) return true;
+      prevLessonIdx = curriculum[prevSecIdx].lectures.length - 1;
+    }
+
+    final prevLectureId = curriculum[prevSecIdx].lectures[prevLessonIdx].id;
+    return _completedLessonIds.contains(prevLectureId);
+  }
 
   final List<String> _tabs = [
     'LESSONS',
@@ -157,9 +190,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     }
   }
 
-  void _toggleSection(int index) {
-    if (!_unlockedModules.contains(index)) return;
-
+  void _toggleSection(int index, List<ChapterModel> curriculum) {
     setState(() {
       if (_collapsedSections.contains(index)) {
         _collapsedSections.remove(index);
@@ -170,8 +201,9 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   }
 
   bool _checkModuleCompletion(int sectionIndex, List<ChapterModel> curriculum) {
-    if (sectionIndex >= curriculum.length) return false;
+    if (sectionIndex >= curriculum.length || sectionIndex < 0) return false;
     final section = curriculum[sectionIndex];
+    if (section.lectures.isEmpty) return true;
     return section.lectures.every((l) => _completedLessonIds.contains(l.id));
   }
 
@@ -195,9 +227,6 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
               Navigator.pop(context);
               setState(() {
                 if (sectionIndex + 1 < curriculum.length) {
-                  if (!_unlockedModules.contains(sectionIndex + 1)) {
-                    _unlockedModules.add(sectionIndex + 1);
-                  }
                   _moduleExamStatus[sectionIndex] = 'completed';
                   _moduleExamStatus[sectionIndex + 1] = 'open';
                   _collapsedSections.remove(sectionIndex + 1);
@@ -225,9 +254,9 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     }
 
     if (!_completedLessonIds.contains(currentLesson.id)) {
-      setState(() {
-        _completedLessonIds.add(currentLesson.id);
-      });
+      ref
+          .read(allCourseProgressProvider.notifier)
+          .markLectureCompleted(widget.courseId, currentLesson.id);
     }
   }
 
@@ -248,21 +277,11 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
 
     if (isLastLessonInSection) {
       if (!isLastSection) {
-        if (_unlockedModules.contains(_currentSectionIndex + 1)) {
-          setState(() {
-            _currentSectionIndex++;
-            _currentLessonIndex = 0;
-            _collapsedSections.remove(_currentSectionIndex);
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Please complete the Module Exam to unlock the next module.',
-              ),
-            ),
-          );
-        }
+        setState(() {
+          _currentSectionIndex++;
+          _currentLessonIndex = 0;
+          _collapsedSections.remove(_currentSectionIndex);
+        });
       }
     } else {
       setState(() {
@@ -295,6 +314,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     final courseAsync = ref.watch(courseLearnProvider(widget.courseId));
+    final progressAsync = ref.watch(courseProgressProvider(widget.courseId));
 
     return PopScope(
       canPop: false,
@@ -315,6 +335,10 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
               data: (course) {
+                if (progressAsync.isLoading && progressAsync.data == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
                 final curriculum = course.curriculum;
                 if (curriculum.isEmpty) {
                   return Center(
@@ -340,21 +364,33 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                   _currentLessonIndex = 0;
                 }
 
-                if (!_didApplyResumeLecture &&
-                    widget.resumeLectureId != null &&
-                    widget.resumeLectureId!.isNotEmpty) {
-                  for (var s = 0; s < curriculum.length; s++) {
-                    final lectures = curriculum[s].lectures;
-                    for (var l = 0; l < lectures.length; l++) {
-                      if (lectures[l].id == widget.resumeLectureId) {
-                        _currentSectionIndex = s;
-                        _currentLessonIndex = l;
-                        _didApplyResumeLecture = true;
-                        break;
-                      }
-                    }
-                    if (_didApplyResumeLecture) break;
+                if (!_didApplyResumeLecture) {
+                  String? targetLectureId = widget.resumeLectureId;
+                  final progressData = progressAsync.data;
+
+                  if ((targetLectureId == null || targetLectureId.isEmpty) &&
+                      progressData?.lastAccessedLectureId != null &&
+                      progressData!.lastAccessedLectureId!.isNotEmpty) {
+                    targetLectureId = progressData.lastAccessedLectureId;
                   }
+
+                  if (targetLectureId != null && targetLectureId.isNotEmpty) {
+                    for (var s = 0; s < curriculum.length; s++) {
+                      final lectures = curriculum[s].lectures;
+                      for (var l = 0; l < lectures.length; l++) {
+                        if (lectures[l].id == targetLectureId) {
+                          _currentSectionIndex = s;
+                          _currentLessonIndex = l;
+                          _didApplyResumeLecture = true;
+                          break;
+                        }
+                      }
+                      if (_didApplyResumeLecture) break;
+                    }
+                  }
+
+                  // Even if we didn't find the target, flag it applied so we don't try again
+                  _didApplyResumeLecture = true;
                 }
 
                 final currentSection = curriculum[_currentSectionIndex];
@@ -471,11 +507,23 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                             controller: _mainTabController,
                                             children: [
                                               _buildLessonsList(curriculum),
-                                              const AskDoubtsScreen(),
+                                              AskDoubtsScreen(
+                                                courseId: widget.courseId,
+                                                lectureId: currentLesson.id,
+                                              ),
                                               const PracticeScreen(),
                                               const NotesScreen(),
-                                              const ResourcesScreen(),
-                                              const MessagesScreen(),
+                                              ResourcesScreen(
+                                                resources: curriculum
+                                                    .expand((s) => s.lectures)
+                                                    .expand(
+                                                      (l) => l.attachments,
+                                                    )
+                                                    .toList(),
+                                              ),
+                                              MessagesScreen(
+                                                courseId: widget.courseId,
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -705,81 +753,86 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         itemBuilder: (context, secIdx) {
           final section = curriculum[secIdx];
           final isCollapsed = _collapsedSections.contains(secIdx);
-          final isLocked = !_unlockedModules.contains(secIdx);
           final isModuleComplete = _checkModuleCompletion(secIdx, curriculum);
           final examStatus = _moduleExamStatus[secIdx];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 24),
-            child: Opacity(
-              opacity: isLocked ? 0.6 : 1.0,
-              child: Column(
-                children: [
-                  InkWell(
-                    onTap: () => _toggleSection(secIdx),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${section.title} ${isLocked ? '🔒' : ''}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: themeExt.secondaryText,
-                                letterSpacing: 1.1,
-                              ),
+            child: Column(
+              children: [
+                InkWell(
+                  onTap: () => _toggleSection(secIdx, curriculum),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            section.title,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: themeExt.secondaryText,
+                              letterSpacing: 1.1,
                             ),
                           ),
-                          if (!isLocked)
-                            Icon(
-                              isCollapsed
-                                  ? Icons.keyboard_arrow_down
-                                  : Icons.keyboard_arrow_up,
-                              size: 16,
-                              color: themeExt.secondaryText,
-                            ),
-                        ],
-                      ),
+                        ),
+                        Icon(
+                          isCollapsed
+                              ? Icons.keyboard_arrow_down
+                              : Icons.keyboard_arrow_up,
+                          size: 16,
+                          color: themeExt.secondaryText,
+                        ),
+                      ],
                     ),
                   ),
-                  if (!isCollapsed && !isLocked)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: themeExt.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: themeExt.borderColor),
-                        boxShadow: [
-                          BoxShadow(
-                            color: themeExt.shadowColor,
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Column(
-                          children: [
-                            ...((section.lectures).asMap().entries.map((entry) {
-                              final lessonIdx = entry.key;
-                              final lesson = entry.value;
-                              final isCompleted = _completedLessonIds.contains(
-                                lesson.id,
-                              );
-                              final isActive =
-                                  secIdx == _currentSectionIndex &&
-                                  lessonIdx == _currentLessonIndex;
+                ),
+                if (!isCollapsed)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: themeExt.cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: themeExt.borderColor),
+                      boxShadow: [
+                        BoxShadow(
+                          color: themeExt.shadowColor,
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Column(
+                        children: [
+                          ...((section.lectures).asMap().entries.map((entry) {
+                            final lessonIdx = entry.key;
+                            final lesson = entry.value;
+                            final isCompleted = _completedLessonIds.contains(
+                              lesson.id,
+                            );
+                            final isLectureLocked = !_isLectureUnlocked(
+                              secIdx,
+                              lessonIdx,
+                              curriculum,
+                            );
+                            final isActive =
+                                secIdx == _currentSectionIndex &&
+                                lessonIdx == _currentLessonIndex;
 
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _currentSectionIndex = secIdx;
-                                    _currentLessonIndex = lessonIdx;
-                                  });
-                                },
+                            return InkWell(
+                              onTap: isLectureLocked
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _currentSectionIndex = secIdx;
+                                        _currentLessonIndex = lessonIdx;
+                                      });
+                                    },
+                              child: Opacity(
+                                opacity: isLectureLocked ? 0.6 : 1.0,
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
@@ -844,7 +897,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              lesson.title,
+                                              '${lesson.title} ${isLectureLocked ? '🔒' : ''}',
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
@@ -868,99 +921,98 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                     ],
                                   ),
                                 ),
-                              );
-                            }).toList()),
+                              ),
+                            );
+                          }).toList()),
 
-                            // Module Exam Row
-                            if (secIdx != curriculum.length - 1)
-                              InkWell(
-                                onTap: isModuleComplete
-                                    ? () => _handleModuleExamClick(
-                                        secIdx,
-                                        curriculum,
-                                      )
-                                    : null,
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: isModuleComplete
-                                        ? colorScheme.secondary.withValues(
-                                            alpha: 0.1,
-                                          )
-                                        : themeExt.skeletonBase,
-                                    borderRadius: const BorderRadius.vertical(
-                                      bottom: Radius.circular(16),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 32,
-                                        height: 32,
-                                        margin: const EdgeInsets.only(
-                                          right: 16,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isModuleComplete
-                                              ? colorScheme.secondary
-                                                    .withValues(alpha: 0.2)
-                                              : themeExt.borderColor,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: Icon(
-                                          Icons.assignment_outlined,
-                                          size: 16,
-                                          color: isModuleComplete
-                                              ? colorScheme.secondary
-                                              : themeExt.secondaryText,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Module Exam',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: isModuleComplete
-                                                    ? colorScheme.secondary
-                                                    : themeExt.secondaryText,
-                                              ),
-                                            ),
-                                            Text(
-                                              isModuleComplete
-                                                  ? (examStatus == 'completed'
-                                                        ? 'Completed ✅'
-                                                        : 'Ready to start')
-                                                  : 'Complete all lessons to unlock',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: themeExt.secondaryText,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (isModuleComplete)
-                                        Icon(
-                                          Icons.arrow_forward,
-                                          size: 16,
-                                          color: colorScheme.secondary,
-                                        ),
-                                    ],
+                          // Module Exam Row
+                          if (secIdx != curriculum.length - 1)
+                            InkWell(
+                              onTap: isModuleComplete
+                                  ? () => _handleModuleExamClick(
+                                      secIdx,
+                                      curriculum,
+                                    )
+                                  : null,
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isModuleComplete
+                                      ? colorScheme.secondary.withValues(
+                                          alpha: 0.1,
+                                        )
+                                      : themeExt.skeletonBase,
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(16),
                                   ),
                                 ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      margin: const EdgeInsets.only(right: 16),
+                                      decoration: BoxDecoration(
+                                        color: isModuleComplete
+                                            ? colorScheme.secondary.withValues(
+                                                alpha: 0.2,
+                                              )
+                                            : themeExt.borderColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        Icons.assignment_outlined,
+                                        size: 16,
+                                        color: isModuleComplete
+                                            ? colorScheme.secondary
+                                            : themeExt.secondaryText,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Module Exam',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: isModuleComplete
+                                                  ? colorScheme.secondary
+                                                  : themeExt.secondaryText,
+                                            ),
+                                          ),
+                                          Text(
+                                            isModuleComplete
+                                                ? (examStatus == 'completed'
+                                                      ? 'Completed ✅'
+                                                      : 'Ready to start')
+                                                : 'Complete all lessons to unlock',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: themeExt.secondaryText,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isModuleComplete)
+                                      Icon(
+                                        Icons.arrow_forward,
+                                        size: 16,
+                                        color: colorScheme.secondary,
+                                      ),
+                                  ],
+                                ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           );
         },

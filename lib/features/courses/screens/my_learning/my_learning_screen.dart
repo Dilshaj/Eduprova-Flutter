@@ -1,4 +1,3 @@
-import 'package:eduprova/features/courses/models/enrolled_course_model.dart';
 import 'package:eduprova/features/courses/providers/enrolled_courses_provider.dart';
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
@@ -530,7 +529,7 @@ class _MyLearningScreenState extends ConsumerState<MyLearningScreen>
                       ),
                     ),
                     Opacity(
-                      opacity: isClickable ? 1.0 : 0.5,
+                      opacity: 1.0,
                       child: InkWell(
                         onTap: () {
                           if (isClickable) {

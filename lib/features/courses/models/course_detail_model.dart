@@ -145,6 +145,7 @@ class LectureModel {
   final String? status;
   final bool freePreview;
   final VideoSourceModel? videoSource;
+  final List<AttachmentModel> attachments;
 
   LectureModel({
     required this.id,
@@ -157,6 +158,7 @@ class LectureModel {
     this.status,
     this.freePreview = false,
     this.videoSource,
+    this.attachments = const [],
   });
 
   factory LectureModel.fromJson(Map<String, dynamic> json) {
@@ -173,6 +175,37 @@ class LectureModel {
       videoSource: json['videoSource'] != null
           ? VideoSourceModel.fromJson(json['videoSource'])
           : null,
+      attachments: json['attachments'] != null
+          ? (json['attachments'] as List)
+                .map((e) => AttachmentModel.fromJson(e))
+                .toList()
+          : [],
+    );
+  }
+}
+
+class AttachmentModel {
+  final String id;
+  final String title;
+  final String url;
+  final String type;
+  final bool isDownloadable;
+
+  AttachmentModel({
+    required this.id,
+    required this.title,
+    required this.url,
+    required this.type,
+    this.isDownloadable = true,
+  });
+
+  factory AttachmentModel.fromJson(Map<String, dynamic> json) {
+    return AttachmentModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      title: json['title'] ?? '',
+      url: json['url'] ?? '',
+      type: json['type'] ?? '',
+      isDownloadable: json['isDownloadable'] ?? true,
     );
   }
 }

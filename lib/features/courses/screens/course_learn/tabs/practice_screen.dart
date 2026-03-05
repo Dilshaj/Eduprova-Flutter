@@ -1,7 +1,7 @@
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eduprova/features/practice/providers/practice_provider.dart';
 
 // --- Types ---
 class LanguageConfig {
@@ -24,8 +24,7 @@ class LanguageConfig {
   });
 }
 
-// --- Configuration ---
-const String executionApiUrl = "http://localhost:2000/api/v2/execute";
+// Configuration for Language is managed in individual LanguageConfig
 
 // --- Mock Data ---
 final List<LanguageConfig> _languages = [
@@ -91,18 +90,17 @@ final List<LanguageConfig> _languages = [
   ),
 ];
 
-class PracticeScreen extends StatefulWidget {
+class PracticeScreen extends ConsumerStatefulWidget {
   const PracticeScreen({super.key});
 
   @override
-  State<PracticeScreen> createState() => _PracticeScreenState();
+  ConsumerState<PracticeScreen> createState() => _PracticeScreenState();
 }
 
-class _PracticeScreenState extends State<PracticeScreen> {
+class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   late LanguageConfig _selectedLang;
   late TextEditingController _codeController;
-  Map<String, dynamic>? _output;
-  bool _isRunning = false;
+  // Execution State is now managed by practiceProvider
   // FullScreen state removed as it is handled by the Navigator route
 
   @override
@@ -149,8 +147,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
     String codeStr,
   ) async {
     await Future.delayed(const Duration(milliseconds: 1500));
-    String simulatedOutput =
-        "Execution Successful (Mock).\nBackend unavailable.";
+    final List<MapEntry<int, String>> matchesWithIndex = [];
 
     final printPatterns = [
       RegExp(r'''print\s*\(\s*["'](.+?)["']\s*\)'''),
@@ -161,93 +158,52 @@ class _PracticeScreenState extends State<PracticeScreen> {
     ];
 
     for (final pattern in printPatterns) {
-      final match = pattern.firstMatch(codeStr);
-      if (match != null) {
-        simulatedOutput = match.group(1) ?? simulatedOutput;
-        break;
+      final matches = pattern.allMatches(codeStr);
+      for (final match in matches) {
+        if (match.group(1) != null) {
+          matchesWithIndex.add(MapEntry(match.start, match.group(1)!));
+        }
       }
     }
-    return {'stdout': "$simulatedOutput\n"};
+
+    // Sort by appearance in code
+    matchesWithIndex.sort((a, b) => a.key.compareTo(b.key));
+
+    final simulatedOutputs = matchesWithIndex.map((m) => m.value).toList();
+
+    if (simulatedOutputs.isEmpty) {
+      simulatedOutputs.add(
+        "Execution Successful (Mock).\nBackend unavailable.",
+      );
+    }
+
+    return {'stdout': "${simulatedOutputs.join('\n')}\n"};
   }
 
   Future<void> _handleRunCode() async {
-    setState(() {
-      _output = null;
-    });
+    ref.read(practiceProvider.notifier).clearOutput();
 
     final validationError = _validateCodeClientSide(
       _selectedLang,
       _codeController.text,
     );
     if (validationError != null) {
-      setState(() {
-        _output = {'message': '❌ $validationError'};
+      ref.read(practiceProvider.notifier).setOutput({
+        'message': '❌ $validationError',
       });
       return;
     }
 
-    setState(() {
-      _isRunning = true;
-    });
+    final mockResult = await _executeMock(_selectedLang, _codeController.text);
 
-    try {
-      final payload = {
-        'language': _selectedLang.pistonName,
-        'version': '*',
-        'files': [
-          {'name': _selectedLang.filename, 'content': _codeController.text},
-        ],
-      };
-
-      final response = await http
-          .post(
-            Uri.parse(executionApiUrl),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 3));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['run'] != null) {
-          setState(() {
-            _output = {
-              'stdout': data['run']['stdout'],
-              'stderr': data['run']['stderr'],
-              'message': data['run']['code'] != 0
-                  ? 'Process exited with code ${data['run']['code']}'
-                  : null,
-            };
-          });
-        } else {
-          setState(() {
-            _output = {'message': '❌ Invalid response.'};
-          });
-        }
-      } else {
-        final mockResult = await _executeMock(
-          _selectedLang,
-          _codeController.text,
+    await ref
+        .read(practiceProvider.notifier)
+        .runCode(
+          pistonName: _selectedLang.pistonName,
+          filename: _selectedLang.filename,
+          code: _codeController.text,
+          mockResult: mockResult,
         );
-        setState(() {
-          _output = mockResult;
-        });
-      }
-    } catch (e) {
-      final mockResult = await _executeMock(
-        _selectedLang,
-        _codeController.text,
-      );
-      setState(() {
-        _output = mockResult;
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isRunning = false;
-        });
-      }
-    }
   }
 
   void _showLanguageSelector(BuildContext context) {
@@ -314,7 +270,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         setState(() {
                           _selectedLang = lang;
                           _codeController.text = lang.startCode;
-                          _output = null;
+                          ref.read(practiceProvider.notifier).clearOutput();
                         });
                         Navigator.pop(context);
                       },
@@ -332,6 +288,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget _buildEditor(bool isFull) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
+    final practiceState = ref.watch(practiceProvider);
+    final isRunning = practiceState.isRunning;
+    final output = practiceState.output;
 
     return Container(
       decoration: BoxDecoration(
@@ -405,21 +364,21 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   children: [
                     if (isFull)
                       InkWell(
-                        onTap: _isRunning ? null : _handleRunCode,
+                        onTap: isRunning ? null : _handleRunCode,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _isRunning
+                            color: isRunning
                                 ? const Color(0xFF1E40AF)
                                 : const Color(0xFF2563EB),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
-                              _isRunning
+                              isRunning
                                   ? const SizedBox(
                                       width: 14,
                                       height: 14,
@@ -433,7 +392,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                       size: 14,
                                       color: Colors.white,
                                     ),
-                              if (!_isRunning) ...[
+                              if (!isRunning) ...[
                                 const SizedBox(width: 6),
                                 const Text(
                                   'RUN',
@@ -462,11 +421,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                 backgroundColor:
                                     themeExt.scaffoldBackgroundColor,
                                 body: SafeArea(
-                                  child: WillPopScope(
-                                    onWillPop: () async {
+                                  child: PopScope(
+                                    canPop: true,
+                                    onPopInvokedWithResult: (didPop, result) {
                                       // Trigger a rebuild when coming back so state syncs
-                                      setState(() {});
-                                      return true;
+                                      if (didPop) setState(() {});
                                     },
                                     child: _buildEditor(true),
                                   ),
@@ -553,9 +512,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
                             letterSpacing: 1.2,
                           ),
                         ),
-                        if (_output != null)
+                        if (output != null)
                           InkWell(
-                            onTap: () => setState(() => _output = null),
+                            onTap: () => ref
+                                .read(practiceProvider.notifier)
+                                .clearOutput(),
                             child: const Text(
                               'CLEAR',
                               style: TextStyle(
@@ -571,7 +532,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
-                      child: _isRunning
+                      child: isRunning
                           ? const Row(
                               children: [
                                 SizedBox(
@@ -593,15 +554,15 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                 ),
                               ],
                             )
-                          : _output != null
+                          : output != null
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (_output!['message'] != null)
+                                if (output['message'] != null)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 8),
                                     child: Text(
-                                      _output!['message'],
+                                      output['message'],
                                       style: const TextStyle(
                                         color: Color(0xFFF87171),
                                         fontSize: 12,
@@ -610,8 +571,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                       ),
                                     ),
                                   ),
-                                if (_output!['stderr'] != null &&
-                                    _output!['stderr'].isNotEmpty)
+                                if (output['stderr'] != null &&
+                                    output['stderr'].isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 8),
                                     child: Column(
@@ -628,7 +589,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          _output!['stderr'],
+                                          output['stderr'],
                                           style: const TextStyle(
                                             color: Color(0xFFFECACA),
                                             fontSize: 12,
@@ -638,8 +599,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                       ],
                                     ),
                                   ),
-                                if (_output!['stdout'] != null &&
-                                    _output!['stdout'].isNotEmpty)
+                                if (output['stdout'] != null &&
+                                    output['stdout'].isNotEmpty)
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -654,7 +615,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        _output!['stdout'],
+                                        output['stdout'],
                                         style: const TextStyle(
                                           color: Color(0xFF86EFAC),
                                           fontSize: 12,
@@ -691,18 +652,18 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 ),
               ),
               child: InkWell(
-                onTap: _isRunning ? null : _handleRunCode,
+                onTap: isRunning ? null : _handleRunCode,
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: _isRunning
+                    color: isRunning
                         ? const Color(0xFF60A5FA)
                         : const Color(0xFF2563EB),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      if (!_isRunning)
+                      if (!isRunning)
                         BoxShadow(
                           color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
                           blurRadius: 10,
@@ -711,7 +672,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: _isRunning
+                  child: isRunning
                       ? const SizedBox(
                           width: 16,
                           height: 16,

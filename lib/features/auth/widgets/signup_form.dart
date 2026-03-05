@@ -61,6 +61,25 @@ class _SignupFormState extends State<SignupForm> {
     });
   }
 
+  void _register() async {
+    // setState(() => _isLoading = true);
+    // await ref.read(authProvider.notifier).register({
+    //   'firstName': _firstNameController.text.trim(),
+    //   'lastName': _lastNameController.text.trim(),
+    //   'email': _emailController.text.trim(),
+    //   'password': _passwordController.text.trim(),
+    //   'role': 'user', // Default to typical user
+    // });
+    // setState(() => _isLoading = false);
+
+    // final error = ref.read(authProvider).error;
+    // if (error != null && mounted) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text(error)));
+    // }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -237,7 +256,7 @@ class _SignupFormState extends State<SignupForm> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: _register,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,

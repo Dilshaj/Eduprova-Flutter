@@ -1,16 +1,23 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:eduprova/features/communication/providers/doubts_provider.dart';
+import 'package:eduprova/features/communication/providers/ai_provider.dart';
+import 'package:intl/intl.dart';
 
-class AskDoubtsScreen extends StatefulWidget {
-  const AskDoubtsScreen({super.key});
+class AskDoubtsScreen extends ConsumerStatefulWidget {
+  final String courseId;
+  final String? lectureId;
+
+  const AskDoubtsScreen({super.key, required this.courseId, this.lectureId});
 
   @override
-  State<AskDoubtsScreen> createState() => _AskDoubtsScreenState();
+  ConsumerState<AskDoubtsScreen> createState() => _AskDoubtsScreenState();
 }
 
-class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
-  String _activeToggle = 'AI'; // 'AI' or 'COMMUNITY'
+class _AskDoubtsScreenState extends ConsumerState<AskDoubtsScreen> {
+  String _activeToggle = 'COMMUNITY'; // Changed default to COMMUNITY for now
   final ScrollController _aiScrollController = ScrollController();
 
   // AI Chat State
@@ -18,38 +25,10 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
   final TextEditingController _aiInputController = TextEditingController();
 
   // Community Doubts State
-  bool _modalVisible = false;
   final TextEditingController _doubtTitleController = TextEditingController();
   final TextEditingController _doubtExplanationController =
       TextEditingController();
   final TextEditingController _doubtTagsController = TextEditingController();
-
-  final List<Map<String, dynamic>> _doubts = [
-    {
-      'id': '1',
-      'user': {'name': 'Rahul S.', 'avatar': 'RS'},
-      'time': '2H AGO',
-      'title': 'How do I center a div using Grid?',
-      'description':
-          'I have tried using justify-content and align-items but it is not working as expected.',
-      'tags': ['CSS', 'Grid'],
-      'status': 'OPEN',
-      'comments': 3,
-      'views': 45,
-    },
-    {
-      'id': '2',
-      'user': {'name': 'Simran K.', 'avatar': 'SK'},
-      'time': '5H AGO',
-      'title': 'Is this compatible with older browsers?',
-      'description':
-          'Trying to use the new clamp() function but worried about support.',
-      'tags': ['CSS', 'Compatibility'],
-      'status': 'PENDING',
-      'comments': 1,
-      'views': 12,
-    },
-  ];
 
   @override
   void initState() {
@@ -66,32 +45,60 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
     super.dispose();
   }
 
-  void _handleSendAI() {
-    if (_aiInputController.text.trim().isEmpty) return;
+  Future<void> _handleSendAI() async {
+    final query = _aiInputController.text.trim();
+    if (query.isEmpty) return;
 
     setState(() {
       _messages.add({
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'text': _aiInputController.text,
+        'text': query,
         'sender': 'user',
       });
       _aiInputController.clear();
+      // Add a loading placeholder
+      _messages.add({'id': 'loading', 'text': 'Thinking...', 'sender': 'ai'});
     });
 
     _scrollToBottom();
 
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      if (!mounted) return;
-      setState(() {
-        _messages.add({
-          'id': (DateTime.now().millisecondsSinceEpoch + 1).toString(),
-          'text':
-              "I'm analyzing your doubt... standard AI response placeholder.",
-          'sender': 'ai',
+    try {
+      final response = await ref
+          .read(aiProvider)
+          .askAi(
+            query: query,
+            courseId: widget.courseId,
+            lectureId: widget.lectureId,
+          );
+
+      if (mounted) {
+        setState(() {
+          // Remove loading placeholder
+          _messages.removeWhere((msg) => msg['id'] == 'loading');
+
+          _messages.add({
+            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'text': response,
+            'sender': 'ai',
+          });
         });
-      });
-      _scrollToBottom();
-    });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          // Remove loading placeholder
+          _messages.removeWhere((msg) => msg['id'] == 'loading');
+
+          _messages.add({
+            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+            'text': 'Error: Failed to connect to AI tutor. Please try again.',
+            'sender': 'ai',
+          });
+        });
+        _scrollToBottom();
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -109,7 +116,7 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
   void _openModal() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.25),
+      barrierColor: Colors.black.withOpacity(0.25),
       builder: (BuildContext dialogContext) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -351,34 +358,39 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
     );
   }
 
-  void _handlePostDoubt() {
+  Future<void> _handlePostDoubt() async {
     if (_doubtTitleController.text.trim().isEmpty ||
         _doubtExplanationController.text.trim().isEmpty) {
       return;
     }
 
-    final tags = _doubtTagsController.text
-        .split(',')
-        .where((t) => t.trim().isNotEmpty)
-        .map((t) => t.trim())
-        .toList();
+    final success = await ref
+        .read(allDoubtsProvider.notifier)
+        .createDoubt(
+          courseId: widget.courseId,
+          lectureId:
+              widget.lectureId ??
+              '', // Requires a lecture ID based on schema, handle gracefully
+          title: _doubtTitleController.text.trim(),
+          content: _doubtExplanationController.text.trim(),
+        );
 
-    final newPost = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'user': {'name': 'You', 'avatar': 'ME'},
-      'time': 'Just now',
-      'title': _doubtTitleController.text,
-      'description': _doubtExplanationController.text,
-      'tags': tags,
-      'status': 'OPEN',
-      'comments': 0,
-      'views': 0,
-    };
+    if (mounted) {
+      if (success) {
+        // Clear inputs after success
+        _doubtTitleController.clear();
+        _doubtExplanationController.clear();
+        _doubtTagsController.clear();
 
-    setState(() {
-      _doubts.insert(0, newPost);
-    });
-    // Fields are cleared when the dialog closes
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Doubt posted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to post doubt')));
+      }
+    }
   }
 
   Widget _buildAskBtn({
@@ -439,7 +451,6 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: themeExt.scaffoldBackgroundColor,
@@ -702,6 +713,9 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
 
+    final doubtsState = ref.watch(doubtsProvider(widget.courseId));
+    final doubts = doubtsState.doubts;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
       child: CustomScrollView(
@@ -773,7 +787,7 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'COMMUNITY DOUBTS (${_doubts.length})',
+                'COMMUNITY DOUBTS (${doubts.length})',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -785,205 +799,235 @@ class _AskDoubtsScreenState extends State<AskDoubtsScreen> {
               ),
             ),
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final doubt = _doubts[index];
-              final isOpen = doubt['status'] == 'OPEN';
-              final themeExt = Theme.of(
-                context,
-              ).extension<AppDesignExtension>()!;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: themeExt.cardColor,
-                  border: Border.all(color: themeExt.borderColor),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+          if (doubtsState.isLoading && doubts.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            )
+          else if (doubtsState.error != null && doubts.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(child: Text(doubtsState.error!)),
+              ),
+            )
+          else if (doubts.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: Text(
+                    'No doubts yet. Be the first to ask!',
+                    style: TextStyle(color: themeExt.secondaryText),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              margin: const EdgeInsets.only(right: 12),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                doubt['user']['avatar'],
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final doubt = doubts[index];
+                final isOpen = !doubt.isResolved;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: themeExt.cardColor,
+                    border: Border.all(color: themeExt.borderColor),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
                                 ),
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  doubt['user']['name'],
+                                alignment: Alignment.center,
+                                child: Text(
+                                  doubt.user.name.isNotEmpty
+                                      ? doubt.user.name[0].toUpperCase()
+                                      : '?',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: Theme.of(
                                       context,
-                                    ).colorScheme.onSurface,
+                                    ).colorScheme.primary,
                                   ),
                                 ),
-                                Text(
-                                  doubt['time'],
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: themeExt.secondaryText,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    doubt.user.name,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                                  Text(
+                                    DateFormat.yMMMd().format(doubt.createdAt),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: themeExt.secondaryText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          decoration: BoxDecoration(
-                            color: isOpen
-                                ? const Color(0xFF16A34A).withValues(alpha: 0.1)
-                                : const Color(
-                                    0xFFF97316,
-                                  ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            doubt['status'],
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isOpen
-                                  ? const Color(0xFF16A34A)
-                                  : const Color(0xFFF97316),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      doubt['title'],
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      doubt['description'],
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: themeExt.secondaryText,
-                        height: 1.5,
-                      ),
-                    ),
-                    if ((doubt['tags'] as List).isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: (doubt['tags'] as List<String>).map((tag) {
-                          return Container(
+                          Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: themeExt.skeletonBase,
-                              border: Border.all(color: themeExt.borderColor),
-                              borderRadius: BorderRadius.circular(8),
+                              color: isOpen
+                                  ? const Color(
+                                      0xFF16A34A,
+                                    ).withValues(alpha: 0.1)
+                                  : const Color(
+                                      0xFFF97316,
+                                    ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              tag,
+                              isOpen ? 'OPEN' : 'RESOLVED',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: themeExt.secondaryText,
+                                fontWeight: FontWeight.bold,
+                                color: isOpen
+                                    ? const Color(0xFF16A34A)
+                                    : const Color(0xFFF97316),
                               ),
                             ),
-                          );
-                        }).toList(),
+                          ),
+                        ],
                       ),
-                    ],
-                    const SizedBox(height: 12),
-                    Divider(
-                      color: themeExt.borderColor,
-                      height: 1,
-                      thickness: 1,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.chat_bubble_outline,
-                              size: 14,
-                              color: themeExt.secondaryText,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${doubt['comments']} answers',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: themeExt.secondaryText,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 12),
+                      Text(
+                        doubt.title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.remove_red_eye_outlined,
-                              size: 14,
-                              color: themeExt.secondaryText,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${doubt['views']} views',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: themeExt.secondaryText,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        doubt.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: themeExt.secondaryText,
+                          height: 1.5,
+                        ),
+                      ),
+                      if (doubt.tags.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: doubt.tags.map((tag) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                            ),
-                          ],
+                              decoration: BoxDecoration(
+                                color: themeExt.skeletonBase,
+                                border: Border.all(color: themeExt.borderColor),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: themeExt.secondaryText,
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              );
-            }, childCount: _doubts.length),
-          ),
+                      const SizedBox(height: 12),
+                      Divider(
+                        color: themeExt.borderColor.withValues(alpha: 0.5),
+                        height: 1,
+                        thickness: 1,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 14,
+                                color: themeExt.secondaryText,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${doubt.replies.length} answers',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: themeExt.secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.remove_red_eye_outlined,
+                                size: 14,
+                                color: themeExt.secondaryText,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${doubt.views} views',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: themeExt.secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }, childCount: doubts.length),
+            ),
         ],
       ),
     );

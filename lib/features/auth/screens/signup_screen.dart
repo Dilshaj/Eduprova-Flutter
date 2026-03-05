@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:eduprova/auth/widgets/background_orbits.dart';
+import 'package:eduprova/features/auth/widgets/background_orbits.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

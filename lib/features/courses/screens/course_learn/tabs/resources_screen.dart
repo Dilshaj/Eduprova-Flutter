@@ -1,90 +1,85 @@
+import 'package:eduprova/features/courses/models/course_detail_model.dart';
 import 'package:flutter/material.dart';
 import 'package:eduprova/theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ResourcesScreen extends StatelessWidget {
-  const ResourcesScreen({super.key});
+  final List<AttachmentModel> resources;
+  const ResourcesScreen({super.key, required this.resources});
 
-  void _handleDownload(BuildContext context, Map<String, dynamic> item) {
-    // Simulate Download
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Starting download for ${item['title']}')),
-    );
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${item['title']} has been downloaded to your device.',
-            ),
-          ),
-        );
+  Future<void> _handleDownload(
+    BuildContext context,
+    AttachmentModel item,
+  ) async {
+    final url = Uri.parse(item.url);
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open ${item.title}')),
+          );
+        }
       }
-    });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return Icons.description_outlined;
+      case 'zip':
+      case 'rar':
+        return Icons.folder_zip_outlined;
+      case 'doc':
+      case 'docx':
+        return Icons.article_outlined;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart_outlined;
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+        return Icons.image_outlined;
+      default:
+        return Icons.insert_drive_file_outlined;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> resources = [
-      {
-        'id': 1,
-        'title': 'Lecture Slides.pdf',
-        'size': '2.4 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-      {
-        'id': 2,
-        'title': 'Project Starter Files.zip',
-        'size': '15 MB',
-        'type': 'zip',
-        'icon': Icons.folder_open_outlined,
-      },
-      {
-        'id': 3,
-        'title': 'Cheat Sheet - Module 1.pdf',
-        'size': '1.1 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-      {
-        'id': 4,
-        'title': 'Cheat Sheet - Module 1.pdf',
-        'size': '1.1 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-      {
-        'id': 5,
-        'title': 'Cheat Sheet - Module 1.pdf',
-        'size': '1.1 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-      {
-        'id': 6,
-        'title': 'Cheat Sheet - Module 1.pdf',
-        'size': '1.1 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-      {
-        'id': 7,
-        'title': 'Cheat Sheet - Module 1.pdf',
-        'size': '1.1 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-      {
-        'id': 8,
-        'title': 'Cheat Sheet - Module 1.pdf',
-        'size': '1.1 MB',
-        'type': 'pdf',
-        'icon': Icons.description_outlined,
-      },
-    ];
-
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
+
+    if (resources.isEmpty) {
+      return Scaffold(
+        backgroundColor: themeExt.scaffoldBackgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.folder_off_outlined,
+                size: 64,
+                color: themeExt.secondaryText.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No resources available for this course.',
+                style: TextStyle(color: themeExt.secondaryText, fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: themeExt.scaffoldBackgroundColor,
@@ -92,7 +87,7 @@ class ResourcesScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
         child: ListView.separated(
           itemCount: resources.length,
-          padding: .only(top: 48),
+          padding: .only(top: 48, bottom: 24),
           separatorBuilder: (context, index) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final item = resources[index];
@@ -103,87 +98,60 @@ class ResourcesScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: themeExt.cardColor,
-                  border: Border.all(color: themeExt.borderColor),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: themeExt.borderColor.withValues(alpha: 0.5),
+                  ),
                   boxShadow: [
-                    if (themeExt.shadowColor != Colors.transparent)
-                      BoxShadow(
-                        color: themeExt.shadowColor,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
+                    BoxShadow(
+                      color: themeExt.shadowColor.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
-                    // Icon Box
                     Container(
                       width: 48,
                       height: 48,
-                      margin: const EdgeInsets.only(right: 16),
                       decoration: BoxDecoration(
                         color: colorScheme.primary.withValues(alpha: 0.1),
-                        border: Border.all(
-                          color: colorScheme.primary.withValues(alpha: 0.2),
-                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      alignment: Alignment.center,
                       child: Icon(
-                        item['icon'],
-                        size: 24,
+                        _getIconForType(item.type),
                         color: colorScheme.primary,
                       ),
                     ),
-
-                    // Info
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item['title'],
-                            style: TextStyle(
-                              fontSize: 14,
+                            item.title,
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
+                              fontSize: 15,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            item['size'],
+                            item.type.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
                               color: themeExt.secondaryText,
-                              letterSpacing: 1.2,
+                              fontSize: 12,
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    // Download Button
-                    InkWell(
-                      onTap: () => _handleDownload(context, item),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: themeExt.skeletonBase,
-                          border: Border.all(color: themeExt.borderColor),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.file_download_outlined,
-                          size: 20,
-                          color: themeExt.secondaryText,
-                        ),
-                      ),
+                    Icon(
+                      Icons.file_download_outlined,
+                      color: themeExt.secondaryText,
                     ),
                   ],
                 ),

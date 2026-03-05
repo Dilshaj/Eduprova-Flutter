@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:eduprova/auth/widgets/background_orbits.dart';
-import 'package:eduprova/auth/widgets/login_form.dart';
-import 'package:eduprova/auth/widgets/signup_form.dart';
+import 'package:eduprova/features/auth/widgets/background_orbits.dart';
+import 'package:eduprova/features/auth/widgets/login_form.dart';
+import 'package:eduprova/features/auth/widgets/signup_form.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

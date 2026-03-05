@@ -77,6 +77,8 @@ class ProgressModel {
   final String courseId;
   final List<String> completedLectures;
   final num percentComplete;
+  final String? lastAccessedLectureId;
+  final Map<String, num> videoWatchTimes;
 
   ProgressModel({
     required this.id,
@@ -84,6 +86,8 @@ class ProgressModel {
     required this.courseId,
     required this.completedLectures,
     required this.percentComplete,
+    this.lastAccessedLectureId,
+    this.videoWatchTimes = const {},
   });
 
   factory ProgressModel.fromJson(Map<String, dynamic> json) {
@@ -95,6 +99,12 @@ class ProgressModel {
         (json['completedLectures'] as List?)?.map((l) => l.toString()) ?? [],
       ),
       percentComplete: json['percentComplete'] ?? 0,
+      lastAccessedLectureId: json['lastAccessedLectureId'],
+      videoWatchTimes:
+          (json['videoWatchTimes'] as Map<String, dynamic>?)?.map(
+            (key, value) => MapEntry(key, value as num),
+          ) ??
+          const {},
     );
   }
 }

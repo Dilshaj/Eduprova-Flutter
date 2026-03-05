@@ -1,3 +1,4 @@
+import 'package:eduprova/features/courses/models/course_detail_model.dart';
 import 'package:eduprova/features/courses/widgets/video_player.dart';
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
@@ -402,11 +403,27 @@ class _CourseContinueScreenState extends State<CourseContinueScreen>
             controller: _mainTabController,
             children: [
               _buildLessonsList(),
-              const AskDoubtsScreen(),
+              const AskDoubtsScreen(courseId: ''),
               const PracticeScreen(),
               const NotesScreen(),
-              const ResourcesScreen(),
-              const MessagesScreen(),
+              ResourcesScreen(
+                resources: (_sections as List)
+                    .expand((s) {
+                      final lessons = (s as Map)['lessons'] as List? ?? [];
+                      return lessons.expand((l) {
+                        final attachments =
+                            (l as Map)['attachments'] as List? ?? [];
+                        return attachments.map(
+                          (a) => AttachmentModel.fromJson(
+                            a as Map<String, dynamic>,
+                          ),
+                        );
+                      });
+                    })
+                    .toList()
+                    .cast<AttachmentModel>(),
+              ),
+              const MessagesScreen(courseId: ''),
             ],
           ),
         ),

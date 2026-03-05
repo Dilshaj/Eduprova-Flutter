@@ -246,7 +246,6 @@ class NotesScreen extends StatefulWidget {
 }
 
 class _NotesScreenState extends State<NotesScreen> {
-  bool _isFullScreen = false;
   String _noteContent = '';
   late WebViewController _webViewController;
   EditorState _editorState = EditorState.initial();
