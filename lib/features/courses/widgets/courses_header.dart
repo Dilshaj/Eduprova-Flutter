@@ -16,7 +16,7 @@ class CoursesHeader extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      color: themeExt.scaffoldBackgroundColor,
+      // color: themeExt.scaffoldBackgroundColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

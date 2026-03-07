@@ -1,3 +1,4 @@
+import 'package:eduprova/features/ai_interview/page.dart';
 import 'package:eduprova/features/auth/screens/login_screen.dart';
 import 'package:eduprova/features/auth/screens/signup_screen.dart';
 import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
@@ -235,6 +236,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final contactId = state.pathParameters['id']!;
           return ChatProfileScreen(id: contactId);
+        },
+      ),
+
+      GoRoute(
+        path: '/ai-interview',
+        builder: (context, state) {
+          return AiInterviewPage();
         },
       ),
     ],

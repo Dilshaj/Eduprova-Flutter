@@ -716,18 +716,20 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       backgroundColor: themeExt.scaffoldBackgroundColor,
       resizeToAvoidBottomInset:
           false, // Prevent terminal crushing on keyboard open
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: _buildEditor(false),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24 + 48, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: _buildEditor(false),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/home/bottom_nav/bottom_nav4.dart';
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
 import 'package:eduprova/core/widgets/dev_server_config_dialog.dart';
@@ -174,7 +175,9 @@ class MainLayout extends StatelessWidget {
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     ListTile(
                       title: const Text('Interview Assistant'),
-                      onTap: () {},
+                      onTap: () {
+                        context.push(AppRoutes.aiInterview);
+                      },
                     ),
                   ],
                 ),

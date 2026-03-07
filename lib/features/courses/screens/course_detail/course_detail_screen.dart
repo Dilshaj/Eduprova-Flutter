@@ -6,6 +6,7 @@ import 'package:eduprova/theme.dart';
 import 'package:eduprova/core/widgets/app_loaders.dart';
 import 'package:eduprova/core/widgets/app_video_player.dart';
 import 'package:eduprova/core/widgets/shimmer_loading.dart';
+import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
@@ -164,7 +165,12 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
           child: Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: _buildAppBar(),
-            body: _buildBody(course),
+            body: Stack(
+              children: [
+                // AppBackground(),
+                _buildBody(course),
+              ],
+            ),
             bottomNavigationBar: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
               switchInCurve: Curves.easeOutCubic,

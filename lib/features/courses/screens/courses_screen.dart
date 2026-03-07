@@ -1,4 +1,5 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
+import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,10 +86,11 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
         backgroundColor: themeExt.scaffoldBackgroundColor,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Column(
+        body: Stack(
+          children: [
+            AppBackground(),
+            SafeArea(
+              child: Column(
                 children: [
                   const CoursesHeader(),
                   Expanded(
@@ -437,74 +439,73 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                   ),
                 ],
               ),
+            ),
 
-              // FILTER MODAL (truncated for readability)
-              if (filterModalVisible)
-                GestureDetector(
-                  onTap: () => setState(() => filterModalVisible = false),
-                  child: Container(
-                    color: Colors.black54,
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.all(20),
-                    child: GestureDetector(
-                      onTap: () {}, // Prevent tap from closing
-                      child: Container(
-                        width: double.infinity,
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.height * 0.8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: themeExt.cardColor,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: themeExt.shadowColor,
-                              spreadRadius: 5,
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Filter',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface,
+            // FILTER MODAL (truncated for readability)
+            if (filterModalVisible)
+              GestureDetector(
+                onTap: () => setState(() => filterModalVisible = false),
+                child: Container(
+                  color: Colors.black54,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(20),
+                  child: GestureDetector(
+                    onTap: () {}, // Prevent tap from closing
+                    child: Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: themeExt.cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: themeExt.shadowColor,
+                            spreadRadius: 5,
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Filter',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () =>
+                                    setState(() => filterModalVisible = false),
+                                behavior: HitTestBehavior.opaque,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 24,
+                                    color: themeExt.secondaryText,
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () => setState(
-                                    () => filterModalVisible = false,
-                                  ),
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 24,
-                                      color: themeExt.secondaryText,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // Filter content can be restored if needed
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                          // Filter content can be restored if needed
+                        ],
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

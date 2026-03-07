@@ -32,5 +32,9 @@
 	<string>This app requires access to the photo library to upload images.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app requires access to the camera to take profile pictures.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app requires access to speech recognition for the AI interview feature.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to the microphone for the AI interview feature.</string>
 </dict>
 </plist>

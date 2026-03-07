@@ -26,4 +26,7 @@ class AppRoutes {
   // Status or Stories
   static const String createStory = '/create-story';
   static String statusPager(String id) => '/status/$id';
+
+  // AI Interview
+  static const String aiInterview = '/ai-interview';
 }

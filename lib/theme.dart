@@ -99,6 +99,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           color: Colors.white,
           fontSize: 18,
@@ -108,7 +109,8 @@ class AppTheme {
       extensions: [
         AppDesignExtension(
           // cardColor: const Color(0xFF1F2937),
-          cardColor: const Color.fromARGB(255, 23, 31, 41),
+          // cardColor: const Color(0xFF171F29),
+          cardColor: const Color(0xFF1A1A28),
           borderColor: const Color(0xFF374151),
           secondaryText: const Color(0xFF9CA3AF),
           shadowColor: Colors.black.withValues(alpha: 0.3),
