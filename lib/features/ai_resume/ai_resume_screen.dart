@@ -1,7 +1,7 @@
 import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme.dart';
+import '../../theme/theme.dart';
 import 'widgets/section_list_view.dart';
 import 'widgets/design_view.dart';
 import 'widgets/preview_view.dart';

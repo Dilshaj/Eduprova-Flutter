@@ -1,5 +1,5 @@
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';

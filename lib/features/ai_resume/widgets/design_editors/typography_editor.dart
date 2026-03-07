@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 

@@ -1,7 +1,8 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -82,65 +83,27 @@ class _LanguageItemEditorState extends ConsumerState<LanguageItemEditor> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildTextField(
+            BasicInput(
               controller: _languageController,
               label: 'Language',
               hint: 'e.g. English, Spanish',
-              themeExt: themeExt,
             ),
             const SizedBox(height: 16),
-            _buildTextField(
+            BasicInput(
               controller: _fluencyController,
               label: 'Fluency',
               hint: 'e.g. Native, Fluent, Basic',
-              themeExt: themeExt,
             ),
             const SizedBox(height: 16),
-            _buildTextField(
+            BasicInput(
               controller: _levelController,
               label: 'Level (0-5)',
               hint: 'e.g. 5 for Native',
               keyboardType: .number,
-              themeExt: themeExt,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required AppDesignExtension themeExt,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          decoration: .new(
-            hintText: hint,
-            filled: true,
-            fillColor: themeExt.cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            contentPadding: const EdgeInsets.all(16),
-          ),
-        ),
-      ],
     );
   }
 }

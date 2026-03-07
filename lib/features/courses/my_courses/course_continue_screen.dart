@@ -1,6 +1,6 @@
 import 'package:eduprova/features/courses/core/models/course_detail_model.dart';
 import 'package:eduprova/features/courses/widgets/video_player.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 
 // Assuming these paths match the generated dart files structure

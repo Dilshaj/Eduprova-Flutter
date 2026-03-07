@@ -15,7 +15,7 @@ import '../../../core/widgets/app_video_player.dart';
 import '../core/models/course_detail_model.dart';
 import '../core/providers/course_detail_provider.dart';
 import '../core/providers/progress_provider.dart';
-import '../../../theme.dart';
+import '../../../theme/theme.dart';
 
 // import 'tabs/ask_doubts_screen.dart';
 import 'tabs/practice_screen.dart';

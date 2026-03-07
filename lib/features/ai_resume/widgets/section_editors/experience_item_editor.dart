@@ -1,6 +1,7 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -105,52 +106,40 @@ class _ExperienceItemEditorState extends ConsumerState<ExperienceItemEditor> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildField(
-              'Company',
-              _companyController,
-              'e.g. Google',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Company',
+              controller: _companyController,
+              hint: 'e.g. Google',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Position',
-              _positionController,
-              'e.g. Senior Developer',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Position',
+              controller: _positionController,
+              hint: 'e.g. Senior Developer',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Period',
-              _periodController,
-              'e.g. Jan 2020 - Present',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Period',
+              controller: _periodController,
+              hint: 'e.g. Jan 2020 - Present',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Location',
-              _locationController,
-              'e.g. Mountain View, CA',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Location',
+              controller: _locationController,
+              hint: 'e.g. Mountain View, CA',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Website',
-              _websiteController,
-              'https://google.com',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Website',
+              controller: _websiteController,
+              hint: 'https://google.com',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Description',
-              _descriptionController,
-              'Describe your roles and responsibilities...',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Description',
+              controller: _descriptionController,
+              hint: 'Describe your roles and responsibilities...',
               maxLines: 5,
             ),
           ],

@@ -186,7 +186,7 @@ import 'dart:ui';
 
 import 'package:eduprova/features/home/posts/post.dart';
 import 'package:eduprova/features/home/storie/view_storie/stories_row.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

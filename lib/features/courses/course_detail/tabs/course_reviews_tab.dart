@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eduprova/features/courses/core/providers/course_review_provider.dart';
 import 'package:eduprova/features/courses/core/models/course_detail_model.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:intl/intl.dart';
 
 class CourseReviewsTab extends ConsumerWidget {

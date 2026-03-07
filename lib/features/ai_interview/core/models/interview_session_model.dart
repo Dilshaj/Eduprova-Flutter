@@ -1,3 +1,5 @@
+import 'interview_feedback_model.dart';
+
 class InterviewQuestion {
   final String question;
   final String topic;
@@ -94,6 +96,7 @@ class InterviewSession {
   final List<InterviewTranscript> transcript;
   final int currentQuestionIndex;
   final String? feedbackId;
+  final InterviewFeedback? feedback;
   final DateTime? startedAt;
   final DateTime? completedAt;
   final DateTime? createdAt;
@@ -107,12 +110,25 @@ class InterviewSession {
     required this.transcript,
     required this.currentQuestionIndex,
     this.feedbackId,
+    this.feedback,
     this.startedAt,
     this.completedAt,
     this.createdAt,
   });
 
   factory InterviewSession.fromJson(Map<String, dynamic> json) {
+    final rawFeedback = json['feedbackId'];
+    String? feedbackId;
+    InterviewFeedback? feedback;
+
+    if (rawFeedback is String) {
+      feedbackId = rawFeedback;
+    } else if (rawFeedback is Map<String, dynamic>) {
+      feedbackId =
+          rawFeedback['_id'] as String? ?? rawFeedback['id'] as String?;
+      feedback = InterviewFeedback.fromJson(rawFeedback);
+    }
+
     return InterviewSession(
       id: (json['_id'] ?? json['id'] ?? '') as String,
       type: (json['type'] ?? '') as String,
@@ -128,7 +144,8 @@ class InterviewSession {
           .toList(),
       currentQuestionIndex:
           (json['currentQuestionIndex'] as num?)?.toInt() ?? 0,
-      feedbackId: json['feedbackId'] as String?,
+      feedbackId: feedbackId,
+      feedback: feedback,
       startedAt: json['startedAt'] != null
           ? DateTime.tryParse(json['startedAt'] as String? ?? '')
           : null,

@@ -1,6 +1,6 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/features/home/main_layout.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'courses_menu_modal.dart';
 import '../../../core/navigation/app_routes.dart';

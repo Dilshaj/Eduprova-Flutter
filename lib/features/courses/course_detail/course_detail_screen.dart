@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:eduprova/features/courses/core/models/course_detail_model.dart';
 import 'package:eduprova/features/courses/core/models/course_model.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/core/widgets/app_loaders.dart';
 import 'package:eduprova/core/widgets/app_video_player.dart';
 import 'package:eduprova/core/widgets/shimmer_loading.dart';

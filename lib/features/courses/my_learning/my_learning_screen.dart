@@ -1,5 +1,5 @@
 import 'package:eduprova/features/courses/my_learning/enrolled_courses_provider.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

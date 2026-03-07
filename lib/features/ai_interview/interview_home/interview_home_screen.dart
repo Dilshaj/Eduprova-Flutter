@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/agent.dart';
 import '../analytics/analytics_screen.dart';
 import '../history/history_screen.dart';
-import '../widgets/interview_resume_setup_screen.dart';
-import '../widgets/interview_setup_screen.dart';
+import '../widgets/refined_unified_setup_screen.dart';
 
 class AiInterviewHomeScreen extends StatefulWidget {
   const AiInterviewHomeScreen({super.key});
@@ -421,7 +420,10 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const PracticePreviewPage(),
+                    builder: (context) =>
+                        const RefinedUnifiedInterviewSetupPage(
+                          initialTabIndex: 0,
+                        ),
                   ),
                 );
               },
@@ -466,7 +468,10 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const InterviewPage(),
+                    builder: (context) =>
+                        const RefinedUnifiedInterviewSetupPage(
+                          initialTabIndex: 1,
+                        ),
                   ),
                 );
               },

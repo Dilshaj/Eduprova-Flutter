@@ -13,7 +13,7 @@ import 'courses_header.dart';
 import 'horizontal_course_row.dart';
 import '../widgets/skeleton_loader.dart';
 
-import '../../../theme.dart';
+import '../../../theme/theme.dart';
 import '../core/models/course_model.dart';
 import '../core/providers/course_provider.dart';
 

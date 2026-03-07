@@ -1,9 +1,10 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -84,12 +85,12 @@ class _PictureEditorState extends ConsumerState<PictureEditor> {
               themeExt,
             ),
             const SizedBox(height: 24),
-            _buildTextField(
+            BasicInput(
               controller: _urlController,
               label: 'Picture URL',
               hint: 'https://example.com/photo.jpg',
-              onChanged: (val) => _update(picture.copyWith(url: val)),
-              themeExt: themeExt,
+              // onChanged: (val) => _update(picture.copyWith(url: val)),
+              // themeExt: themeExt,
             ),
             const SizedBox(height: 32),
             Text(

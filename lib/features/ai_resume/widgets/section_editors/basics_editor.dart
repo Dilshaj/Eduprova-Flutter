@@ -1,6 +1,7 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -73,116 +74,48 @@ class _BasicsEditorState extends ConsumerState<BasicsEditor> {
         child: Column(
           crossAxisAlignment: .start,
           children: [
-            _buildField(
-              'Full Name',
-              _nameController,
-              'e.g. John Doe',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Full Name',
+              controller: _nameController,
+              hint: 'e.g. John Doe',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Headline',
-              _headlineController,
-              'e.g. Senior Software Engineer',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Headline',
+              controller: _headlineController,
+              hint: 'e.g. Senior Software Engineer',
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildField(
-                    'Email',
-                    _emailController,
-                    'john@example.com',
-                    theme,
-                    themeExt,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildField(
-                    'Phone',
-                    _phoneController,
-                    '+1 123 456 7890',
-                    theme,
-                    themeExt,
-                    keyboardType: TextInputType.phone,
-                  ),
-                ),
-              ],
+            BasicInput(
+              label: 'Email',
+              controller: _emailController,
+              hint: 'john@example.com',
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Location',
-              _locationController,
-              'e.g. New York, USA',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Phone',
+              controller: _phoneController,
+              hint: '+1 123 456 7890',
+              keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Website',
-              _websiteController,
-              'https://johndoe.com',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Location',
+              controller: _locationController,
+              hint: 'e.g. New York, USA',
+            ),
+            const SizedBox(height: 16),
+            BasicInput(
+              label: 'Website',
+              controller: _websiteController,
+              hint: 'https://johndoe.com',
               keyboardType: TextInputType.url,
             ),
             const SizedBox(height: 32),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildField(
-    String label,
-    TextEditingController controller,
-    String hint,
-    ThemeData theme,
-    AppDesignExtension themeExt, {
-    TextInputType? keyboardType,
-  }) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: themeExt.secondaryText.withValues(alpha: 0.5),
-            ),
-            filled: true,
-            fillColor: themeExt.cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: theme.colorScheme.primary),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

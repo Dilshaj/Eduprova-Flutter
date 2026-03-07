@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../theme.dart';
+import '../../../theme/theme.dart';
 import 'design_editors/template_editor.dart';
 import 'design_editors/layout_editor.dart';
 import 'design_editors/typography_editor.dart';

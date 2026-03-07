@@ -1,6 +1,7 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -109,129 +110,65 @@ class _EducationItemEditorState extends ConsumerState<EducationItemEditor> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildField(
-              'School / University',
-              _schoolController,
-              'e.g. Stanford University',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'School / University',
+              controller: _schoolController,
+              hint: 'e.g. Stanford University',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Degree',
-              _degreeController,
-              'e.g. Master of Science',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Degree',
+              controller: _degreeController,
+              hint: 'e.g. Master of Science',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Area of Study',
-              _areaController,
-              'e.g. Computer Science',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Area of Study',
+              controller: _areaController,
+              hint: 'e.g. Computer Science',
             ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: _buildField(
-                    'Grade (GPA)',
-                    _gradeController,
-                    'e.g. 3.8/4.0',
-                    theme,
-                    themeExt,
+                  child: BasicInput(
+                    label: 'Grade (GPA)',
+                    controller: _gradeController,
+                    hint: 'e.g. 3.8/4.0',
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildField(
-                    'Period',
-                    _periodController,
-                    'e.g. 2018 - 2022',
-                    theme,
-                    themeExt,
+                  child: BasicInput(
+                    label: 'Period',
+                    controller: _periodController,
+                    hint: 'e.g. 2018 - 2022',
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Location',
-              _locationController,
-              'e.g. California, USA',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Location',
+              controller: _locationController,
+              hint: 'e.g. California, USA',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Website',
-              _websiteController,
-              'https://stanford.edu',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Website',
+              controller: _websiteController,
+              hint: 'https://stanford.edu',
             ),
             const SizedBox(height: 16),
-            _buildField(
-              'Description',
-              _descriptionController,
-              'Describe your studies, honors, etc...',
-              theme,
-              themeExt,
+            BasicInput(
+              label: 'Description',
+              controller: _descriptionController,
+              hint: 'Describe your studies, honors, etc...',
               maxLines: 5,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildField(
-    String label,
-    TextEditingController controller,
-    String hint,
-    ThemeData theme,
-    AppDesignExtension themeExt, {
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: themeExt.secondaryText.withValues(alpha: 0.5),
-            ),
-            filled: true,
-            fillColor: themeExt.cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: theme.colorScheme.primary),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

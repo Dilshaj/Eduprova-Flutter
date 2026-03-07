@@ -1,7 +1,8 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -92,85 +93,47 @@ class _ProjectItemEditorState extends ConsumerState<ProjectItemEditor> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildTextField(
+            BasicInput(
               controller: _nameController,
               label: 'Project Name',
               hint: 'e.g. Edupurva App',
-              themeExt: themeExt,
             ),
             const SizedBox(height: 16),
-            _buildTextField(
+            BasicInput(
               controller: _periodController,
               label: 'Period',
               hint: 'e.g. Jan 2023 - Present',
-              themeExt: themeExt,
             ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(
+                  child: BasicInput(
                     controller: _websiteLabelController,
                     label: 'Website Label',
                     hint: 'e.g. GitHub',
-                    themeExt: themeExt,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildTextField(
+                  child: BasicInput(
                     controller: _websiteUrlController,
                     label: 'Website URL',
                     hint: 'e.g. https://...',
-                    themeExt: themeExt,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            _buildTextField(
+            BasicInput(
               controller: _descriptionController,
               label: 'Description',
               hint: 'Describe your project and contributions...',
               maxLines: 5,
-              themeExt: themeExt,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required AppDesignExtension themeExt,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          decoration: .new(
-            hintText: hint,
-            filled: true,
-            fillColor: themeExt.cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            contentPadding: const EdgeInsets.all(16),
-          ),
-        ),
-      ],
     );
   }
 }

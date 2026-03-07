@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import '../core/models/course_model.dart';
 

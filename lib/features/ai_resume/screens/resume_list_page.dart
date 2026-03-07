@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/navigation/app_routes.dart';
-import '../../../../theme.dart';
+import '../../../theme/theme.dart';
 import '../providers/resume_list_provider.dart';
 
 class ResumeListPage extends ConsumerStatefulWidget {

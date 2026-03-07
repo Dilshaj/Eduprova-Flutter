@@ -1,6 +1,6 @@
 import 'package:eduprova/features/courses/core/models/course_detail_model.dart';
 import 'package:flutter/material.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ResourcesScreen extends StatelessWidget {

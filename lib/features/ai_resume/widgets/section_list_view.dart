@@ -1,7 +1,8 @@
+import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../theme.dart';
+import '../../../theme/theme.dart';
 import 'section_editors/basics_editor.dart';
 import 'section_editors/picture_editor.dart';
 import 'section_editors/experience_editor.dart';
@@ -91,6 +92,10 @@ class SectionListView extends ConsumerWidget {
             side: BorderSide(color: themeExt.borderColor),
           ),
           child: ListTile(
+            // radius
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 8,

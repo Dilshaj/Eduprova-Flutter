@@ -1,6 +1,8 @@
 import 'package:eduprova/globals.dart' show prefs;
 import 'package:eduprova/routes.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/dark_theme.dart';
+import 'package:eduprova/theme/light_theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/core/widgets/global_mini_player_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,14 +19,16 @@ void main() async {
 class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
+  get AppTheme => null;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     // final lightBg = Color(0xFFF8F3FA);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: lightTheme,
+      darkTheme: darkTheme,
       builder: (context, child) {
         return Stack(
           children: [

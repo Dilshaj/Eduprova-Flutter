@@ -1,7 +1,8 @@
+import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../theme.dart';
+import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -92,19 +93,17 @@ class _SkillItemEditorState extends ConsumerState<SkillItemEditor> {
         child: Column(
           crossAxisAlignment: .start,
           children: [
-            _buildTextField(
+            BasicInput(
               controller: _nameController,
               label: 'Skill Name',
-              hint: 'e.g. Flutter, Project Management',
-              themeExt: themeExt,
+              hint: 'e.g. React, SQL',
             ),
             const SizedBox(height: 16),
-            _buildTextField(
+            BasicInput(
               controller: _proficiencyController,
               label: 'Proficiency',
               hint: 'Briefly describe your proficiency',
               maxLines: 3,
-              themeExt: themeExt,
             ),
             const SizedBox(height: 24),
             Text(
@@ -123,50 +122,14 @@ class _SkillItemEditorState extends ConsumerState<SkillItemEditor> {
               },
             ),
             const SizedBox(height: 16),
-            _buildTextField(
+            BasicInput(
               controller: _keywordsController,
               label: 'Keywords',
-              hint: 'e.g. Dart, Widgets, Riverpod (comma separated)',
-              themeExt: themeExt,
+              hint: 'e.g. React, JavaScript, Html',
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required AppDesignExtension themeExt,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          decoration: .new(
-            hintText: hint,
-            filled: true,
-            fillColor: themeExt.cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            contentPadding: const EdgeInsets.all(16),
-          ),
-        ),
-      ],
     );
   }
 }
