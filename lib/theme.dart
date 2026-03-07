@@ -25,9 +25,9 @@ class AppTheme {
         backgroundColor: Colors.white,
         foregroundColor: Color(0xFF111827),
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         titleTextStyle: TextStyle(
-          color: Color(0xFF111827),
+          // color: Color(0xFF111827),
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -98,13 +98,9 @@ class AppTheme {
         backgroundColor: Color(0xFF121212),
         foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         scrolledUnderElevation: 0,
-        titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+        titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
       extensions: [
         AppDesignExtension(

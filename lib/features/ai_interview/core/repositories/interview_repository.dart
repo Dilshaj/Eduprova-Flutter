@@ -32,16 +32,30 @@ class InterviewRepository {
 
   /// Get all sessions for the current user
   Future<List<InterviewSession>> getHistory() async {
-    final response = await _dio.get('/interview/history');
-    final data = response.data as Map<String, dynamic>;
+    try {
+      final response = await _dio.get('/interview/history');
+      final data = response.data as Map<String, dynamic>;
 
-    if (data['success'] != true) {
-      throw Exception(data['error'] ?? 'Failed to fetch history');
+      if (data['success'] != true) {
+        throw Exception(data['error'] ?? 'Failed to fetch history');
+      }
+
+      final sessionsData = data['sessions'] as List<dynamic>? ?? [];
+      return sessionsData.map((s) {
+        try {
+          return InterviewSession.fromJson(s as Map<String, dynamic>);
+        } catch (e, stack) {
+          print('Error parsing session: $e');
+          print('Session data: $s');
+          print(stack);
+          rethrow;
+        }
+      }).toList();
+    } catch (e, stack) {
+      print('InterviewRepository.getHistory error: $e');
+      print(stack);
+      rethrow;
     }
-
-    return (data['sessions'] as List<dynamic>)
-        .map((s) => InterviewSession.fromJson(s as Map<String, dynamic>))
-        .toList();
   }
 
   /// Get analytics for the current user

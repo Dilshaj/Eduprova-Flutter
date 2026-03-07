@@ -174,6 +174,8 @@ class MainLayout extends StatelessWidget {
                     ListTile(
                       title: const Text('Resume Builder'),
                       onTap: () {
+                        // close drawer
+                        context.pop();
                         context.push(AppRoutes.resumeBuilderHome);
                       },
                     ),
@@ -181,6 +183,8 @@ class MainLayout extends StatelessWidget {
                     ListTile(
                       title: const Text('Interview Assistant'),
                       onTap: () {
+                        // close drawer
+                        context.pop();
                         context.push(AppRoutes.aiInterview);
                       },
                     ),

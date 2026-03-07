@@ -15,9 +15,9 @@ class InterviewQuestion {
 
   factory InterviewQuestion.fromJson(Map<String, dynamic> json) {
     return InterviewQuestion(
-      question: json['question'] as String,
-      topic: json['topic'] as String,
-      difficulty: json['difficulty'] as String,
+      question: (json['question'] ?? '') as String,
+      topic: (json['topic'] ?? '') as String,
+      difficulty: (json['difficulty'] ?? '') as String,
       expectedAnswer: json['expectedAnswer'] as String?,
       audioUrl: json['audioUrl'] as String?,
     );
@@ -39,7 +39,9 @@ class InterviewTranscript {
     return InterviewTranscript(
       speaker: json['speaker'] as String,
       text: json['text'] as String,
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      timestamp:
+          DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -70,12 +72,14 @@ class InterviewConfig {
   factory InterviewConfig.fromJson(Map<String, dynamic> json) {
     return InterviewConfig(
       techStack: (json['techStack'] as List<dynamic>?)
-          ?.map((e) => e as String)
+          ?.map((e) => e.toString())
           .toList(),
-      experience: json['experience'] as int?,
-      experienceLevel: json['experienceLevel'] as String?,
-      duration: json['duration'] as int?,
-      voicePreference: json['voicePreference'] as String?,
+      experience: (json['experience'] as num?)?.toInt(),
+      experienceLevel:
+          (json['experienceLevel'] ?? json['experience']?.toString())
+              as String?,
+      duration: (json['duration'] as num?)?.toInt(),
+      voicePreference: (json['voicePreference'] ?? json['voice']) as String?,
       resumeUrl: json['resumeUrl'] as String?,
     );
   }
@@ -110,9 +114,9 @@ class InterviewSession {
 
   factory InterviewSession.fromJson(Map<String, dynamic> json) {
     return InterviewSession(
-      id: (json['_id'] ?? json['id']) as String,
-      type: json['type'] as String,
-      status: json['status'] as String,
+      id: (json['_id'] ?? json['id'] ?? '') as String,
+      type: (json['type'] ?? '') as String,
+      status: (json['status'] ?? '') as String,
       config: json['config'] != null
           ? InterviewConfig.fromJson(json['config'] as Map<String, dynamic>)
           : null,
@@ -122,16 +126,17 @@ class InterviewSession {
       transcript: (json['transcript'] as List<dynamic>? ?? [])
           .map((t) => InterviewTranscript.fromJson(t as Map<String, dynamic>))
           .toList(),
-      currentQuestionIndex: json['currentQuestionIndex'] as int? ?? 0,
+      currentQuestionIndex:
+          (json['currentQuestionIndex'] as num?)?.toInt() ?? 0,
       feedbackId: json['feedbackId'] as String?,
       startedAt: json['startedAt'] != null
-          ? DateTime.parse(json['startedAt'] as String)
+          ? DateTime.tryParse(json['startedAt'] as String? ?? '')
           : null,
       completedAt: json['completedAt'] != null
-          ? DateTime.parse(json['completedAt'] as String)
+          ? DateTime.tryParse(json['completedAt'] as String? ?? '')
           : null,
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
+          ? DateTime.tryParse(json['createdAt'] as String? ?? '')
           : null,
     );
   }

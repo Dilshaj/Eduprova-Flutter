@@ -14,16 +14,12 @@ class HistoryPage extends ConsumerStatefulWidget {
 }
 
 class _HistoryPageState extends ConsumerState<HistoryPage> {
-  bool _isLoading = true;
   String _selectedTab = 'All Sessions';
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
   }
 
   @override
@@ -52,137 +48,168 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     final t = AiTheme.of(context);
     return Scaffold(
       backgroundColor: t.scaffoldBg,
-      body: Skeletonizer(
-        enabled: _isLoading,
-        effect: ShimmerEffect(
-          baseColor: t.shimmerBase,
-          highlightColor: t.shimmerHighlight,
-          duration: const Duration(seconds: 1),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              const double maxWidth = 480;
-              double padding = 0;
-              if (constraints.maxWidth > maxWidth) {
-                padding = (constraints.maxWidth - maxWidth) / 2;
-              }
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: padding),
-                child: Stack(
-                  children: [
-                    _buildBackground(
-                      constraints.maxHeight,
-                      constraints.maxWidth > maxWidth
-                          ? maxWidth
-                          : constraints.maxWidth,
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildHeader(context),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const SizedBox(height: 12),
-                                _buildActivityChip(),
-                                const SizedBox(height: 16),
-                                _buildTitle(),
-                                const SizedBox(height: 6),
-                                _buildSubtitle(),
-                                const SizedBox(height: 20),
-                                _buildSearchBar(),
-                                const SizedBox(height: 16),
-                                _buildTabs(),
-                                const SizedBox(height: 20),
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    final historyAsync = ref.watch(
-                                      interviewHistoryProvider,
-                                    );
-                                    return historyAsync.when(
-                                      loading: () => const Center(
-                                        child: CircularProgressIndicator(),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const double maxWidth = 480;
+            double padding = 0;
+            if (constraints.maxWidth > maxWidth) {
+              padding = (constraints.maxWidth - maxWidth) / 2;
+            }
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: padding),
+              child: Stack(
+                children: [
+                  _buildBackground(
+                    constraints.maxHeight,
+                    constraints.maxWidth > maxWidth
+                        ? maxWidth
+                        : constraints.maxWidth,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(context),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 12),
+                              _buildActivityChip(),
+                              const SizedBox(height: 16),
+                              _buildTitle(),
+                              const SizedBox(height: 6),
+                              _buildSubtitle(),
+                              const SizedBox(height: 20),
+                              _buildSearchBar(),
+                              const SizedBox(height: 16),
+                              _buildTabs(),
+                              const SizedBox(height: 20),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final historyAsync = ref.watch(
+                                    interviewHistoryProvider,
+                                  );
+                                  return historyAsync.when(
+                                    loading: () => Skeletonizer(
+                                      enabled: true,
+                                      effect: ShimmerEffect(
+                                        baseColor: t.shimmerBase,
+                                        highlightColor: t.shimmerHighlight,
+                                        duration: const Duration(seconds: 1),
                                       ),
-                                      error: (e, _) => Center(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.error_outline,
-                                              color: Colors.redAccent,
-                                              size: 40,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Failed to load history',
-                                              style: TextStyle(
-                                                color: AiTheme.of(
-                                                  context,
-                                                ).textMuted,
+                                      child: Column(
+                                        children: [
+                                          for (int i = 0; i < 3; i++)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 16,
                                               ),
+                                              child: _buildSessionCard({
+                                                'type': 'TECHNICAL',
+                                                'status': 'IN PROGRESS',
+                                                'score': 0,
+                                                'title':
+                                                    'Loading Session Data...',
+                                                'date': 'Jan 1, 2024',
+                                                'duration': '30m',
+                                                'color': Colors.grey,
+                                                'badgeColor': Colors.grey,
+                                                'badgeBg': Colors.grey.shade200,
+                                              }),
                                             ),
-                                            TextButton(
-                                              onPressed: () => ref
-                                                  .read(
-                                                    interviewHistoryProvider
-                                                        .notifier,
-                                                  )
-                                                  .refresh(),
-                                              child: const Text('Retry'),
-                                            ),
-                                          ],
-                                        ),
+                                        ],
                                       ),
-                                      data: (sessions) {
-                                        final filtered = _applyFilters(
-                                          sessions,
-                                        );
-                                        if (filtered.isEmpty) {
-                                          return Center(
+                                    ),
+                                    error: (e, _) => Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.error_outline,
+                                            color: Colors.redAccent,
+                                            size: 40,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Failed to load history',
+                                            style: TextStyle(
+                                              color: AiTheme.of(
+                                                context,
+                                              ).textMuted,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                            ),
                                             child: Text(
-                                              'No sessions found',
-                                              style: TextStyle(
-                                                color: AiTheme.of(
-                                                  context,
-                                                ).textMuted,
+                                              e.toString(),
+                                              style: const TextStyle(
+                                                color: Colors.redAccent,
+                                                fontSize: 12,
                                               ),
+                                              textAlign: TextAlign.center,
                                             ),
-                                          );
-                                        }
-                                        return Column(
-                                          children: [
-                                            for (final s in filtered)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 16,
-                                                ),
-                                                child: _buildRealSessionCard(s),
-                                              ),
-                                          ],
+                                          ),
+                                          TextButton(
+                                            onPressed: () => ref
+                                                .read(
+                                                  interviewHistoryProvider
+                                                      .notifier,
+                                                )
+                                                .refresh(),
+                                            child: const Text('Retry'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    data: (sessions) {
+                                      final filtered = _applyFilters(sessions);
+                                      if (filtered.isEmpty) {
+                                        return Center(
+                                          child: Text(
+                                            'No sessions found',
+                                            style: TextStyle(
+                                              color: AiTheme.of(
+                                                context,
+                                              ).textMuted,
+                                            ),
+                                          ),
                                         );
-                                      },
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 8),
-                                _buildPagination(),
-                                const SizedBox(height: 24),
-                              ],
-                            ),
+                                      }
+                                      return Column(
+                                        children: [
+                                          for (final s in filtered)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 16,
+                                              ),
+                                              child: _buildRealSessionCard(s),
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              _buildPagination(),
+                              const SizedBox(height: 24),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

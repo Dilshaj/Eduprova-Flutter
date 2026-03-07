@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:file_picker/file_picker.dart';
 import '../interview_bot/interview_bot_screen.dart';
 import 'ai_theme.dart';
@@ -497,26 +497,25 @@ class _InterviewPageState extends State<InterviewPage> {
   Widget _buildBottomActions() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: Skeletonizer(
-        enabled: _isUploading,
-        child: SizedBox(
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _isUploading ? null : _startInterview,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shadowColor: const Color(0xFF3B82F6).withValues(alpha: 0.4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'ANALYZE & START',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+      child: SizedBox(
+        height: 56,
+        child: ElevatedButton(
+          onPressed: _isUploading ? null : _startInterview,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF3B82F6),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shadowColor: const Color(0xFF3B82F6).withValues(alpha: 0.4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
+          child: _isUploading
+              ? const SpinKitThreeBounce(color: Colors.white, size: 24)
+              : const Text(
+                  'ANALYZE & START',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                ),
         ),
       ),
     );

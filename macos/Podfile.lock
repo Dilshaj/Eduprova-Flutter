@@ -61,7 +61,7 @@ PODS:
   - just_audio (0.0.1):
     - Flutter
     - FlutterMacOS
-  - livekit_client (2.6.4):
+  - livekit_client (2.6.5):
     - flutter_webrtc
     - FlutterMacOS
     - WebRTC-SDK (= 137.7151.04)
@@ -202,7 +202,7 @@ SPEC CHECKSUMS:
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   just_audio: a42c63806f16995daf5b219ae1d679deb76e6a79
-  livekit_client: 5111001b5d8b5bc86ac91ba0a8bd0d5ecc0173a1
+  livekit_client: 945a3718717e11fcbaceddb90fbf287ea68798a0
   media_kit_libs_macos_video: b3e2bbec2eef97c285f2b1baa7963c67c753fb82
   media_kit_video: c75b07f14d59706c775778e4dd47dd027de8d1e5
   package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b

@@ -1,3 +1,4 @@
+import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme.dart';
@@ -46,12 +47,17 @@ class _AiResumeScreenState extends ConsumerState<AiResumeScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      // extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('AI Resume Builder'),
         backgroundColor: theme.scaffoldBackgroundColor,
+        // backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [_buildToggle(theme, themeExt), const SizedBox(width: 16)],
+        scrolledUnderElevation: 0,
+        // actions: [_buildToggle(theme, themeExt), const SizedBox(width: 16)],
       ),
+      floatingActionButton: Container(child: _buildToggle(theme, themeExt)),
+      // body: Stack(children: [AppBackground(), _buildBody()]),
       body: _buildBody(),
     );
   }
@@ -59,6 +65,7 @@ class _AiResumeScreenState extends ConsumerState<AiResumeScreen> {
   Widget _buildToggle(ThemeData theme, AppDesignExtension themeExt) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
@@ -118,7 +125,7 @@ class _ToggleItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? theme.colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(10),

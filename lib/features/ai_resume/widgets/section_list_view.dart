@@ -12,6 +12,63 @@ import 'section_editors/projects_editor.dart';
 import 'section_editors/certifications_editor.dart';
 import 'section_editors/languages_editor.dart';
 
+final sections = [
+  _SectionItem(
+    title: 'Picture',
+    icon: LucideIcons.camera,
+    description: 'Profile picture and styling',
+    builder: (context) => const PictureEditor(),
+  ),
+  _SectionItem(
+    title: 'Personal Details',
+    icon: LucideIcons.user,
+    description: 'Name, email, phone, location',
+    builder: (context) => const BasicsEditor(),
+  ),
+  _SectionItem(
+    title: 'Summary',
+    icon: LucideIcons.fileText,
+    description: 'Professional summary or bio',
+    builder: (context) => const SummaryEditor(),
+  ),
+  _SectionItem(
+    title: 'Experience',
+    icon: LucideIcons.briefcase,
+    description: 'Work history and professional experience',
+    builder: (context) => const ExperienceEditor(),
+  ),
+  _SectionItem(
+    title: 'Education',
+    icon: LucideIcons.graduationCap,
+    description: 'Educational background and degrees',
+    builder: (context) => const EducationEditor(),
+  ),
+  _SectionItem(
+    title: 'Skills',
+    icon: LucideIcons.wrench,
+    description: 'Technical and soft skills',
+    builder: (context) => const SkillsEditor(),
+  ),
+  _SectionItem(
+    title: 'Projects',
+    icon: LucideIcons.folder,
+    description: 'Personal or professional projects',
+    builder: (context) => const ProjectsEditor(),
+  ),
+  _SectionItem(
+    title: 'Certifications',
+    icon: LucideIcons.award,
+    description: 'Courses and certifications',
+    builder: (context) => const CertificationsEditor(),
+  ),
+  _SectionItem(
+    title: 'Languages',
+    icon: LucideIcons.languages,
+    description: 'Languages you speak',
+    builder: (context) => const LanguagesEditor(),
+  ),
+];
+
 class SectionListView extends ConsumerWidget {
   const SectionListView({super.key});
 
@@ -19,63 +76,6 @@ class SectionListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final themeExt = theme.extension<AppDesignExtension>()!;
-
-    final sections = [
-      _SectionItem(
-        title: 'Picture',
-        icon: LucideIcons.camera,
-        description: 'Profile picture and styling',
-        builder: (context) => const PictureEditor(),
-      ),
-      _SectionItem(
-        title: 'Personal Details',
-        icon: LucideIcons.user,
-        description: 'Name, email, phone, location',
-        builder: (context) => const BasicsEditor(),
-      ),
-      _SectionItem(
-        title: 'Summary',
-        icon: LucideIcons.fileText,
-        description: 'Professional summary or bio',
-        builder: (context) => const SummaryEditor(),
-      ),
-      _SectionItem(
-        title: 'Experience',
-        icon: LucideIcons.briefcase,
-        description: 'Work history and professional experience',
-        builder: (context) => const ExperienceEditor(),
-      ),
-      _SectionItem(
-        title: 'Education',
-        icon: LucideIcons.graduationCap,
-        description: 'Educational background and degrees',
-        builder: (context) => const EducationEditor(),
-      ),
-      _SectionItem(
-        title: 'Skills',
-        icon: LucideIcons.wrench,
-        description: 'Technical and soft skills',
-        builder: (context) => const SkillsEditor(),
-      ),
-      _SectionItem(
-        title: 'Projects',
-        icon: LucideIcons.folder,
-        description: 'Personal or professional projects',
-        builder: (context) => const ProjectsEditor(),
-      ),
-      _SectionItem(
-        title: 'Certifications',
-        icon: LucideIcons.award,
-        description: 'Courses and certifications',
-        builder: (context) => const CertificationsEditor(),
-      ),
-      _SectionItem(
-        title: 'Languages',
-        icon: LucideIcons.languages,
-        description: 'Languages you speak',
-        builder: (context) => const LanguagesEditor(),
-      ),
-    ];
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
@@ -85,7 +85,7 @@ class SectionListView extends ConsumerWidget {
         final section = sections[index];
         return Card(
           elevation: 0,
-          color: themeExt.cardColor,
+          color: themeExt.cardColor.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: themeExt.borderColor),
@@ -99,6 +99,8 @@ class SectionListView extends ConsumerWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                // color: themeExt.cardColor,
+                // color: Colors.red,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(section.icon, color: theme.colorScheme.primary),

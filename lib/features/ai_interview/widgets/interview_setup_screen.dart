@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../interview_bot/interview_bot_screen.dart';
 import 'ai_theme.dart';
 import '../core/repositories/interview_repository.dart';
@@ -50,7 +50,7 @@ class _PracticePreviewPageState extends ConsumerState<PracticePreviewPage> {
     'HTML',
     'CSS',
   ];
-  final List<String> _selectedSkills = ['React', 'System Design'];
+  final List<String> _selectedSkills = ['React'];
   List<String> _filteredSkills = [];
 
   String _selectedDuration = '30M';
@@ -665,26 +665,25 @@ class _PracticePreviewPageState extends ConsumerState<PracticePreviewPage> {
   Widget _buildBottomActions() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: Skeletonizer(
-        enabled: _isStarting,
-        child: SizedBox(
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _isStarting ? null : _startInterview,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2962FF),
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shadowColor: const Color(0xFF2962FF).withValues(alpha: 0.4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'START INTERVIEW',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+      child: SizedBox(
+        height: 56,
+        child: ElevatedButton(
+          onPressed: _isStarting ? null : _startInterview,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2962FF),
+            foregroundColor: Colors.white,
+            elevation: 4,
+            shadowColor: const Color(0xFF2962FF).withValues(alpha: 0.4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
+          child: _isStarting
+              ? const SpinKitThreeBounce(color: Colors.white, size: 24)
+              : const Text(
+                  'START INTERVIEW',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                ),
         ),
       ),
     );
