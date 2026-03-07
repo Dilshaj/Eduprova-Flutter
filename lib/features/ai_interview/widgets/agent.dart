@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
-import '../repositories/interview_repository.dart';
+import '../core/repositories/interview_repository.dart';
 import 'ai_theme.dart';
 
 class LiveAgentPage extends StatefulWidget {
@@ -13,6 +13,20 @@ class LiveAgentPage extends StatefulWidget {
 
   @override
   State<LiveAgentPage> createState() => _LiveAgentPageState();
+}
+
+class _ChatMessage {
+  final String id;
+  final String text;
+  final bool isUser;
+  final DateTime time;
+
+  _ChatMessage({
+    required this.id,
+    required this.text,
+    required this.isUser,
+    required this.time,
+  });
 }
 
 class _LiveAgentPageState extends State<LiveAgentPage>
@@ -28,8 +42,16 @@ class _LiveAgentPageState extends State<LiveAgentPage>
   Room? _room;
   void Function()? _cancelListen;
   double _agentAudioLevel = 0.0;
-  String _currentQuestion = "Connecting to agent...";
   bool _isConnected = false;
+
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, _ChatMessage> _messages = {};
+
+  List<_ChatMessage> get _sortedMessages {
+    final list = _messages.values.toList();
+    list.sort((a, b) => a.time.compareTo(b.time));
+    return list;
+  }
 
   @override
   void initState() {
@@ -59,9 +81,19 @@ class _LiveAgentPageState extends State<LiveAgentPage>
   Future<void> _connectToLiveKit() async {
     try {
       final repo = InterviewRepository();
-      final token = await repo.getSessionLivekitToken(widget.sessionId);
 
-      final room = Room();
+      final participantName =
+          'Candidate-${DateTime.now().millisecondsSinceEpoch}';
+      final token = await repo.getLivekitToken(
+        participantName: participantName,
+        roomName: widget.sessionId,
+      );
+
+      final room = Room(
+        roomOptions: const RoomOptions(
+          defaultAudioOutputOptions: AudioOutputOptions(speakerOn: true),
+        ),
+      );
       _room = room;
 
       _cancelListen = room.events.listen((event) {
@@ -71,24 +103,55 @@ class _LiveAgentPageState extends State<LiveAgentPage>
               _agentAudioLevel = event.speakers.isNotEmpty ? 1.0 : 0.0;
             });
           }
+        } else if (event is TranscriptionEvent) {
+          if (mounted) {
+            setState(() {
+              final isUser = event.participant is LocalParticipant;
+              for (final segment in event.segments) {
+                if (segment.text.trim().isEmpty && !segment.isFinal) {
+                  continue;
+                }
+                _messages[segment.id] = _ChatMessage(
+                  id: segment.id,
+                  text: segment.text,
+                  isUser: isUser,
+                  time: segment.firstReceivedTime,
+                );
+              }
+            });
+
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (_scrollController.hasClients) {
+                _scrollController.animateTo(
+                  _scrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
+          }
         }
       });
 
-      await room.connect('ws://192.168.1.116:7800', token);
+      await room.connect('wss://rahul-h1jumjl8.livekit.cloud', token);
+
+      // Route audio to speakerphone
+      // await Hardware.instance.setSpeakerphoneOn(true);
+
+      // Enable microphone to start recording and sending audio
+      await room.localParticipant?.setMicrophoneEnabled(true);
+      await Hardware.instance.setSpeakerphoneOn(true);
+      await Hardware.instance.setSpeakerphoneOn(true);
 
       if (mounted) {
         setState(() {
           _isConnected = true;
-          _currentQuestion =
-              "Hello! I'm your Live Agent. How can I help you today?";
         });
       }
     } catch (e) {
       debugPrint('LiveKit Connection Error: $e');
       if (mounted) {
-        setState(
-          () => _currentQuestion = "Connection failed. Please try again.",
-        );
+        // Handle connection error if needed
       }
     }
   }
@@ -114,6 +177,7 @@ class _LiveAgentPageState extends State<LiveAgentPage>
     _durTimer?.cancel();
     _waveController.dispose();
     _pulseController.dispose();
+    _scrollController.dispose();
     _cancelListen?.call();
     _room?.disconnect();
     _room?.dispose();
@@ -182,9 +246,9 @@ class _LiveAgentPageState extends State<LiveAgentPage>
                               flex: 3,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 28,
+                                  horizontal: 16,
                                 ),
-                                child: Center(child: _buildQuestion()),
+                                child: _buildChatHistory(),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -425,18 +489,111 @@ class _LiveAgentPageState extends State<LiveAgentPage>
     );
   }
 
-  Widget _buildQuestion() {
+  Widget _buildChatHistory() {
     final t = AiTheme.of(context);
-    return Text(
-      '"$_currentQuestion"',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 14,
-        height: 1.65,
-        fontStyle: FontStyle.italic,
-        color: t.textSecondary,
-        fontWeight: FontWeight.w500,
-      ),
+    final messages = _sortedMessages;
+
+    if (messages.isEmpty) {
+      return Center(
+        child: Text(
+          _isConnected ? "Listening for audio..." : "Connecting to agent...",
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: t.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: messages.length,
+      itemBuilder: (context, index) {
+        final msg = messages[index];
+        return Align(
+          alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: msg.isUser
+                  ? const Color(0xFF3B82F6).withValues(alpha: 0.1) // blue-500
+                  : Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: msg.isUser
+                    ? const Radius.circular(16)
+                    : Radius.zero,
+                bottomRight: msg.isUser
+                    ? Radius.zero
+                    : const Radius.circular(16),
+              ),
+              border: Border.all(
+                color: msg.isUser
+                    ? const Color(0xFF60A5FA).withValues(alpha: 0.2) // blue-400
+                    : Colors.white.withValues(alpha: 0.05),
+              ),
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            child: Column(
+              crossAxisAlignment: msg.isUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '"${msg.text}"',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    fontStyle: FontStyle.italic,
+                    color: msg.isUser
+                        ? const Color(0xFFDBEAFE).withValues(
+                            alpha: 0.9,
+                          ) // blue-100
+                        : t.textSecondary,
+                  ),
+                  textAlign: msg.isUser ? TextAlign.right : TextAlign.left,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      msg.isUser ? 'CANDIDATE' : 'SAGE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                        color: msg.isUser
+                            ? const Color(0xFF93C5FD).withValues(
+                                alpha: 0.5,
+                              ) // blue-300
+                            : Colors.white30,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '• LIVE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        color: t.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

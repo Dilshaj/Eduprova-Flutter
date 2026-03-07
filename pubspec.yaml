@@ -47,9 +47,10 @@ dependencies:
   speech_to_text: ^7.3.0
   just_audio: ^0.10.5
   flutter_tts: ^4.2.5
-  livekit_client: ^2.6.4
+  livekit_client: ^2.6.5
   record: ^6.2.0
   web_socket_channel: ^3.0.3
+  uuid: ^4.5.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -780,10 +780,10 @@ packages:
     dependency: "direct main"
     description:
       name: livekit_client
-      sha256: "51d97a4501e385e53c140b8367a52316af5b466e71e6d800c8826065b6061521"
+      sha256: "35cbf59d8d0909083db3ee02bc53f5397085ff34c48e33af6f1fcd20862d91a2"
       url: "https://pub.dev"
     source: hosted
-    version: "2.6.4"
+    version: "2.6.5"
   logger:
     dependency: transitive
     description:
@@ -1614,7 +1614,7 @@ packages:
     source: hosted
     version: "3.1.5"
   uuid:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: uuid
       sha256: "1fef9e8e11e2991bb773070d4656b7bd5d850967a2456cfc83cf47925ba79489"

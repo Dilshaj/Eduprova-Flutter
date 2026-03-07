@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
 import 'package:eduprova/theme.dart';
 import 'package:flutter/material.dart';
-import '../models/course_model.dart';
+import '../core/models/course_model.dart';
 
 class CourseCard2 extends StatefulWidget {
   final CourseModel course;

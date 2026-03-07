@@ -1,10 +1,14 @@
-import 'package:eduprova/features/ai_interview/page.dart';
+import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
+import 'package:eduprova/features/ai_resume/ai_resume_screen.dart';
+import 'package:eduprova/features/ai_resume/screens/import_resume_page.dart';
+import 'package:eduprova/features/ai_resume/screens/resume_builder_landing_page.dart';
+import 'package:eduprova/features/ai_resume/screens/resume_list_page.dart';
 import 'package:eduprova/features/auth/screens/login_screen.dart';
 import 'package:eduprova/features/auth/screens/signup_screen.dart';
 import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
-import 'package:eduprova/features/courses/screens/cart/cart_screen.dart';
-import 'package:eduprova/features/courses/screens/my_learning/my_learning_screen.dart';
-import 'package:eduprova/features/courses/screens/my_wishlist_screen.dart';
+import 'package:eduprova/features/courses/cart/cart_screen.dart';
+import 'package:eduprova/features/courses/my_learning/my_learning_screen.dart';
+import 'package:eduprova/features/courses/wishlist/my_wishlist_screen.dart';
 import 'package:eduprova/features/courses/screens/profile_settings/profile_settings_screen.dart';
 import 'package:eduprova/features/help_and_support.dart';
 import 'package:eduprova/features/home/main_layout.dart';
@@ -17,9 +21,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/home/home_screen.dart';
-import 'package:eduprova/features/courses/screens/course_learn/course_learning_screen.dart';
-import 'package:eduprova/features/courses/screens/courses_screen.dart';
-import 'package:eduprova/features/courses/screens/course_detail/course_detail_screen.dart';
+import 'package:eduprova/features/courses/course_learn/course_learning_screen.dart';
+import 'package:eduprova/features/courses/courses_home/courses_screen.dart';
+import 'package:eduprova/features/courses/course_detail/course_detail_screen.dart';
 import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
 import 'package:eduprova/features/messages/communities/create_community_screen.dart';
 import 'package:eduprova/features/messages/messages/chat_screen.dart';
@@ -240,10 +244,36 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/ai-interview',
+        path: AppRoutes.aiInterview,
         builder: (context, state) {
-          return AiInterviewPage();
+          return AiInterviewHomeScreen();
         },
+      ),
+
+      // Multi-Resume Builder Flow
+      GoRoute(
+        path: AppRoutes.resumeBuilderHome,
+        builder: (context, state) => const ResumeBuilderLandingPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.resumeBuilderList,
+        builder: (context, state) => const ResumeListPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.resumeBuilderImport,
+        builder: (context, state) => const ImportResumePage(),
+      ),
+      GoRoute(
+        path: '/resume-builder/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return AiResumeScreen(resumeId: id);
+        },
+      ),
+      GoRoute(
+        // Keep for backwards compatibility if needed, redirecting to list
+        path: AppRoutes.aiResume,
+        redirect: (context, state) => AppRoutes.resumeBuilderList,
       ),
     ],
   );

@@ -171,7 +171,12 @@ class MainLayout extends StatelessWidget {
                       onTap: () {},
                     ),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
-                    ListTile(title: const Text('Resume Builder'), onTap: () {}),
+                    ListTile(
+                      title: const Text('Resume Builder'),
+                      onTap: () {
+                        context.push(AppRoutes.resumeBuilderHome);
+                      },
+                    ),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     ListTile(
                       title: const Text('Interview Assistant'),

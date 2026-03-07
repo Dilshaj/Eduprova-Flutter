@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:eduprova/core/network/api_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
@@ -18,6 +17,7 @@ class DeepgramSttService {
 
   bool _isListening = false;
   bool get isListening => _isListening;
+  bool _isInitializing = false;
 
   String _currentBuffer = '';
   String _finalizedText = '';
@@ -33,7 +33,8 @@ class DeepgramSttService {
     Function(String)? onError,
     Function()? onDone,
   }) async {
-    if (_isListening) return;
+    if (_isListening || _isInitializing) return;
+    _isInitializing = true;
 
     _onTranscript = onTranscript;
     _onError = onError;
@@ -42,19 +43,21 @@ class DeepgramSttService {
     _finalizedText = '';
 
     try {
-      // 1. Get temporary token from backend
-      final response = await ApiClient.instance.get(
-        '/interview/deepgram-token',
-      );
+      // 1. Get temporary token from backend with timeout
+      final response = await ApiClient.instance
+          .get('/interview/deepgram-token')
+          .timeout(const Duration(seconds: 5));
+
       final token = response.data['token'];
 
       if (token == null || token.isEmpty) {
-        throw Exception('Failed to get Deepgram token from backend');
+        throw Exception('Failed to get Deepgram token');
       }
 
+      // Check if we were stopped while waiting for token
+      if (!_isInitializing) return;
+
       // 2. Connect to Deepgram WebSocket
-      // Explicitly specifying port 443 to avoid 'port 0' issues on some Android devices.
-      // Using Authorization: Bearer header for JWT tokens as recommended by Deepgram.
       final wsUrl =
           'wss://api.deepgram.com:443/v1/listen?model=nova-2&language=en&interim_results=true&encoding=linear16&sample_rate=16000';
 
@@ -69,7 +72,7 @@ class DeepgramSttService {
         _onWsMessage,
         onError: (e) {
           debugPrint('Deepgram WS Error: $e');
-          _onError?.call('Microphone connection error');
+          _onError?.call('Microphone connection lost');
           stop();
         },
         onDone: () {
@@ -89,6 +92,7 @@ class DeepgramSttService {
         );
 
         _isListening = true;
+        _isInitializing = false;
 
         _audioSubscription = stream.listen((data) {
           if (_isListening && _channel != null) {
@@ -100,6 +104,7 @@ class DeepgramSttService {
       }
     } catch (e) {
       debugPrint('Deepgram Start Error: $e');
+      _isInitializing = false;
       _onError?.call(e.toString());
       stop();
     }
@@ -133,6 +138,7 @@ class DeepgramSttService {
 
   /// Stops listening, closes WS, and cleans up.
   Future<void> stop() async {
+    _isInitializing = false;
     if (!_isListening) return;
     _isListening = false;
 
