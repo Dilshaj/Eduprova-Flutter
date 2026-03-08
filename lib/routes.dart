@@ -1,4 +1,9 @@
+import 'package:eduprova/features/ai_interview/analytics/interview_analysis.dart';
+import 'package:eduprova/features/ai_interview/history/history_analytics_screen.dart';
+import 'package:eduprova/features/ai_interview/history/history_screen.dart';
 import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
+import 'package:eduprova/features/ai_interview/widgets/agent.dart';
+import 'package:eduprova/features/ai_interview/widgets/refined_unified_setup_screen.dart';
 import 'package:eduprova/features/ai_resume/ai_resume_screen.dart';
 import 'package:eduprova/features/ai_resume/screens/import_resume_page.dart';
 import 'package:eduprova/features/ai_resume/screens/resume_builder_landing_page.dart';
@@ -29,10 +34,7 @@ import 'package:eduprova/features/messages/communities/create_community_screen.d
 import 'package:eduprova/features/messages/messages/chat_screen.dart';
 import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
 import 'package:eduprova/features/messages/messages/messages_screen.dart';
-
-// SplashScreen and Auth imports (only necessary ones)
 import 'features/auth/providers/auth_provider.dart';
-// import 'features/auth/screens/login_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -86,7 +88,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignupScreen(),
       ),
 
-      // Bottom Nav Routes
+      /*********************************************
+      *************** Bottom Nav Routes ***********
+      *********************************************/
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return MainLayout(navigationShell: navigationShell);
@@ -126,12 +130,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+
       GoRoute(
         path: AppRoutes.search,
         builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
-        path: '/status/:id',
+        path: AppRoutes.statusPager(':id'),
         builder: (context, state) {
           final initialIndex = state.pathParameters['id']!;
           return StatusUsersPager(initialIndex: int.parse(initialIndex));
@@ -143,24 +148,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const StatusScreen(),
       ),
 
-      //// Course Routes
+      /*********************************************
+      ******************** Courses  ***************
+      *********************************************/
       GoRoute(
-        path: '/course/:id',
+        path: AppRoutes.courseDetail(':id'),
         builder: (context, state) {
           final courseId = state.pathParameters['id']!;
           return CourseDetailScreen(courseId: courseId);
         },
       ),
       GoRoute(
-        path: '/course/:id/learn',
+        path: AppRoutes.courseLearning(':id'),
         pageBuilder: (context, state) {
           final courseId = state.pathParameters['id']!;
-          final resumeMs = int.tryParse(
-            state.uri.queryParameters['resumeMs'] ?? '',
-          );
-          final resumeLectureId = state.uri.queryParameters['lectureId'];
-          final resumeFromMini = state.uri.queryParameters['fromMini'] == '1';
-          final autoplayParam = state.uri.queryParameters['autoplay'];
+          final query = state.uri.queryParameters;
+          final resumeMs = int.tryParse(query['resumeMs'] ?? '');
+          final autoplayParam = query['autoplay'];
           final resumeAutoPlay = autoplayParam == null
               ? true
               : autoplayParam == '1';
@@ -172,8 +176,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               courseId: courseId,
               resumePositionMs: resumeMs,
               resumeAutoPlay: resumeAutoPlay,
-              resumeLectureId: resumeLectureId,
-              resumeFromMini: resumeFromMini,
+              resumeLectureId: query['lectureId'],
+              resumeFromMini: query['fromMini'] == '1',
             ),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
@@ -219,7 +223,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      //// Messages Routes
+      /*********************************************
+      ***************** Messages  *****************
+      *********************************************/
       GoRoute(
         path: AppRoutes.createCommunity,
         builder: (context, state) => const CreateCommunityScreen(),
@@ -229,7 +235,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CreateChannelScreen(),
       ),
       GoRoute(
-        path: '/chat/:id',
+        path: AppRoutes.chat(':id'),
         builder: (context, state) {
           final chatId = state.pathParameters['id']!;
           return ChatScreen(id: chatId);
@@ -243,14 +249,59 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      /*********************************************
+      ***************  Ai Interview  ***************
+      *********************************************/
       GoRoute(
         path: AppRoutes.aiInterview,
         builder: (context, state) {
-          return AiInterviewHomeScreen();
+          return const AiInterviewHomeScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.aiInterviewSetup,
+        builder: (context, state) {
+          return const RefinedUnifiedInterviewSetupPage(initialTabIndex: 0);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.aiResumeInterview,
+        builder: (context, state) {
+          return const RefinedUnifiedInterviewSetupPage(initialTabIndex: 1);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.interviewHistory,
+        builder: (context, state) {
+          return const HistoryAnalyticsScreen(initialTabIndex: 0);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.interviewAnalytics,
+        builder: (context, state) {
+          return const HistoryAnalyticsScreen(initialTabIndex: 1);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.interviewFeedback(':id'),
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return InterviewAnalysisPage(sessionId: id);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.interviewLiveAgent,
+        builder: (context, state) {
+          return const LiveAgentPage(
+            sessionId: 'dummy_session',
+            role: 'Career Coach',
+          );
         },
       ),
 
-      // Multi-Resume Builder Flow
+      /*********************************************
+      ************  Ai Resume Builder  ***********
+      *********************************************/
       GoRoute(
         path: AppRoutes.resumeBuilderHome,
         builder: (context, state) => const ResumeBuilderLandingPage(),
@@ -264,16 +315,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ImportResumePage(),
       ),
       GoRoute(
-        path: '/resume-builder/:id',
+        path: AppRoutes.resumeBuilderEditor(':id'),
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return AiResumeScreen(resumeId: id);
         },
-      ),
-      GoRoute(
-        // Keep for backwards compatibility if needed, redirecting to list
-        path: AppRoutes.aiResume,
-        redirect: (context, state) => AppRoutes.resumeBuilderList,
       ),
     ],
   );

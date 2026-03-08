@@ -28,9 +28,13 @@ class AppRoutes {
   static String statusPager(String id) => '/status/$id';
 
   // AI Interview
-  static const String aiInterview = '/ai-interview';
-
-  static const String aiResume = '/ai-resume';
+  static const String aiInterview = '/ai/interview';
+  static const String aiInterviewSetup = '/ai/interview/setup';
+  static const String aiResumeInterview = '/ai/interview/setup-resume';
+  static const String interviewHistory = '/ai/interview/history';
+  static const String interviewAnalytics = '/ai/interview/analytics';
+  static const String interviewLiveAgent = '/ai/interview/live-agent';
+  static String interviewFeedback(String id) => '/ai/interview/feedback/$id';
 
   // Multi-Resume Builder
   static const String resumeBuilderHome = '/resume-builder';

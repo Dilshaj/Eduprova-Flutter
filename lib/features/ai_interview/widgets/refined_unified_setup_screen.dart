@@ -37,8 +37,7 @@ class _RefinedUnifiedInterviewSetupPageState
   // Resume Based State
   PlatformFile? _selectedFile;
   final TextEditingController _jobRoleController = TextEditingController();
-  final TextEditingController _jobDescriptionController =
-      TextEditingController();
+  String _seniorityLevel = 'MID';
 
   final List<String> _allAvailableSkills = [
     'React',
@@ -89,7 +88,6 @@ class _RefinedUnifiedInterviewSetupPageState
     _skillSearchController.dispose();
     _skillSearchFocus.dispose();
     _jobRoleController.dispose();
-    _jobDescriptionController.dispose();
     super.dispose();
   }
 
@@ -160,7 +158,7 @@ class _RefinedUnifiedInterviewSetupPageState
       if (isResumeMode) {
         config.addAll({
           'jobRole': _jobRoleController.text,
-          'jobDescription': _jobDescriptionController.text,
+          'experienceLevel': _seniorityLevel,
           'resumeName': _selectedFile!.name,
         });
       } else {
@@ -456,19 +454,69 @@ class _RefinedUnifiedInterviewSetupPageState
         const SizedBox(height: 32),
         _buildSectionHeader(
           t,
-          Icons.description_outlined,
-          'JOB DESCRIPTION (OPTIONAL)',
+          Icons.bar_chart_rounded,
+          'SENIORITY LEVEL',
           color,
         ),
         const SizedBox(height: 16),
-        _buildTextField(
-          t,
-          controller: _jobDescriptionController,
-          hint: 'Paste job description here...',
-          icon: Icons.notes_rounded,
-          maxLines: 3,
-        ),
+        _buildSenioritySelector(t, color),
       ],
+    );
+  }
+
+  Widget _buildSenioritySelector(AiTheme t, Color color) {
+    final levels = ['JUNIOR', 'MID', 'SENIOR', 'LEAD'];
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: t.scaffoldBg,
+        borderRadius: .circular(16),
+        border: .all(color: t.cardBorder.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          for (final level in levels)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _seniorityLevel = level),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: _seniorityLevel == level
+                        ? (t.isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : color)
+                        : Colors.transparent,
+                    borderRadius: .circular(12),
+                    boxShadow: _seniorityLevel == level && !t.isDark
+                        ? [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      level,
+                      style: TextStyle(
+                        color: _seniorityLevel == level
+                            ? (t.isDark ? Colors.white : Colors.white)
+                            : t.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -581,8 +629,9 @@ class _RefinedUnifiedInterviewSetupPageState
                   ),
                   onTap: () {
                     setState(() {
-                      if (!_selectedSkills.contains(skill))
+                      if (!_selectedSkills.contains(skill)) {
                         _selectedSkills.add(skill);
+                      }
                       _skillSearchController.clear();
                       _skillSearchFocus.unfocus();
                     });

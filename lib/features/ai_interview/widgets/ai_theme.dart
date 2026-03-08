@@ -96,13 +96,17 @@ class AiTheme {
   // ── Background Blobs ───────────────────────────────────────────────────────
   Color get blobTopRight => isDark
       ? const Color(0xFF1E3A8A).withValues(alpha: 0.15) // Deep blue
-      : Colors.white;
+      : const Color.fromARGB(255, 225, 235, 255);
 
   Color get blobBottomLeft => isDark
+      // ? const Color(0xFF312E81).withValues(alpha: 0.15) // Indigo
       ? const Color(0xFF312E81).withValues(alpha: 0.15) // Indigo
-      : const Color(0xFFF3EFE9).withValues(alpha: 0.7);
+      : const Color.fromARGB(255, 238, 233, 243).withValues(alpha: 0.7);
 
   Color get blobMiddleRight => isDark
-      ? const Color(0xFF1E1B4B).withValues(alpha: 0.15) // Dark indigo
+      // ? const Color(0xFF1E1B4B).withValues(alpha: 0.15) // Dark indigo
+      ? const Color.fromARGB(255, 50, 27, 75).withValues(
+          alpha: 0.15,
+        ) // Dark indigo
       : Colors.white.withValues(alpha: 0.8);
 }

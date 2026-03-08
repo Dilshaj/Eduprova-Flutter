@@ -1,9 +1,7 @@
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/ai_interview/widgets/ai_theme.dart';
 import 'package:flutter/material.dart';
-import '../widgets/agent.dart';
-import '../analytics/analytics_screen.dart';
-import '../history/history_screen.dart';
-import '../widgets/refined_unified_setup_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class AiInterviewHomeScreen extends StatefulWidget {
   const AiInterviewHomeScreen({super.key});
@@ -93,7 +91,7 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
           ),
           // Bottom left brownish soft wave
           Positioned(
-            bottom: height * 0.1,
+            bottom: height * 0.08,
             left: -width * 0.4,
             child: Transform.rotate(
               angle: -0.2, // rotate wave
@@ -118,8 +116,8 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
           ),
           // Middle right white soft wave
           Positioned(
-            top: height * 0.4,
-            right: -width * 0.4,
+            top: height * 0.35,
+            right: -width * 0.5,
             child: Transform.rotate(
               angle: 0.3,
               child: Container(
@@ -185,9 +183,7 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
           ),
           InkWell(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const HistoryPage()),
-              );
+              context.push(AppRoutes.interviewHistory);
             },
             borderRadius: BorderRadius.circular(8),
             child: Padding(
@@ -418,14 +414,7 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
             ),
             child: ElevatedButton(
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const RefinedUnifiedInterviewSetupPage(
-                          initialTabIndex: 0,
-                        ),
-                  ),
-                );
+                context.push(AppRoutes.aiInterviewSetup);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -452,59 +441,7 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Start With Resume Button
-          Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border.all(
-                color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const RefinedUnifiedInterviewSetupPage(
-                          initialTabIndex: 1,
-                        ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Start With Resume',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF3B82F6),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(
-                    Icons.description_outlined,
-                    color: Color(0xFF3B82F6),
-                    size: 18,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Bottom Two Buttons Row
+          // Bottom Buttons Row
           Row(
             children: [
               Expanded(
@@ -531,14 +468,7 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(20),
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const LiveAgentPage(
-                              sessionId: 'dummy_session',
-                              role: 'Career Coach',
-                            ),
-                          ),
-                        );
+                        context.push(AppRoutes.interviewLiveAgent);
                       },
                       child: Row(
                         mainAxisAlignment: .center,
@@ -560,60 +490,6 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
                                 ? const Color(0xFFF06292)
                                 : const Color(0xFFD500F9),
                             size: 18,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: t.isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.grey.withValues(alpha: 0.15),
-                    border: Border.all(
-                      color: t.isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.grey.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const AnalyticsPage(),
-                          ),
-                        );
-                      },
-                      child: Row(
-                        mainAxisAlignment: .center,
-                        children: [
-                          Icon(
-                            Icons.bar_chart,
-                            color: t.isDark
-                                ? Colors.grey.shade300
-                                : Colors.grey.shade800,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'View Analytics',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: t.isDark
-                                  ? Colors.grey.shade300
-                                  : Colors.grey.shade800,
-                            ),
                           ),
                         ],
                       ),

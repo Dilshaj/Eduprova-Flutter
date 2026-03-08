@@ -1,13 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../widgets/ai_theme.dart';
 import '../core/models/interview_feedback_model.dart';
+import '../core/repositories/interview_repository.dart';
 
 class InterviewAnalysisPage extends StatefulWidget {
-  final InterviewFeedback feedback;
+  final InterviewFeedback? feedback;
+  final String sessionId;
 
-  const InterviewAnalysisPage({super.key, required this.feedback});
+  const InterviewAnalysisPage({
+    super.key,
+    this.feedback,
+    required this.sessionId,
+  });
 
   @override
   State<InterviewAnalysisPage> createState() => _InterviewAnalysisPageState();
@@ -16,6 +23,7 @@ class InterviewAnalysisPage extends StatefulWidget {
 class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
+  late InterviewFeedback _feedback;
   late AnimationController _animController;
   late Animation<double> _scoreAnim;
 
@@ -26,17 +34,66 @@ class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
-    _scoreAnim = Tween(begin: 0.0, end: widget.feedback.overallScore / 10)
-        .animate(
-          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
-        );
 
-    Future.delayed(const Duration(milliseconds: 800), () {
+    if (widget.feedback != null) {
+      _feedback = widget.feedback!;
+      _isLoading = false;
+      _initScoreAnimation();
+      _animController.forward();
+    } else {
+      _feedback = _createSkeletonFeedback();
+      _initScoreAnimation();
+      _loadFeedback();
+    }
+  }
+
+  void _initScoreAnimation() {
+    _scoreAnim = Tween(begin: 0.0, end: _feedback.overallScore / 10).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
+  }
+
+  InterviewFeedback _createSkeletonFeedback() {
+    return const InterviewFeedback(
+      id: '',
+      sessionId: '',
+      overallScore: 8.5,
+      technicalScore: 8.0,
+      communicationScore: 9.0,
+      strengths: ['Excellent problem solving', 'Clear communication path'],
+      improvements: ['Deepen system design', 'Practice behavioral'],
+      recommendations: ['Review advanced topics', 'Keep practicing mock'],
+      detailedAnalysis: [
+        DetailedAnalysisItem(
+          question: 'What is a closure in JavaScript?',
+          userAnswer: 'A closure is a function that has access to...',
+          score: 8.5,
+          feedback: 'Great understanding of closures and scope.',
+          detailedAnswer: 'A closure is the combination of a function...',
+        ),
+      ],
+    );
+  }
+
+  Future<void> _loadFeedback() async {
+    try {
+      final repo = InterviewRepository();
+      final feedback = await repo.generateFeedback(widget.sessionId);
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _feedback = feedback;
+          _isLoading = false;
+          _initScoreAnimation();
+        });
         _animController.forward();
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load analysis: $e')));
+      }
+    }
   }
 
   @override
@@ -48,7 +105,7 @@ class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
   @override
   Widget build(BuildContext context) {
     final t = AiTheme.of(context);
-    final f = widget.feedback;
+    final f = _feedback;
 
     final skills = [
       {'label': 'TECHNICAL PROFICIENCY', 'value': f.technicalScore / 10},
@@ -58,35 +115,35 @@ class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
 
     return Scaffold(
       backgroundColor: t.scaffoldBg,
-      body: Skeletonizer(
-        enabled: _isLoading,
-        effect: ShimmerEffect(
-          baseColor: t.shimmerBase,
-          highlightColor: t.shimmerHighlight,
-          duration: const Duration(seconds: 1),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            const double maxWidth = 480;
-            double padding = 0;
-            if (constraints.maxWidth > maxWidth) {
-              padding = (constraints.maxWidth - maxWidth) / 2;
-            }
-            return Padding(
-              padding: EdgeInsets.symmetric(horizontal: padding),
-              child: Stack(
-                children: [
-                  _buildBackground(
-                    constraints.maxHeight,
-                    constraints.maxWidth > maxWidth
-                        ? maxWidth
-                        : constraints.maxWidth,
-                  ),
-                  SafeArea(
-                    child: Column(
-                      children: [
-                        _buildHeader(context),
-                        Expanded(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          const double maxWidth = 480;
+          double padding = 0;
+          if (constraints.maxWidth > maxWidth) {
+            padding = (constraints.maxWidth - maxWidth) / 2;
+          }
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: padding),
+            child: Stack(
+              children: [
+                _buildBackground(
+                  constraints.maxHeight,
+                  constraints.maxWidth > maxWidth
+                      ? maxWidth
+                      : constraints.maxWidth,
+                ),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _buildHeader(context),
+                      Expanded(
+                        child: Skeletonizer(
+                          enabled: _isLoading,
+                          effect: ShimmerEffect(
+                            baseColor: t.shimmerBase,
+                            highlightColor: t.shimmerHighlight,
+                            duration: const Duration(seconds: 1),
+                          ),
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
@@ -117,14 +174,14 @@ class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
-        ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -199,7 +256,7 @@ class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
       child: Row(
         children: [
           InkWell(
-            onTap: () => Navigator.of(context).popUntil((r) => r.isFirst),
+            onTap: () => context.pop(),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.all(4),
@@ -207,12 +264,26 @@ class _InterviewAnalysisPageState extends State<InterviewAnalysisPage>
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Interview Analysis',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: t.textPrimary,
+          Expanded(
+            child: Text(
+              'Interview Analysis',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: t.textPrimary,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('PDF Download coming soon!')),
+              );
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(Icons.download_rounded, color: t.iconBack, size: 22),
             ),
           ),
         ],

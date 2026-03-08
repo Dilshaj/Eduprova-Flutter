@@ -8,7 +8,8 @@ import '../core/providers/interview_providers.dart';
 import '../core/models/interview_analytics_model.dart';
 
 class AnalyticsPage extends ConsumerStatefulWidget {
-  const AnalyticsPage({super.key});
+  final bool isSubView;
+  const AnalyticsPage({super.key, this.isSubView = false});
 
   @override
   ConsumerState<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -31,6 +32,9 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           if (constraints.maxWidth > maxWidth) {
             padding = (constraints.maxWidth - maxWidth) / 2;
           }
+          if (widget.isSubView) {
+            return _buildBody(analytics, isLoading, t);
+          }
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: padding),
             child: Stack(
@@ -46,31 +50,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildHeader(context),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 16),
-                              _buildInsightsChip(),
-                              const SizedBox(height: 16),
-                              _buildTitle(),
-                              const SizedBox(height: 8),
-                              _buildSubtitle(),
-                              const SizedBox(height: 24),
-                              _buildScoreCards(analytics, isLoading),
-                              const SizedBox(height: 20),
-                              _buildScoreProgressionCard(analytics, isLoading),
-                              const SizedBox(height: 20),
-                              _buildRepetitiveStrengths(analytics, isLoading),
-                              const SizedBox(height: 20),
-                              _buildFocusAreas(analytics, isLoading),
-                              const SizedBox(height: 32),
-                            ],
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _buildBody(analytics, isLoading, t)),
                     ],
                   ),
                 ),
@@ -78,6 +58,32 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildBody(InterviewAnalytics? analytics, bool isLoading, AiTheme t) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 16),
+          _buildInsightsChip(),
+          const SizedBox(height: 16),
+          _buildTitle(),
+          const SizedBox(height: 8),
+          _buildSubtitle(),
+          const SizedBox(height: 24),
+          _buildScoreCards(analytics, isLoading),
+          const SizedBox(height: 20),
+          _buildScoreProgressionCard(analytics, isLoading),
+          const SizedBox(height: 20),
+          _buildRepetitiveStrengths(analytics, isLoading),
+          const SizedBox(height: 20),
+          _buildFocusAreas(analytics, isLoading),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }

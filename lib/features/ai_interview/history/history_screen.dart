@@ -1,13 +1,17 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../widgets/ai_theme.dart';
+import '../../../theme/theme_model.dart';
 import '../core/models/interview_session_model.dart';
 import '../core/providers/interview_providers.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
-  const HistoryPage({super.key});
+  final bool isSubView;
+  const HistoryPage({super.key, this.isSubView = false});
 
   @override
   ConsumerState<HistoryPage> createState() => _HistoryPageState();
@@ -56,6 +60,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             if (constraints.maxWidth > maxWidth) {
               padding = (constraints.maxWidth - maxWidth) / 2;
             }
+            if (widget.isSubView) {
+              return _buildBody(context, t);
+            }
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: padding),
               child: Stack(
@@ -70,140 +77,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildHeader(context),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 12),
-                              _buildActivityChip(),
-                              const SizedBox(height: 16),
-                              _buildTitle(),
-                              const SizedBox(height: 6),
-                              _buildSubtitle(),
-                              const SizedBox(height: 20),
-                              _buildSearchBar(),
-                              const SizedBox(height: 16),
-                              _buildTabs(),
-                              const SizedBox(height: 20),
-                              Consumer(
-                                builder: (context, ref, _) {
-                                  final historyAsync = ref.watch(
-                                    interviewHistoryProvider,
-                                  );
-                                  return historyAsync.when(
-                                    loading: () => Skeletonizer(
-                                      enabled: true,
-                                      effect: ShimmerEffect(
-                                        baseColor: t.shimmerBase,
-                                        highlightColor: t.shimmerHighlight,
-                                        duration: const Duration(seconds: 1),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          for (int i = 0; i < 3; i++)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 16,
-                                              ),
-                                              child: _buildSessionCard({
-                                                'type': 'TECHNICAL',
-                                                'status': 'IN PROGRESS',
-                                                'score': 0,
-                                                'title':
-                                                    'Loading Session Data...',
-                                                'date': 'Jan 1, 2024',
-                                                'duration': '30m',
-                                                'color': Colors.grey,
-                                                'badgeColor': Colors.grey,
-                                                'badgeBg': Colors.grey.shade200,
-                                              }),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    error: (e, _) => Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.error_outline,
-                                            color: Colors.redAccent,
-                                            size: 40,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Failed to load history',
-                                            style: TextStyle(
-                                              color: AiTheme.of(
-                                                context,
-                                              ).textMuted,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                            ),
-                                            child: Text(
-                                              e.toString(),
-                                              style: const TextStyle(
-                                                color: Colors.redAccent,
-                                                fontSize: 12,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => ref
-                                                .read(
-                                                  interviewHistoryProvider
-                                                      .notifier,
-                                                )
-                                                .refresh(),
-                                            child: const Text('Retry'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    data: (sessions) {
-                                      final filtered = _applyFilters(sessions);
-                                      if (filtered.isEmpty) {
-                                        return Center(
-                                          child: Text(
-                                            'No sessions found',
-                                            style: TextStyle(
-                                              color: AiTheme.of(
-                                                context,
-                                              ).textMuted,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      return Column(
-                                        children: [
-                                          for (final s in filtered)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 16,
-                                              ),
-                                              child: _buildRealSessionCard(s),
-                                            ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              _buildPagination(),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _buildBody(context, t)),
                     ],
                   ),
                 ],
@@ -211,6 +85,124 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, AiTheme t) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 12),
+          _buildActivityChip(),
+          const SizedBox(height: 16),
+          _buildTitle(),
+          const SizedBox(height: 6),
+          _buildSubtitle(),
+          const SizedBox(height: 20),
+          _buildSearchBar(),
+          const SizedBox(height: 16),
+          _buildTabs(),
+          const SizedBox(height: 20),
+          Consumer(
+            builder: (context, ref, _) {
+              final historyAsync = ref.watch(interviewHistoryProvider);
+              return historyAsync.when(
+                loading: () => Skeletonizer(
+                  enabled: true,
+                  effect: ShimmerEffect(
+                    baseColor: t.shimmerBase,
+                    highlightColor: t.shimmerHighlight,
+                    duration: const Duration(seconds: 1),
+                  ),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < 3; i++)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildSessionCard(
+                            data: {
+                              'type': 'TECHNICAL',
+                              'status': 'IN PROGRESS',
+                              'score': 0,
+                              'title': 'Loading Session Data...',
+                              'date': 'Jan 1, 2024',
+                              'duration': '30m',
+                              'color': Colors.grey,
+                              'badgeColor': Colors.grey,
+                              'badgeBg': Colors.grey.shade200,
+                            },
+                            onDownload: () {},
+                            onViewReport: () {},
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                error: (e, _) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.redAccent,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Failed to load history',
+                        style: TextStyle(color: AiTheme.of(context).textMuted),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          e.toString(),
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => ref
+                            .read(interviewHistoryProvider.notifier)
+                            .refresh(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+                data: (sessions) {
+                  final filtered = _applyFilters(sessions);
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No sessions found',
+                        style: TextStyle(color: AiTheme.of(context).textMuted),
+                      ),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (final s in filtered)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildRealSessionCard(s),
+                        ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildPagination(),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
@@ -454,16 +446,25 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 
   Widget _buildRealSessionCard(InterviewSession session) {
+    final theme = Theme.of(context);
+    final themeExt = theme.extension<AppDesignExtension>()!;
+
     final typeColors = {
       'RESUME BASED': (
-        bg: const Color(0xFFEFF6FF),
-        text: const Color(0xFF3B82F6),
+        bg: themeExt.purpleAccentColor,
+        text: themeExt.purpleAccentTextColor,
       ),
-      'TECHNICAL': (bg: const Color(0xFFDCFCE7), text: const Color(0xFF22C55E)),
+      'TECHNICAL': (
+        bg: themeExt.successBackgroundColor,
+        text: themeExt.successColor,
+      ),
     };
     final colors =
         typeColors[session.typeLabel] ??
-        (bg: const Color(0xFFFFF7ED), text: const Color(0xFFF97316));
+        (
+          bg: themeExt.warningColor.withValues(alpha: 0.1),
+          text: themeExt.warningColor,
+        );
 
     final statusColor = session.status == 'completed'
         ? const Color(0xFF22C55E)
@@ -482,20 +483,40 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         ? '${session.createdAt!.day} ${_monthName(session.createdAt!.month)}, ${session.createdAt!.year}'
         : '—';
 
-    return _buildSessionCard({
-      'type': session.typeLabel,
-      'status': session.status.toUpperCase(),
-      'score': scorePercent,
-      'title':
-          session.config?.techStack?.join(', ') ??
-          session.config?.experienceLevel ??
-          'Interview',
-      'date': dateStr,
-      'duration': session.durationDisplay,
-      'color': statusColor,
-      'badgeColor': colors.text,
-      'badgeBg': colors.bg,
-    });
+    return _buildSessionCard(
+      data: {
+        'type': session.typeLabel,
+        'status': session.status.toUpperCase(),
+        'score': scorePercent,
+        'title':
+            session.config?.techStack?.join(', ') ??
+            session.config?.experienceLevel ??
+            'Interview',
+        'date': dateStr,
+        'duration': session.durationDisplay,
+        'color': statusColor,
+        'badgeColor': colors.text,
+        'badgeBg': colors.bg,
+      },
+      onDownload: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PDF Download coming soon!')),
+        );
+      },
+      onViewReport: () async {
+        context
+            .push(
+              AppRoutes.interviewFeedback(session.id),
+              extra: session.feedback,
+            )
+            .then((_) {
+              // Refresh history when coming back to update local state if feedback was generated
+              if (session.feedback == null) {
+                ref.read(interviewHistoryProvider.notifier).refresh();
+              }
+            });
+      },
+    );
   }
 
   String _monthName(int month) {
@@ -517,11 +538,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     return names[month];
   }
 
-  Widget _buildSessionCard(Map<String, dynamic> session) {
+  Widget _buildSessionCard({
+    required Map<String, dynamic> data,
+    required VoidCallback onDownload,
+    required VoidCallback onViewReport,
+  }) {
     final t = AiTheme.of(context);
-    final Color typeColor = session['color'] as Color;
-    final Color badgeColor = session['badgeColor'] as Color;
-    final Color badgeBg = session['badgeBg'] as Color;
+    final Color typeColor = data['color'] as Color;
+    final Color badgeColor = data['badgeColor'] as Color;
+    final Color badgeBg = data['badgeBg'] as Color;
 
     return Container(
       decoration: BoxDecoration(
@@ -549,7 +574,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    session['type'] as String,
+                    data['type'] as String,
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -570,7 +595,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      session['status'] as String,
+                      data['status'] as String,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -593,14 +618,14 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     fit: StackFit.expand,
                     children: [
                       CircularProgressIndicator(
-                        value: (session['score'] as int) / 100,
+                        value: (data['score'] as int) / 100,
                         strokeWidth: 5,
-                        backgroundColor: Colors.grey.shade100,
+                        backgroundColor: t.gaugeTrack,
                         color: typeColor,
                       ),
                       Center(
                         child: Text(
-                          '${session['score']}',
+                          '${data['score']}',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
@@ -617,7 +642,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        session['title'] as String,
+                        data['title'] as String,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -634,7 +659,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            session['date'] as String,
+                            data['date'] as String,
                             style: TextStyle(
                               fontSize: 11,
                               color: t.textMuted,
@@ -649,7 +674,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            session['duration'] as String,
+                            data['duration'] as String,
                             style: TextStyle(
                               fontSize: 11,
                               color: t.textMuted,
@@ -671,13 +696,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                   child: _buildCardButton(
                     label: 'Download',
                     icon: Icons.download_outlined,
-                    onTap: () {},
+                    onTap: onDownload,
                     outlined: true,
                     color: const Color(0xFF374151),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildGradientButton('View Report', () {})),
+                Expanded(
+                  child: _buildGradientButton('View Report', onViewReport),
+                ),
               ],
             ),
           ],

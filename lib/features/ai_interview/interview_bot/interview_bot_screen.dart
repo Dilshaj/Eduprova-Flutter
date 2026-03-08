@@ -3,7 +3,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:eduprova/globals.dart';
 import 'package:eduprova/core/network/api_client.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -11,9 +13,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../core/services/deepgram_stt_service.dart';
 import '../widgets/ai_theme.dart';
-import '../analytics/interview_analysis.dart';
 import '../core/models/interview_session_model.dart';
-import '../core/repositories/interview_repository.dart';
 import 'widgets/interview_header.dart';
 import 'widgets/question_progress_bar.dart';
 import 'widgets/ai_avatar_widget.dart';
@@ -409,25 +409,8 @@ class _InterviewBotPageState extends State<InterviewBotPage> {
     if (_isEndingSession) return;
     if (mounted) setState(() => _isEndingSession = true);
 
-    try {
-      final repo = InterviewRepository();
-      final feedback = await repo.generateFeedback(widget.sessionId);
-
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => InterviewAnalysisPage(feedback: feedback),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isEndingSession = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to get feedback: ${e.toString()}'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+    if (mounted) {
+      context.go(AppRoutes.interviewFeedback(widget.sessionId));
     }
   }
 

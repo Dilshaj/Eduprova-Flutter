@@ -1,11 +1,8 @@
-import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme/theme.dart';
-import 'widgets/section_list_view.dart';
-import 'widgets/design_view.dart';
 import 'widgets/preview_view.dart';
 import 'providers/resume_provider.dart';
+import 'ai_resume_editor_screen.dart';
 
 class AiResumeScreen extends ConsumerStatefulWidget {
   final String resumeId;
@@ -17,7 +14,6 @@ class AiResumeScreen extends ConsumerStatefulWidget {
 }
 
 class _AiResumeScreenState extends ConsumerState<AiResumeScreen> {
-  int _selectedIndex = 0;
   bool _isLoading = true;
 
   @override
@@ -43,104 +39,107 @@ class _AiResumeScreenState extends ConsumerState<AiResumeScreen> {
     }
 
     final theme = Theme.of(context);
-    final themeExt = theme.extension<AppDesignExtension>()!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      // extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('AI Resume Builder'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        // backgroundColor: Colors.transparent,
+        // title: const Text('AI Resume Builder'),
+        // backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        // actions: [_buildToggle(theme, themeExt), const SizedBox(width: 16)],
       ),
-      floatingActionButton: Container(child: _buildToggle(theme, themeExt)),
-      // body: Stack(children: [AppBackground(), _buildBody()]),
-      body: _buildBody(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: _buildFloatingTabBar(context, theme),
+      body: const PreviewView(),
     );
   }
 
-  Widget _buildToggle(ThemeData theme, AppDesignExtension themeExt) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildFloatingTabBar(BuildContext context, ThemeData theme) {
+    return Hero(
+      tag: 'tab_container',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.8,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FloatingTabButton(
+              heroTag: 'tab_content',
+              icon: Icons.edit_note,
+              label: 'Content',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AiResumeEditorScreen(initialIndex: 0),
+                  ),
+                );
+              },
+              theme: theme,
+            ),
+            const SizedBox(width: 8),
+            _FloatingTabButton(
+              heroTag: 'tab_design',
+              icon: Icons.palette_outlined,
+              label: 'Design',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AiResumeEditorScreen(initialIndex: 1),
+                  ),
+                );
+              },
+              theme: theme,
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ToggleItem(
-            icon: Icons.edit_note,
-            label: 'Content',
-            isSelected: _selectedIndex == 0,
-            onTap: () => setState(() => _selectedIndex = 0),
-          ),
-          _ToggleItem(
-            icon: Icons.palette_outlined,
-            label: 'Design',
-            isSelected: _selectedIndex == 1,
-            onTap: () => setState(() => _selectedIndex = 1),
-          ),
-          _ToggleItem(
-            icon: Icons.remove_red_eye_outlined,
-            label: 'Preview',
-            isSelected: _selectedIndex == 2,
-            onTap: () => setState(() => _selectedIndex = 2),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    return IndexedStack(
-      index: _selectedIndex,
-      children: const [SectionListView(), DesignView(), PreviewView()],
     );
   }
 }
 
-class _ToggleItem extends StatelessWidget {
+class _FloatingTabButton extends StatelessWidget {
+  final String heroTag;
   final IconData icon;
   final String label;
-  final bool isSelected;
   final VoidCallback onTap;
+  final ThemeData theme;
 
-  const _ToggleItem({
+  const _FloatingTabButton({
+    required this.heroTag,
     required this.icon,
     required this.label,
-    required this.isSelected,
     required this.onTap,
+    required this.theme,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected
-                  ? Colors.white
-                  : theme.iconTheme.color?.withValues(alpha: 0.7),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 4),
+      child: Material(
+        color: theme.colorScheme.primary,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: Colors.white),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: const TextStyle(
@@ -150,7 +149,7 @@ class _ToggleItem extends StatelessWidget {
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
