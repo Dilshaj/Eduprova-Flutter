@@ -1,11 +1,305 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:video_player/video_player.dart' as vp;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Storyboard / Trick-play support
+// ─────────────────────────────────────────────────────────────────────────────
+
+typedef _StoryboardCue = ({Duration start, Duration end, Rect crop});
+
+class MuxStoryboardService {
+  MuxStoryboardService._(this.playbackId);
+
+  final String playbackId;
+
+  String get storyboardImageUrl =>
+      'https://image.mux.com/$playbackId/storyboard.jpg';
+
+  List<_StoryboardCue>? _cues;
+  bool _loading = false;
+  bool _failed = false;
+
+  // Cache one service per playback-id so we only fetch VTT once per session.
+  static final Map<String, MuxStoryboardService> _cache = {};
+
+  static MuxStoryboardService forPlaybackId(String id) =>
+      _cache.putIfAbsent(id, () => MuxStoryboardService._(id));
+
+  Future<List<_StoryboardCue>?> getCues() async {
+    if (_cues != null) return _cues;
+    if (_failed || _loading) return null;
+    _loading = true;
+    try {
+      final uri = Uri.parse('https://image.mux.com/$playbackId/storyboard.vtt');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        _cues = _parseVtt(response.body);
+      } else {
+        _failed = true;
+      }
+    } catch (_) {
+      _failed = true;
+    } finally {
+      _loading = false;
+    }
+    return _cues;
+  }
+
+  _StoryboardCue? findCue(Duration position) {
+    final list = _cues;
+    if (list == null || list.isEmpty) return null;
+    for (final cue in list) {
+      if (position >= cue.start && position < cue.end) return cue;
+    }
+    return list.last;
+  }
+
+  static List<_StoryboardCue> _parseVtt(String vtt) {
+    final cues = <_StoryboardCue>[];
+    final lines = vtt.split('\n');
+    Duration? start;
+    Duration? end;
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i].trim();
+      if (line.contains('-->')) {
+        final parts = line.split('-->');
+        start = _parseDuration(parts[0].trim());
+        end = _parseDuration(parts[1].split('#').first.trim());
+      } else if (line.contains('xywh=') && start != null && end != null) {
+        final xywhStr = line.split('xywh=').last;
+        final nums = xywhStr
+            .split(',')
+            .map((s) => double.tryParse(s.trim()) ?? 0)
+            .toList();
+        if (nums.length >= 4) {
+          cues.add((
+            start: start,
+            end: end,
+            crop: Rect.fromLTWH(nums[0], nums[1], nums[2], nums[3]),
+          ));
+        }
+        start = null;
+        end = null;
+      }
+    }
+    return cues;
+  }
+
+  static Duration _parseDuration(String s) {
+    // Supports HH:MM:SS.mmm or MM:SS.mmm
+    final parts = s.split(':');
+    if (parts.length == 3) {
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      final secParts = parts[2].split('.');
+      final sec = int.tryParse(secParts[0]) ?? 0;
+      final ms =
+          int.tryParse(
+            secParts.length > 1
+                ? secParts[1].padRight(3, '0').substring(0, 3)
+                : '0',
+          ) ??
+          0;
+      return Duration(hours: h, minutes: m, seconds: sec, milliseconds: ms);
+    } else if (parts.length == 2) {
+      final m = int.tryParse(parts[0]) ?? 0;
+      final secParts = parts[1].split('.');
+      final sec = int.tryParse(secParts[0]) ?? 0;
+      final ms =
+          int.tryParse(
+            secParts.length > 1
+                ? secParts[1].padRight(3, '0').substring(0, 3)
+                : '0',
+          ) ??
+          0;
+      return Duration(minutes: m, seconds: sec, milliseconds: ms);
+    }
+    return Duration.zero;
+  }
+}
+
+/// Floating thumbnail that appears above the seek bar thumb while scrubbing.
+class StoryboardThumbnail extends StatefulWidget {
+  final String playbackId;
+  final Duration position;
+  final Duration totalDuration;
+  final double thumbFraction; // 0.0 → 1.0 position along the slider
+  final double sliderWidth;
+  final double bottomOffset; // distance from bottom of player
+
+  const StoryboardThumbnail({
+    super.key,
+    required this.playbackId,
+    required this.position,
+    required this.totalDuration,
+    required this.thumbFraction,
+    required this.sliderWidth,
+    required this.bottomOffset,
+  });
+
+  @override
+  State<StoryboardThumbnail> createState() => _StoryboardThumbnailState();
+}
+
+class _StoryboardThumbnailState extends State<StoryboardThumbnail> {
+  static const double _thumbW = 160.0;
+  static const double _thumbH = 90.0;
+
+  List<_StoryboardCue>? _cues;
+
+  late final MuxStoryboardService _service;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = MuxStoryboardService.forPlaybackId(widget.playbackId);
+    _loadCues();
+  }
+
+  Future<void> _loadCues() async {
+    final cues = await _service.getCues();
+    if (mounted) {
+      setState(() {
+        _cues = cues;
+      });
+    }
+  }
+
+  String _formatTime(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) {
+      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Horizontal centre of the thumb in slider-local space
+    final thumbCentreX = widget.thumbFraction * widget.sliderWidth;
+    // Keep card within bounds
+    final halfW = _thumbW / 2;
+    final cardLeft = (thumbCentreX - halfW).clamp(
+      0.0,
+      widget.sliderWidth - _thumbW,
+    );
+
+    final cue = _service.findCue(widget.position);
+    final hasCue = _cues != null && cue != null;
+
+    return Positioned(
+      bottom: widget.bottomOffset,
+      left: cardLeft,
+      child: IgnorePointer(
+        child: Column(
+          mainAxisSize: .min,
+          children: [
+            Container(
+              width: _thumbW,
+              height: _thumbH,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: hasCue
+                  ? _buildCroppedThumbnail(cue)
+                  : const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                _formatTime(widget.position),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCroppedThumbnail(_StoryboardCue cue) {
+    // We show just the cue's crop region from the full storyboard image.
+    // CachedNetworkImage loads the full sheet; we use a ClipRect + CustomPaint
+    // trick: scale the sheet down to _thumbW×_thumbH then offset it.
+    final cropW = cue.crop.width;
+    final cropH = cue.crop.height;
+    final scaleX = _thumbW / cropW;
+    final scaleY = _thumbH / cropH;
+    final scale = scaleX < scaleY ? scaleX : scaleY; // fit
+    // actual render size of the FULL storyboard
+    // We need the full storyboard image dimensions to calculate offset.
+    // We'll approximate: Mux default storyboard-per-cell is 160×90, so the
+    // sheet total width = ceil(sqrt(count))*160.  But we can simply use the
+    // crop origin scaled by our scale factor.
+    return CachedNetworkImage(
+      imageUrl: _service.storyboardImageUrl,
+      fit: BoxFit.none,
+      width: _thumbW,
+      height: _thumbH,
+      imageBuilder: (context, imageProvider) {
+        return ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.topLeft,
+            maxWidth: double.infinity,
+            maxHeight: double.infinity,
+            child: Transform.translate(
+              offset: Offset(-cue.crop.left * scale, -cue.crop.top * scale),
+              child: Transform.scale(
+                scale: scale,
+                alignment: Alignment.topLeft,
+                child: Image(image: imageProvider, fit: BoxFit.none),
+              ),
+            ),
+          ),
+        );
+      },
+      errorWidget: (_, __, ___) => const Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.white38,
+          size: 22,
+        ),
+      ),
+    );
+  }
+}
 
 enum AppVideoEngine { mediaKit, videoPlayer }
 
@@ -610,6 +904,7 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       duration: _duration(),
       brightness: _brightness,
       volume: _volume,
+      muxPlaybackId: widget.muxPlaybackId,
       onTogglePlayPause: _togglePlayPause,
       onSeekTo: _seekTo,
       onSeekBySeconds: _seekBySeconds,
@@ -660,6 +955,7 @@ class _GestureVideoLayer extends StatefulWidget {
   final Duration duration;
   final double brightness;
   final double volume;
+  final String? muxPlaybackId;
   final Future<void> Function() onTogglePlayPause;
   final Future<void> Function(Duration target) onSeekTo;
   final Future<void> Function(int seconds) onSeekBySeconds;
@@ -680,6 +976,7 @@ class _GestureVideoLayer extends StatefulWidget {
     required this.duration,
     required this.brightness,
     required this.volume,
+    this.muxPlaybackId,
     required this.onTogglePlayPause,
     required this.onSeekTo,
     required this.onSeekBySeconds,
@@ -714,6 +1011,10 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
   double _startBrightness = 1.0;
   bool _isScrubbing = false;
   double _scrubMs = 0;
+  // Holds the seeked-to ms after onChangeEnd until the player position
+  // catches up. Prevents the "snap-back" where the slider briefly shows the
+  // old position right after a seek.
+  double? _postSeekTargetMs;
   double _inlineMiniTargetDy = 1;
   bool _isSettlingToMini = false;
   _GestureZone _zone = _GestureZone.center;
@@ -986,7 +1287,10 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
         final dragProgress = (_dragDy.abs() / _dragDistance).clamp(0.0, 1.0);
         final displayPosition = _isScrubbing
             ? Duration(milliseconds: _scrubMs.round())
-            : widget.position;
+            : (_postSeekTargetMs != null
+                  // Keep showing the seeked position until the player catches up
+                  ? Duration(milliseconds: _postSeekTargetMs!.round())
+                  : widget.position);
         final totalMs = widget.duration.inMilliseconds <= 0
             ? 1.0
             : widget.duration.inMilliseconds.toDouble();
@@ -1143,46 +1447,88 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
                                   ],
                                 ),
                               ),
+                              // Seek-bar + storyboard thumbnail
                               Positioned(
                                 left: 0,
                                 right: 0,
                                 bottom: 0,
-                                child: SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    trackHeight: 2.8,
-                                    thumbShape: const RoundSliderThumbShape(
-                                      enabledThumbRadius: 5.5,
-                                    ),
-                                    overlayShape:
-                                        SliderComponentShape.noOverlay,
-                                    trackShape:
-                                        const RoundedRectSliderTrackShape(),
-                                  ),
-                                  child: Slider(
-                                    value: sliderValue,
-                                    min: 0,
-                                    max: totalMs,
-                                    onChangeStart: (value) {
-                                      setState(() {
-                                        _isScrubbing = true;
-                                        _scrubMs = value;
-                                      });
-                                    },
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _scrubMs = value;
-                                      });
-                                    },
-                                    onChangeEnd: (value) async {
-                                      await widget.onSeekTo(
-                                        Duration(milliseconds: value.round()),
-                                      );
-                                      setState(() {
-                                        _isScrubbing = false;
-                                      });
-                                      _scheduleControlsHide();
-                                    },
-                                  ),
+                                child: LayoutBuilder(
+                                  builder: (_, bc) {
+                                    // Usable track width (Slider adds ~24px padding each side)
+                                    final trackW = bc.maxWidth - 48.0;
+                                    final thumbFrac = totalMs <= 0
+                                        ? 0.0
+                                        : (sliderValue / totalMs).clamp(
+                                            0.0,
+                                            1.0,
+                                          );
+                                    return Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        SliderTheme(
+                                          data: SliderTheme.of(context).copyWith(
+                                            trackHeight: 2.8,
+                                            thumbShape:
+                                                const RoundSliderThumbShape(
+                                                  enabledThumbRadius: 5.5,
+                                                ),
+                                            overlayShape:
+                                                SliderComponentShape.noOverlay,
+                                            trackShape:
+                                                const RoundedRectSliderTrackShape(),
+                                          ),
+                                          child: Slider(
+                                            value: sliderValue,
+                                            min: 0,
+                                            max: totalMs,
+                                            onChangeStart: (value) {
+                                              _controlsTimer?.cancel();
+                                              setState(() {
+                                                _controlsVisible = true;
+                                                _isScrubbing = true;
+                                                _postSeekTargetMs = null;
+                                                _scrubMs = value;
+                                              });
+                                            },
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _scrubMs = value;
+                                              });
+                                            },
+                                            onChangeEnd: (value) async {
+                                              setState(() {
+                                                _isScrubbing = false;
+                                                _postSeekTargetMs = value;
+                                              });
+                                              await widget.onSeekTo(
+                                                Duration(
+                                                  milliseconds: value.round(),
+                                                ),
+                                              );
+                                              if (mounted) {
+                                                setState(() {
+                                                  _postSeekTargetMs = null;
+                                                });
+                                              }
+                                              _scheduleControlsHide();
+                                            },
+                                          ),
+                                        ),
+                                        if (_isScrubbing &&
+                                            widget.muxPlaybackId != null)
+                                          StoryboardThumbnail(
+                                            playbackId: widget.muxPlaybackId!,
+                                            position: displayPosition,
+                                            totalDuration: widget.duration,
+                                            thumbFraction: thumbFrac,
+                                            sliderWidth: trackW,
+                                            // position card relative to the
+                                            // track start (24px left padding)
+                                            bottomOffset: 24,
+                                          ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
                             ] else
@@ -1191,44 +1537,84 @@ class _GestureVideoLayerState extends State<_GestureVideoLayer> {
                                 right: 12,
                                 bottom: 8,
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: .start,
                                   children: [
-                                    SliderTheme(
-                                      data: SliderTheme.of(context).copyWith(
-                                        trackHeight: 2.8,
-                                        thumbShape: const RoundSliderThumbShape(
-                                          enabledThumbRadius: 6,
-                                        ),
-                                        overlayShape:
-                                            SliderComponentShape.noOverlay,
-                                      ),
-                                      child: Slider(
-                                        value: sliderValue,
-                                        min: 0,
-                                        max: totalMs,
-                                        onChangeStart: (value) {
-                                          setState(() {
-                                            _isScrubbing = true;
-                                            _scrubMs = value;
-                                          });
-                                        },
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _scrubMs = value;
-                                          });
-                                        },
-                                        onChangeEnd: (value) async {
-                                          await widget.onSeekTo(
-                                            Duration(
-                                              milliseconds: value.round(),
+                                    LayoutBuilder(
+                                      builder: (_, bc) {
+                                        final trackW = bc.maxWidth - 48.0;
+                                        final thumbFrac = totalMs <= 0
+                                            ? 0.0
+                                            : (sliderValue / totalMs).clamp(
+                                                0.0,
+                                                1.0,
+                                              );
+                                        return Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            SliderTheme(
+                                              data: SliderTheme.of(context)
+                                                  .copyWith(
+                                                    trackHeight: 2.8,
+                                                    thumbShape:
+                                                        const RoundSliderThumbShape(
+                                                          enabledThumbRadius: 6,
+                                                        ),
+                                                    overlayShape:
+                                                        SliderComponentShape
+                                                            .noOverlay,
+                                                  ),
+                                              child: Slider(
+                                                value: sliderValue,
+                                                min: 0,
+                                                max: totalMs,
+                                                onChangeStart: (value) {
+                                                  _controlsTimer?.cancel();
+                                                  setState(() {
+                                                    _controlsVisible = true;
+                                                    _isScrubbing = true;
+                                                    _postSeekTargetMs = null;
+                                                    _scrubMs = value;
+                                                  });
+                                                },
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    _scrubMs = value;
+                                                  });
+                                                },
+                                                onChangeEnd: (value) async {
+                                                  setState(() {
+                                                    _isScrubbing = false;
+                                                    _postSeekTargetMs = value;
+                                                  });
+                                                  await widget.onSeekTo(
+                                                    Duration(
+                                                      milliseconds: value
+                                                          .round(),
+                                                    ),
+                                                  );
+                                                  if (mounted) {
+                                                    setState(() {
+                                                      _postSeekTargetMs = null;
+                                                    });
+                                                  }
+                                                  _scheduleControlsHide();
+                                                },
+                                              ),
                                             ),
-                                          );
-                                          setState(() {
-                                            _isScrubbing = false;
-                                          });
-                                          _scheduleControlsHide();
-                                        },
-                                      ),
+                                            if (_isScrubbing &&
+                                                widget.muxPlaybackId != null)
+                                              StoryboardThumbnail(
+                                                playbackId:
+                                                    widget.muxPlaybackId!,
+                                                position: displayPosition,
+                                                totalDuration: widget.duration,
+                                                thumbFraction: thumbFrac,
+                                                sliderWidth: trackW,
+                                                bottomOffset: 34,
+                                              ),
+                                          ],
+                                        );
+                                      },
                                     ),
                                     Row(
                                       children: [
