@@ -52,6 +52,8 @@ class AppVideoPlayer extends StatefulWidget {
   final ValueChanged<bool>? onMiniPlayerChanged;
   final ValueChanged<double>? onInlineCollapseProgress;
   final bool Function(AppVideoMiniSnapshot snapshot)? onInlineMiniPlayerRequest;
+  final ValueChanged<Duration>? onPositionChanged;
+  final VoidCallback? onFinished;
   final double inlineMiniBottomInset;
   final String? restoreRouteOnExpand;
 
@@ -61,6 +63,8 @@ class AppVideoPlayer extends StatefulWidget {
     this.muxPlaybackId,
     this.autoPlay = true,
     this.initialPosition,
+    this.onPositionChanged,
+    this.onFinished,
     this.engine = AppVideoEngine.mediaKit,
     this.adoptedMediaPlayer,
     this.adoptedVideoPlayerController,
@@ -120,6 +124,7 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
     _mediaSubscriptions.add(
       _mediaPlayer.stream.position.listen((value) {
         _mediaPosition = value;
+        widget.onPositionChanged?.call(value);
         if (mounted) setState(() {});
       }),
     );
@@ -127,6 +132,13 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       _mediaPlayer.stream.duration.listen((value) {
         _mediaDuration = value;
         if (mounted) setState(() {});
+      }),
+    );
+    _mediaSubscriptions.add(
+      _mediaPlayer.stream.completed.listen((completed) {
+        if (completed) {
+          widget.onFinished?.call();
+        }
       }),
     );
     _mediaSubscriptions.add(
@@ -254,6 +266,14 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
   }
 
   void _onVideoControllerChanged() {
+    final controller = _videoController;
+    if (controller != null && controller.value.isInitialized) {
+      widget.onPositionChanged?.call(controller.value.position);
+      if (controller.value.position >= controller.value.duration &&
+          !controller.value.isPlaying) {
+        widget.onFinished?.call();
+      }
+    }
     if (mounted) setState(() {});
   }
 

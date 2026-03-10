@@ -1,6 +1,5 @@
 import 'package:eduprova/features/ai_interview/analytics/interview_analysis.dart';
 import 'package:eduprova/features/ai_interview/history/history_analytics_screen.dart';
-import 'package:eduprova/features/ai_interview/history/history_screen.dart';
 import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
 import 'package:eduprova/features/ai_interview/widgets/agent.dart';
 import 'package:eduprova/features/ai_interview/widgets/refined_unified_setup_screen.dart';
@@ -75,17 +74,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: AppRoutes.splash,
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
+      GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
       GoRoute(
         path: AppRoutes.register,
-        builder: (context, state) => const SignupScreen(),
+        builder: (_, _) => const SignupScreen(),
       ),
 
       /*********************************************
@@ -100,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) => const HomeScreen(),
+                builder: (_, _) => const HomeScreen(),
               ),
             ],
           ),
@@ -108,7 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.courses,
-                builder: (context, state) => const CoursesScreen(),
+                builder: (_, _) => const CoursesScreen(),
               ),
             ],
           ),
@@ -116,28 +109,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.messages,
-                builder: (context, state) => const MessagesListScreen(),
+                builder: (_, _) => const MessagesListScreen(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: '/jobs',
-                builder: (context, state) => const JobsScreen(),
-              ),
+              GoRoute(path: '/jobs', builder: (_, _) => const JobsScreen()),
             ],
           ),
         ],
       ),
 
-      GoRoute(
-        path: AppRoutes.search,
-        builder: (context, state) => const SearchScreen(),
-      ),
+      GoRoute(path: AppRoutes.search, builder: (_, _) => const SearchScreen()),
       GoRoute(
         path: AppRoutes.statusPager(':id'),
-        builder: (context, state) {
+        builder: (_, state) {
           final initialIndex = state.pathParameters['id']!;
           return StatusUsersPager(initialIndex: int.parse(initialIndex));
         },
@@ -145,7 +132,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.createStory,
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const StatusScreen(),
+        builder: (_, _) => const StatusScreen(),
       ),
 
       /*********************************************
@@ -153,14 +140,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       *********************************************/
       GoRoute(
         path: AppRoutes.courseDetail(':id'),
-        builder: (context, state) {
+        builder: (_, state) {
           final courseId = state.pathParameters['id']!;
           return CourseDetailScreen(courseId: courseId);
         },
       ),
       GoRoute(
         path: AppRoutes.courseLearning(':id'),
-        pageBuilder: (context, state) {
+        pageBuilder: (_, state) {
           final courseId = state.pathParameters['id']!;
           final query = state.uri.queryParameters;
           final resumeMs = int.tryParse(query['resumeMs'] ?? '');
@@ -186,41 +173,26 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      GoRoute(
-        path: AppRoutes.myCart,
-        builder: (context, state) {
-          return MyCartScreen();
-        },
-      ),
+      GoRoute(path: AppRoutes.myCart, builder: (_, _) => MyCartScreen()),
       GoRoute(
         path: AppRoutes.myWishlist,
-        builder: (context, state) {
-          return MyWishlistScreen();
-        },
+        builder: (_, _) => MyWishlistScreen(),
       ),
       GoRoute(
         path: AppRoutes.helpAndSupport,
-        builder: (context, state) {
-          return HelpSupportScreen();
-        },
+        builder: (_, _) => HelpSupportScreen(),
       ),
       GoRoute(
         path: AppRoutes.myLearning,
-        builder: (context, state) {
-          return MyLearningScreen();
-        },
+        builder: (_, _) => MyLearningScreen(),
       ),
       GoRoute(
         path: AppRoutes.billingAndPayments,
-        builder: (context, state) {
-          return BillingPaymentsScreen();
-        },
+        builder: (_, _) => BillingPaymentsScreen(),
       ),
       GoRoute(
         path: AppRoutes.profileSettings,
-        builder: (context, state) {
-          return ProfileSettingsScreen();
-        },
+        builder: (_, _) => ProfileSettingsScreen(),
       ),
 
       /*********************************************
@@ -228,22 +200,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       *********************************************/
       GoRoute(
         path: AppRoutes.createCommunity,
-        builder: (context, state) => const CreateCommunityScreen(),
+        builder: (_, _) => const CreateCommunityScreen(),
       ),
       GoRoute(
         path: AppRoutes.createChannel,
-        builder: (context, state) => const CreateChannelScreen(),
+        builder: (_, _) => const CreateChannelScreen(),
       ),
       GoRoute(
         path: AppRoutes.chat(':id'),
-        builder: (context, state) {
+        builder: (_, state) {
           final chatId = state.pathParameters['id']!;
           return ChatScreen(id: chatId);
         },
       ),
       GoRoute(
         path: '/contact/:id',
-        builder: (context, state) {
+        builder: (_, state) {
           final contactId = state.pathParameters['id']!;
           return ChatProfileScreen(id: contactId);
         },
@@ -254,65 +226,55 @@ final routerProvider = Provider<GoRouter>((ref) {
       *********************************************/
       GoRoute(
         path: AppRoutes.aiInterview,
-        builder: (context, state) {
-          return const AiInterviewHomeScreen();
-        },
+        builder: (context, state) => const AiInterviewHomeScreen(),
       ),
       GoRoute(
         path: AppRoutes.aiInterviewSetup,
-        builder: (context, state) {
-          return const RefinedUnifiedInterviewSetupPage(initialTabIndex: 0);
-        },
+        builder: (_, _) =>
+            const RefinedUnifiedInterviewSetupPage(initialTabIndex: 0),
       ),
       GoRoute(
         path: AppRoutes.aiResumeInterview,
-        builder: (context, state) {
-          return const RefinedUnifiedInterviewSetupPage(initialTabIndex: 1);
-        },
+        builder: (_, _) =>
+            const RefinedUnifiedInterviewSetupPage(initialTabIndex: 1),
       ),
       GoRoute(
         path: AppRoutes.interviewHistory,
-        builder: (context, state) {
-          return const HistoryAnalyticsScreen(initialTabIndex: 0);
-        },
+        builder: (_, _) => const HistoryAnalyticsScreen(initialTabIndex: 0),
       ),
       GoRoute(
         path: AppRoutes.interviewAnalytics,
-        builder: (context, state) {
-          return const HistoryAnalyticsScreen(initialTabIndex: 1);
-        },
+        builder: (_, _) => const HistoryAnalyticsScreen(initialTabIndex: 1),
       ),
       GoRoute(
         path: AppRoutes.interviewFeedback(':id'),
-        builder: (context, state) {
+        builder: (_, state) {
           final id = state.pathParameters['id']!;
           return InterviewAnalysisPage(sessionId: id);
         },
       ),
       GoRoute(
         path: AppRoutes.interviewLiveAgent,
-        builder: (context, state) {
-          return const LiveAgentPage(
-            sessionId: 'dummy_session',
-            role: 'Career Coach',
-          );
-        },
+        builder: (_, _) => const LiveAgentPage(
+          sessionId: 'dummy_session',
+          role: 'Career Coach',
+        ),
       ),
 
       /*********************************************
-      ************  Ai Resume Builder  ***********
+      *************  Ai Resume Builder  ************
       *********************************************/
       GoRoute(
         path: AppRoutes.resumeBuilderHome,
-        builder: (context, state) => const ResumeBuilderLandingPage(),
+        builder: (_, _) => const ResumeBuilderLandingPage(),
       ),
       GoRoute(
         path: AppRoutes.resumeBuilderList,
-        builder: (context, state) => const ResumeListPage(),
+        builder: (_, _) => const ResumeListPage(),
       ),
       GoRoute(
         path: AppRoutes.resumeBuilderImport,
-        builder: (context, state) => const ImportResumePage(),
+        builder: (_, _) => const ImportResumePage(),
       ),
       GoRoute(
         path: AppRoutes.resumeBuilderEditor(':id'),

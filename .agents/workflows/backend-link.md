@@ -4,10 +4,9 @@ description: For linking the backend to this flutter app
 
 You Need to Link the backend to our Flutter Code
 
-the Full source code for both frontend and backend is in this folder: @/Users/jayasuryasarisa/work/EDUPROVA
-it has source code for :
-    - backend: implemented using Nest.js + fastify , code at: @/Users/jayasuryasarisa/work/EDUPROVA/backend
-    - frontend: implemented using Next.js (react,typescript,tailwind) at @/Users/jayasuryasarisa/work/EDUPROVA/frontend
+the Full source code for both frontend and backend is in this folder: @/Users/jayasuryasarisa/ws/nestjs/eduprova-main/EDURPOVA
+
+it has source code for  both backend and next.js frontend code.
 
 the backend uses swaggar for docs, to get api : http://localhost:4000/docs or http://<IPADDRESS>:4000/docs to get the api docs, if backend not runs, run using :  npm run start
 

@@ -410,7 +410,7 @@ class _InterviewBotPageState extends State<InterviewBotPage> {
     if (mounted) setState(() => _isEndingSession = true);
 
     if (mounted) {
-      context.go(AppRoutes.interviewFeedback(widget.sessionId));
+      context.push(AppRoutes.interviewFeedback(widget.sessionId));
     }
   }
 

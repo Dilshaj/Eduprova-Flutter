@@ -8,7 +8,7 @@ class ProgressRepository {
 
   Future<ProgressModel?> getProgress(String courseId) async {
     try {
-      final response = await _dio.get('/api/v2/progress/$courseId');
+      final response = await _dio.get('/progress/$courseId');
       if (response.data != null) {
         return ProgressModel.fromJson(response.data);
       }
@@ -25,8 +25,7 @@ class ProgressRepository {
   ) async {
     try {
       final response = await _dio.post(
-        '/api/v2/progress/$courseId/complete',
-        data: {'lectureId': lectureId},
+        '/progress/$courseId/complete/$lectureId',
       );
       if (response.data != null) {
         return ProgressModel.fromJson(response.data);
@@ -46,9 +45,9 @@ class ProgressRepository {
     num watchTime,
   ) async {
     try {
-      final response = await _dio.post(
-        '/api/v2/progress/$courseId/watch-time',
-        data: {'lessonId': lectureId, 'watchTime': watchTime},
+      final response = await _dio.patch(
+        '/progress/$courseId/video-time/$lectureId',
+        data: {'watchTime': watchTime},
       );
       if (response.data != null) {
         return ProgressModel.fromJson(response.data);
@@ -58,6 +57,44 @@ class ProgressRepository {
       log(
         'Error updating watch time for lecture $lectureId in course $courseId: $e',
       );
+      return null;
+    }
+  }
+
+  Future<ProgressModel?> markExamCompleted(
+    String courseId,
+    String moduleId,
+  ) async {
+    try {
+      final response = await _dio.post('/progress/$courseId/exam/$moduleId');
+      if (response.data != null) {
+        return ProgressModel.fromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      log(
+        'Error marking exam completed for module $moduleId in course $courseId: $e',
+      );
+      return null;
+    }
+  }
+
+  Future<ProgressModel?> submitFinalExam(
+    String courseId,
+    num score,
+    bool passed,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/progress/$courseId/final-exam',
+        data: {'score': score, 'passed': passed},
+      );
+      if (response.data != null) {
+        return ProgressModel.fromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      log('Error submitting final exam for course $courseId: $e');
       return null;
     }
   }

@@ -80,11 +80,13 @@ class AllCourseProgressNotifier extends Notifier<Map<String, ProgressState>> {
             percentComplete: currentProgress.percentComplete,
             lastAccessedLectureId: lectureId,
             videoWatchTimes: currentProgress.videoWatchTimes,
+            completedExams: currentProgress.completedExams,
+            isFinalExamPassed: currentProgress.isFinalExamPassed,
+            finalExamScore: currentProgress.finalExamScore,
           ),
         ),
       };
     }
-
     // Call backend
     final updatedProgress = await _repository.updateProgress(
       courseId,
@@ -125,6 +127,9 @@ class AllCourseProgressNotifier extends Notifier<Map<String, ProgressState>> {
           percentComplete: currentProgress.percentComplete,
           lastAccessedLectureId: lectureId,
           videoWatchTimes: newWatchTimes,
+          completedExams: currentProgress.completedExams,
+          isFinalExamPassed: currentProgress.isFinalExamPassed,
+          finalExamScore: currentProgress.finalExamScore,
         ),
       ),
     };
@@ -134,6 +139,86 @@ class AllCourseProgressNotifier extends Notifier<Map<String, ProgressState>> {
       courseId,
       lectureId,
       watchTime,
+    );
+    if (updatedProgress != null) {
+      state = {
+        ...state,
+        courseId: currentState.copyWith(data: updatedProgress),
+      };
+    }
+  }
+
+  Future<void> markExamCompleted(String courseId, String moduleId) async {
+    final currentState = state[courseId];
+    if (currentState == null || currentState.data == null) return;
+
+    final currentProgress = currentState.data!;
+
+    // Optimistic update
+    if (!currentProgress.completedExams.contains(moduleId)) {
+      final updatedExams = [...currentProgress.completedExams, moduleId];
+      state = {
+        ...state,
+        courseId: currentState.copyWith(
+          data: ProgressModel(
+            id: currentProgress.id,
+            userId: currentProgress.userId,
+            courseId: currentProgress.courseId,
+            completedLectures: currentProgress.completedLectures,
+            percentComplete: currentProgress.percentComplete,
+            lastAccessedLectureId: currentProgress.lastAccessedLectureId,
+            videoWatchTimes: currentProgress.videoWatchTimes,
+            completedExams: updatedExams,
+            isFinalExamPassed: currentProgress.isFinalExamPassed,
+            finalExamScore: currentProgress.finalExamScore,
+          ),
+        ),
+      };
+    }
+
+    final updatedProgress = await _repository.markExamCompleted(
+      courseId,
+      moduleId,
+    );
+    if (updatedProgress != null) {
+      state = {
+        ...state,
+        courseId: currentState.copyWith(data: updatedProgress),
+      };
+    }
+  }
+
+  Future<void> submitFinalExam(String courseId, num score, bool passed) async {
+    final currentState = state[courseId];
+    if (currentState == null || currentState.data == null) return;
+
+    final currentProgress = currentState.data!;
+
+    // Optimistic update
+    state = {
+      ...state,
+      courseId: currentState.copyWith(
+        data: ProgressModel(
+          id: currentProgress.id,
+          userId: currentProgress.userId,
+          courseId: currentProgress.courseId,
+          completedLectures: currentProgress.completedLectures,
+          percentComplete: currentProgress.percentComplete,
+          lastAccessedLectureId: currentProgress.lastAccessedLectureId,
+          videoWatchTimes: currentProgress.videoWatchTimes,
+          completedExams: currentProgress.completedExams,
+          isFinalExamPassed: passed,
+          finalExamScore: score > (currentProgress.finalExamScore ?? 0)
+              ? score
+              : currentProgress.finalExamScore,
+        ),
+      ),
+    };
+
+    final updatedProgress = await _repository.submitFinalExam(
+      courseId,
+      score,
+      passed,
     );
     if (updatedProgress != null) {
       state = {

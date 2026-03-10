@@ -13,6 +13,7 @@ import '../../../core/utils/image_cache_manager.dart';
 import '../../../core/widgets/app_loaders.dart';
 import '../../../core/widgets/app_video_player.dart';
 import '../core/models/course_detail_model.dart';
+import '../core/models/enrolled_course_model.dart';
 import '../core/providers/course_detail_provider.dart';
 import '../core/providers/progress_provider.dart';
 import '../../../theme/theme.dart';
@@ -85,31 +86,36 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   int _currentSectionIndex = 0;
   int _currentLessonIndex = 0;
   bool _didApplyResumeLecture = false;
+  DateTime? _lastWatchSyncTime;
+  Duration? _lastSentPosition;
+
   bool _didTryAdoptGlobalMini = false;
   Player? _adoptedMediaPlayer;
   vp.VideoPlayerController? _adoptedVideoController;
   final List<int> _collapsedSections = [];
-  final Map<int, String> _moduleExamStatus = {
-    0: 'open',
-    1: 'locked',
-    2: 'locked',
-  };
 
-  List<String> get _completedLessonIds {
-    return ref
-            .read(courseProgressProvider(widget.courseId))
-            .data
-            ?.completedLectures ??
-        [];
+  List<String> _getCompletedLessonIds(ProgressState progress) {
+    return progress.data?.completedLectures ?? [];
   }
+
+  List<String> get _completedLessonIds =>
+      ref
+          .read(courseProgressProvider(widget.courseId))
+          .data
+          ?.completedLectures ??
+      [];
 
   bool _isLectureUnlocked(
     int secIdx,
     int lessonIdx,
     List<ChapterModel>? curriculum,
+    ProgressModel? progress,
   ) {
     if (curriculum == null || curriculum.isEmpty) return true;
     if (secIdx == 0 && lessonIdx == 0) return true;
+
+    final completedIds = progress?.completedLectures ?? [];
+    final completedExams = progress?.completedExams ?? [];
 
     int prevSecIdx = secIdx;
     int prevLessonIdx = lessonIdx - 1;
@@ -117,12 +123,20 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     if (prevLessonIdx < 0) {
       prevSecIdx = secIdx - 1;
       if (prevSecIdx < 0) return true;
-      if (curriculum[prevSecIdx].lectures.isEmpty) return true;
-      prevLessonIdx = curriculum[prevSecIdx].lectures.length - 1;
+
+      // If we are at the start of a new module,
+      // check if the previous module's exam is completed if it has one.
+      final prevSection = curriculum[prevSecIdx];
+      if (prevSection.hasExam && !completedExams.contains(prevSection.id)) {
+        return false;
+      }
+
+      if (prevSection.lectures.isEmpty) return true;
+      prevLessonIdx = prevSection.lectures.length - 1;
     }
 
     final prevLectureId = curriculum[prevSecIdx].lectures[prevLessonIdx].id;
-    return _completedLessonIds.contains(prevLectureId);
+    return completedIds.contains(prevLectureId);
   }
 
   final List<String> _tabs = [
@@ -200,11 +214,58 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     });
   }
 
-  bool _checkModuleCompletion(int sectionIndex, List<ChapterModel> curriculum) {
+  bool _checkModuleCompletion(
+    int sectionIndex,
+    List<ChapterModel> curriculum,
+    List<String> completedIds,
+  ) {
     if (sectionIndex >= curriculum.length || sectionIndex < 0) return false;
     final section = curriculum[sectionIndex];
     if (section.lectures.isEmpty) return true;
-    return section.lectures.every((l) => _completedLessonIds.contains(l.id));
+    return section.lectures.every((l) => completedIds.contains(l.id));
+  }
+
+  void _handlePositionChanged(String lectureId, Duration position) {
+    if (!mounted) return;
+
+    final now = DateTime.now();
+    // Sync every 10 seconds or if moved significantly (more than 5s skip)
+    final shouldSync =
+        _lastWatchSyncTime == null ||
+        now.difference(_lastWatchSyncTime!) > const Duration(seconds: 10) ||
+        (_lastSentPosition != null &&
+            (position.inSeconds - _lastSentPosition!.inSeconds).abs() > 5);
+
+    if (shouldSync && position > Duration.zero) {
+      _lastWatchSyncTime = now;
+      _lastSentPosition = position;
+
+      ref
+          .read(allCourseProgressProvider.notifier)
+          .updateWatchTime(widget.courseId, lectureId, position.inSeconds);
+    }
+  }
+
+  void _handleVideoFinished(
+    LectureModel lecture,
+    List<ChapterModel> curriculum,
+  ) {
+    if (!_completedLessonIds.contains(lecture.id)) {
+      _handleMarkAsComplete(lecture, false);
+    }
+    _handleNext(false, curriculum);
+  }
+
+  Duration? _getInitialPositionForLecture(
+    LectureModel lecture,
+    ProgressModel? progress,
+  ) {
+    if (progress == null) return null;
+    final watchTimeSeconds = progress.videoWatchTimes[lecture.id];
+    if (watchTimeSeconds != null && watchTimeSeconds > 0) {
+      return Duration(seconds: watchTimeSeconds.toInt());
+    }
+    return null;
   }
 
   void _handleModuleExamClick(int sectionIndex, List<ChapterModel> curriculum) {
@@ -225,15 +286,14 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() {
-                if (sectionIndex + 1 < curriculum.length) {
-                  _moduleExamStatus[sectionIndex] = 'completed';
-                  _moduleExamStatus[sectionIndex + 1] = 'open';
-                  _collapsedSections.remove(sectionIndex + 1);
-                } else {
-                  _moduleExamStatus[sectionIndex] = 'completed';
-                }
-              });
+              final section = curriculum[sectionIndex];
+              ref
+                  .read(allCourseProgressProvider.notifier)
+                  .markExamCompleted(widget.courseId, section.id);
+
+              if (sectionIndex + 1 < curriculum.length) {
+                _collapsedSections.remove(sectionIndex + 1);
+              }
             },
             child: const Text('Submit Exam'),
           ),
@@ -506,7 +566,10 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                           body: TabBarView(
                                             controller: _mainTabController,
                                             children: [
-                                              _buildLessonsList(curriculum),
+                                              _buildLessonsList(
+                                                curriculum,
+                                                progressAsync,
+                                              ),
                                               AskDoubtsScreen(
                                                 courseId: widget.courseId,
                                                 lectureId: currentLesson.id,
@@ -530,7 +593,12 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                       ),
                                     ),
                                     if (_activeTabIndex == 0 && !_isLoading)
-                                      _buildFooter(curriculum, currentLesson),
+                                      _buildFooter(
+                                        curriculum,
+                                        currentLesson,
+                                        _getCompletedLessonIds(progressAsync),
+                                        progressAsync.data,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -657,10 +725,17 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         autoPlay: widget.resumeAutoPlay,
         initialPosition: widget.resumePositionMs != null
             ? Duration(milliseconds: widget.resumePositionMs!)
-            : null,
+            : _getInitialPositionForLecture(
+                currentLecture,
+                ref.read(courseProgressProvider(widget.courseId)).data,
+              ),
         adoptedMediaPlayer: adoptedMediaPlayer,
         adoptedVideoPlayerController: adoptedVideoPlayerController,
         controller: controller,
+        onPositionChanged: (pos) =>
+            _handlePositionChanged(currentLecture.id, pos),
+        onFinished: () =>
+            _handleVideoFinished(currentLecture, course.curriculum),
         onMiniPlayerChanged: onMiniPlayerChanged,
         onInlineCollapseProgress: onInlineCollapseProgressChanged,
         onInlineMiniPlayerRequest: onInlineMiniPlayerRequest,
@@ -741,9 +816,13 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     );
   }
 
-  Widget _buildLessonsList(List<ChapterModel> curriculum) {
+  Widget _buildLessonsList(
+    List<ChapterModel> curriculum,
+    ProgressState progress,
+  ) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
+    final completedIds = _getCompletedLessonIds(progress);
 
     return Container(
       color: themeExt.scaffoldBackgroundColor,
@@ -753,8 +832,13 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
         itemBuilder: (context, secIdx) {
           final section = curriculum[secIdx];
           final isCollapsed = _collapsedSections.contains(secIdx);
-          final isModuleComplete = _checkModuleCompletion(secIdx, curriculum);
-          final examStatus = _moduleExamStatus[secIdx];
+          final isModuleComplete = _checkModuleCompletion(
+            secIdx,
+            curriculum,
+            completedIds,
+          );
+          final isExamCompleted =
+              progress.data?.completedExams.contains(section.id) ?? false;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 24),
@@ -810,13 +894,14 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                           ...((section.lectures).asMap().entries.map((entry) {
                             final lessonIdx = entry.key;
                             final lesson = entry.value;
-                            final isCompleted = _completedLessonIds.contains(
+                            final isCompleted = completedIds.contains(
                               lesson.id,
                             );
                             final isLectureLocked = !_isLectureUnlocked(
                               secIdx,
                               lessonIdx,
                               curriculum,
+                              progress.data,
                             );
                             final isActive =
                                 secIdx == _currentSectionIndex &&
@@ -884,7 +969,9 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                             : Icon(
                                                 isActive
                                                     ? Icons.pause
-                                                    : Icons.play_arrow,
+                                                    : (isLectureLocked
+                                                          ? Icons.lock
+                                                          : Icons.play_arrow),
                                                 size: 16,
                                                 color: isActive
                                                     ? Colors.white
@@ -897,7 +984,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              '${lesson.title} ${isLectureLocked ? '🔒' : ''}',
+                                              lesson.title,
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
@@ -986,7 +1073,7 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
                                           ),
                                           Text(
                                             isModuleComplete
-                                                ? (examStatus == 'completed'
+                                                ? (isExamCompleted
                                                       ? 'Completed ✅'
                                                       : 'Ready to start')
                                                 : 'Complete all lessons to unlock',
@@ -1023,6 +1110,8 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
   Widget _buildFooter(
     List<ChapterModel> curriculum,
     LectureModel currentLesson,
+    List<String> completedIds,
+    ProgressModel? progress,
   ) {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
@@ -1033,7 +1122,32 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
     final isFinalAssignment = currentLesson.title.toLowerCase().contains(
       'final assignment',
     );
-    final isLessonCompleted = _completedLessonIds.contains(currentLesson.id);
+    final isLessonCompleted = completedIds.contains(currentLesson.id);
+
+    // Calculate if next is locked
+    final currentSection = curriculum[_currentSectionIndex];
+    final isLastLessonInSection =
+        _currentLessonIndex == currentSection.lectures.length - 1;
+    final isLastSection = _currentSectionIndex == curriculum.length - 1;
+
+    bool hasNext = true;
+    int nextSecIdx = _currentSectionIndex;
+    int nextLessonIdx = _currentLessonIndex;
+
+    if (isLastLessonInSection) {
+      if (!isLastSection) {
+        nextSecIdx++;
+        nextLessonIdx = 0;
+      } else {
+        hasNext = false;
+      }
+    } else {
+      nextLessonIdx++;
+    }
+
+    final isNextLocked =
+        !hasNext ||
+        !_isLectureUnlocked(nextSecIdx, nextLessonIdx, curriculum, progress);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -1145,13 +1259,17 @@ class _CourseLearningScreenState extends ConsumerState<CourseLearningScreen>
 
           // Next
           InkWell(
-            onTap: () => _handleNext(isFinalAssignment, curriculum),
+            onTap: isNextLocked
+                ? null
+                : () => _handleNext(isFinalAssignment, curriculum),
             borderRadius: BorderRadius.circular(12),
             child: Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6),
+                color: isNextLocked
+                    ? themeExt.secondaryText.withValues(alpha: 0.3)
+                    : const Color(0xFF3B82F6),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
