@@ -1,5 +1,6 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/constants.dart';
+import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -243,6 +244,7 @@ class _CommunitiesViewState extends State<CommunitiesView> {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final channelBg = isDark ? Colors.grey[800]! : const Color(0xFFF4F6F9);
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -301,7 +303,8 @@ class _CommunitiesViewState extends State<CommunitiesView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ShaderMask(
-                    shaderCallback: (bounds) => kGradient.createShader(bounds),
+                    shaderCallback: (bounds) =>
+                        themeExt.buyNowGradient.createShader(bounds),
                     child: const Icon(
                       Icons.add_circle_outline_rounded,
                       color: Colors.white,

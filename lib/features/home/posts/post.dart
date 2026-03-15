@@ -39,6 +39,7 @@ class _PostState extends ConsumerState<Post> {
   Widget build(BuildContext context) {
     const double padding = 12;
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final cs = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(

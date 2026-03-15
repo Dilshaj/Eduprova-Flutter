@@ -193,6 +193,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/ui/animated_title_header.dart';
 import 'package:eduprova/features/home/main_layout.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -280,8 +281,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           actions: [
-            IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
+            IconButton(
+              icon: const Icon(LucideIcons.search, size: 22),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(LucideIcons.bell, size: 22),
+              onPressed: () {},
+            ),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0),
               child: CircleAvatar(

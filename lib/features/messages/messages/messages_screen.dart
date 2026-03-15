@@ -1,5 +1,6 @@
 import 'package:eduprova/constants.dart';
 import 'package:eduprova/core/navigation/app_routes.dart';
+import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../communities/communities_view.dart';
@@ -230,6 +231,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
   }
 
   Widget _buildTabBar(Color textColor, Color subTextColor) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final cs = Theme.of(context).colorScheme;
     return TabBar(
       controller: _tabController,
       isScrollable: true,
@@ -245,7 +248,7 @@ class _MessagesListScreenState extends State<MessagesListScreen>
       indicator: UnderlineTabIndicator(
         borderSide: BorderSide(
           width: 3,
-          color: kGradientStart.withValues(alpha: 0.3),
+          color: cs.primary.withValues(alpha: 0.3),
         ),
         borderRadius: BorderRadius.circular(3),
       ),
@@ -309,6 +312,8 @@ class _MessagesListScreenState extends State<MessagesListScreen>
   }
 
   Widget _buildPlaceholderTab(String title, IconData icon, Color subTextColor) {
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -318,7 +323,7 @@ class _MessagesListScreenState extends State<MessagesListScreen>
             height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: kGradient,
+              gradient: themeExt.buyNowGradient,
             ),
             child: Icon(icon, color: Colors.white, size: 40),
           ),

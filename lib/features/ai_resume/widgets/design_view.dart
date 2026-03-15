@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../theme/theme.dart';
 import 'design_editors/template_editor.dart';
 import 'design_editors/layout_editor.dart';
@@ -19,13 +19,13 @@ class DesignView extends ConsumerWidget {
       _DesignSection(
         title: 'Templates',
         subtitle: 'Choose your resume design',
-        icon: LucideIcons.layout,
+        icon: LucideIcons.layoutDashboard,
         builder: (context) => const TemplateEditor(),
       ),
       _DesignSection(
         title: 'Layout',
         subtitle: 'Reorder sections and columns',
-        icon: LucideIcons.columns,
+        icon: LucideIcons.columns2,
         builder: (context) => const LayoutEditor(),
       ),
       _DesignSection(

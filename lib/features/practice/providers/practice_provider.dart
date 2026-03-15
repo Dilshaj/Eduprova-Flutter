@@ -37,6 +37,7 @@ class PracticeNotifier extends Notifier<PracticeState> {
 
   Future<void> runCode({
     required String pistonName,
+    required int judge0Id,
     required String filename,
     required String code,
     Map<String, dynamic>?
@@ -47,6 +48,7 @@ class PracticeNotifier extends Notifier<PracticeState> {
     final repository = ref.read(practiceRepositoryProvider);
     final result = await repository.executeCode(
       pistonName: pistonName,
+      judge0Id: judge0Id,
       filename: filename,
       code: code,
     );

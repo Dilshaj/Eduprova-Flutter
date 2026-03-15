@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:eduprova/theme/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -340,6 +341,7 @@ class _RefinedUnifiedInterviewSetupPageState
   }
 
   Widget _buildMainConfigCard(AiTheme t) {
+    final cs = context.colorScheme;
     final isResumeMode = _tabController.index == 1;
     final color = isResumeMode
         ? const Color(0xFF3B82F6)
@@ -360,7 +362,7 @@ class _RefinedUnifiedInterviewSetupPageState
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: t.scaffoldBg,
+                color: cs.surfaceContainerHighest,
                 borderRadius: .circular(14),
               ),
               child: TabBar(
@@ -472,7 +474,7 @@ class _RefinedUnifiedInterviewSetupPageState
       decoration: BoxDecoration(
         color: t.scaffoldBg,
         borderRadius: .circular(16),
-        border: .all(color: t.cardBorder.withValues(alpha: 0.5)),
+        border: .all(color: t.inputBorder),
       ),
       child: Row(
         children: [
@@ -757,16 +759,20 @@ class _RefinedUnifiedInterviewSetupPageState
 
   Widget _buildUploadArea(AiTheme t, Color color) {
     final isSelected = _selectedFile != null;
+    final cs = context.colorScheme;
     return GestureDetector(
       onTap: _pickResume,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.05) : t.scaffoldBg,
+          // color: isSelected ? color.withValues(alpha: 0.05) : t.scaffoldBg,
+          color: isSelected
+              ? color.withValues(alpha: 0.05)
+              : cs.surfaceContainerHighest,
           borderRadius: .circular(20),
           border: .all(
-            color: isSelected ? color : t.cardBorder.withValues(alpha: 0.3),
+            color: isSelected ? color : t.inputBorder.withValues(alpha: 0.5),
             width: 1.5,
           ),
         ),
@@ -807,11 +813,12 @@ class _RefinedUnifiedInterviewSetupPageState
     required IconData icon,
     int maxLines = 1,
   }) {
+    final c = context.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: t.scaffoldBg,
+        color: c.surfaceContainerHighest,
         borderRadius: .circular(16),
-        border: .all(color: t.cardBorder.withValues(alpha: 0.5)),
+        border: .all(color: t.inputBorder),
       ),
       child: TextField(
         controller: controller,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onSignupTap;
@@ -44,7 +45,7 @@ class _LoginFormState extends State<LoginForm> {
         // Form Fields
         _buildInputField(
           label: 'Email Address',
-          hint: 'Enter your email',
+          hint: 'Enter your emailll',
           icon: LucideIcons.mail,
         ),
         const SizedBox(height: 20),
@@ -181,11 +182,7 @@ class _LoginFormState extends State<LoginForm> {
           ),
           child: OutlinedButton.icon(
             onPressed: () {},
-            icon: const Icon(
-              LucideIcons.chrome,
-              size: 20,
-              color: Color(0xFFD94839),
-            ),
+            icon: Brand(Brands.google, size: 20),
             label: Text(
               'Sign in with Google',
               style: GoogleFonts.inter(
@@ -280,16 +277,18 @@ class _LoginFormState extends State<LoginForm> {
                     onPressed: onToggleVisibility,
                   )
                 : null,
-            filled: true,
-            fillColor: colorScheme.surface,
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.outline),
+              borderRadius: BorderRadius.circular(32),
+              // borderSide: BorderSide(
+              //   color: colorScheme.outline.withValues(alpha: 0.2),
+              // ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.outline),
+              // borderSide: BorderSide(
+              //   color: colorScheme.outline.withValues(alpha: 0.2),
+              // ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

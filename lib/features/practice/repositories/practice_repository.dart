@@ -2,21 +2,20 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class PracticeRepository {
-  // Configured correctly based on practice_screen.dart
-  static const String executionApiUrl = "http://localhost:2000/api/v2/execute";
+  static const String executionApiUrl =
+      "https://ce.judge0.com/submissions?base64_encoded=false&wait=true";
 
   Future<Map<String, dynamic>> executeCode({
     required String pistonName,
     required String filename,
     required String code,
+    int? judge0Id,
   }) async {
     try {
       final payload = {
-        'language': pistonName,
-        'version': '*',
-        'files': [
-          {'name': filename, 'content': code},
-        ],
+        'source_code': code,
+        'language_id': judge0Id ?? 63,
+        'stdin': "",
       };
 
       final response = await http
@@ -25,23 +24,23 @@ class PracticeRepository {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        if (data['run'] != null) {
-          return {
-            'stdout': data['run']['stdout'],
-            'stderr': data['run']['stderr'],
-            'message': data['run']['code'] != 0
-                ? 'Process exited with code ${data['run']['code']}'
-                : null,
-          };
-        }
+        return {
+          'stdout': data['stdout'],
+          'stderr': data['stderr'] ?? data['compile_output'],
+          'message':
+              data['message'] ??
+              (data['status']?['description'] == 'Accepted'
+                  ? null
+                  : data['status']?['description']),
+        };
       }
       return {'message': '❌ Execution failed (Status: ${response.statusCode})'};
     } catch (e) {
-      return {'message': '❌ Failed to connect to execution server.'};
+      return {'message': '❌ Failed to connect to execution server. Error: $e'};
     }
   }
 }

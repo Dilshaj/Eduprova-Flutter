@@ -1,7 +1,7 @@
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../theme/theme.dart';
 import 'section_editors/basics_editor.dart';
 import 'section_editors/picture_editor.dart';

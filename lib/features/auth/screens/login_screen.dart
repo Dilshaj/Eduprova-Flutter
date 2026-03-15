@@ -1,10 +1,12 @@
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
 import 'package:eduprova/theme/theme.dart';
+import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:eduprova/features/auth/widgets/background_orbits.dart';
 import 'package:eduprova/features/auth/screens/signup_screen.dart';
 import 'package:eduprova/core/widgets/dev_server_config_dialog.dart';
@@ -92,6 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           : const Color(0xFFF8F8F8),
       body: Stack(
         children: [
+          // AppBackground(),
           // Background Orbits
           const Positioned.fill(child: BackgroundOrbits()),
           // Top Left Logos
@@ -348,11 +351,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     onPressed: _isLoading
                                         ? null
                                         : _loginWithGoogle,
-                                    icon: const Icon(
-                                      LucideIcons.chrome,
-                                      size: 20,
-                                      color: Color(0xFFD94839),
-                                    ),
+                                    icon: Brand(Brands.google, size: 20),
                                     label: Text(
                                       'Sign in with Google',
                                       style: GoogleFonts.inter(
@@ -449,7 +448,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     bool obscureText = false,
     VoidCallback? onToggleVisibility,
   }) {
-    final dividerClr = Theme.of(context).dividerColor;
+    final dividerClr = Theme.of(context).dividerColor.withValues(alpha: 0.8);
+    final cs = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -481,6 +481,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   )
                 : null,
             filled: true,
+            // fillColor: cs.surfaceContainer,
             // fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
             border: OutlineInputBorder(

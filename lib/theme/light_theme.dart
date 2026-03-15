@@ -4,7 +4,22 @@ import 'package:flutter/material.dart';
 const _gradientStart = Color(0xFF0066FF);
 const _gradientEnd = Color(0xFFE056FD);
 
-final _lightThemeColors = AppDesignExtension(
+final _colorSchema = const ColorScheme.light(
+  // primary: Color(0xFF3B82F6),
+  primary: Color(0xFF155DFC),
+  onPrimary: Colors.white,
+  secondary: Color(0xFF7F5EFF),
+  onSecondary: Colors.white,
+  surface: Colors.white,
+  surfaceContainer: Color(0xFFF1F5F9),
+  surfaceContainerHighest: Color(0xFFF4F9Fd),
+
+  onSurface: Color(0xFF111827),
+  error: Colors.red,
+  onError: Colors.white,
+);
+
+final _themeColors = AppDesignExtension(
   cardColor: Colors.white,
   borderColor: const Color(0xFFE5E7EB),
   secondaryText: const Color(0xFF6B7280),
@@ -44,19 +59,12 @@ final _lightThemeColors = AppDesignExtension(
 final lightTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
-  colorScheme: const ColorScheme.light(
-    primary: Color(0xFF3B82F6),
-    onPrimary: Colors.white,
-    secondary: Color(0xFF7F5EFF),
-    onSecondary: Colors.white,
-    surface: Colors.white,
-    onSurface: Color(0xFF111827),
-    error: Colors.red,
-    onError: Colors.white,
-  ),
+  colorScheme: _colorSchema,
   scaffoldBackgroundColor: Colors.white,
   // scaffoldBackgroundColor: const Color.fromARGB(255, 248, 248, 248),
   dividerColor: const Color(0xFFE5E7EB),
+
+  extensions: [_themeColors],
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.white,
     foregroundColor: Color(0xFF111827),
@@ -68,5 +76,7 @@ final lightTheme = ThemeData(
       fontWeight: FontWeight.bold,
     ),
   ),
-  extensions: [_lightThemeColors],
+  inputDecorationTheme: InputDecorationTheme(
+    fillColor: _colorSchema.surfaceContainerHighest,
+  ),
 );

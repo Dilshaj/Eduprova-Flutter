@@ -1,4 +1,6 @@
 import 'package:eduprova/constants.dart';
+import 'package:eduprova/theme/theme.dart';
+import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,6 +31,8 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
         Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
         Colors.grey;
     final borderColor = Theme.of(context).dividerColor;
+    final themeExt = context.design;
+    final cs = context.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -169,11 +173,11 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
               width: double.infinity,
               height: 56,
               decoration: BoxDecoration(
-                gradient: kGradient,
+                gradient: themeExt.buyNowGradient,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: kGradientStart.withValues(alpha: 0.3),
+                    color: cs.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

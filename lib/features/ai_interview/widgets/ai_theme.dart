@@ -56,14 +56,14 @@ class AiTheme {
   Color get inputBg => isDark ? const Color(0xFF1E1E2E) : Colors.white;
 
   Color get inputBorder =>
-      isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200;
+      isDark ? Color.fromARGB(255, 45, 45, 45) : Colors.grey.shade200;
 
   Color get inputHint =>
       isDark ? const Color(0xFF6B7280) : Colors.grey.shade400;
 
   // ── Divider ─────────────────────────────────────────────────────────────────
   Color get divider =>
-      isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade100;
+      isDark ? const Color.fromARGB(255, 45, 45, 45) : Colors.grey.shade100;
 
   // ── Chip / badge ─────────────────────────────────────────────────────────────
   Color get chipBg => isDark ? const Color(0xFF1E1E2E) : Colors.white;

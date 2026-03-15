@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
@@ -120,7 +120,7 @@ class EducationEditor extends ConsumerWidget {
             const Icon(LucideIcons.gripVertical, size: 20, color: Colors.grey),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(LucideIcons.edit2, size: 18),
+              icon: const Icon(LucideIcons.pencil, size: 18),
               onPressed: () {
                 Navigator.push(
                   context,
