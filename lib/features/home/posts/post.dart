@@ -1,3 +1,4 @@
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -37,11 +38,12 @@ class _PostState extends ConsumerState<Post> {
   @override
   Widget build(BuildContext context) {
     const double padding = 12;
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: themeExt.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Theme.of(context).dividerColor, width: 1),
         ),

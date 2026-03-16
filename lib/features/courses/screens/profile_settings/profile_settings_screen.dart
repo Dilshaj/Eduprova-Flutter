@@ -1,5 +1,5 @@
 import 'package:eduprova/features/courses/widgets/skeleton_loader.dart';
-import 'package:eduprova/theme.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
