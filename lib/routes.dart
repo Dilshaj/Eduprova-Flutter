@@ -9,6 +9,7 @@ import 'package:eduprova/features/ai_resume/ai_resume_screen.dart';
 import 'package:eduprova/features/ai_resume/screens/import_resume_page.dart';
 import 'package:eduprova/features/ai_resume/screens/resume_builder_landing_page.dart';
 import 'package:eduprova/features/ai_resume/screens/resume_list_page.dart';
+import 'package:eduprova/features/auth/providers/auth_provider.dart';
 import 'package:eduprova/features/auth/screens/login_screen.dart';
 import 'package:eduprova/features/auth/screens/signup_screen.dart';
 import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
@@ -49,29 +50,28 @@ class SplashScreen extends StatelessWidget {
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.home,
     redirect: (context, state) {
-      // final status = authState.status;
-      // final isAuth = status == AuthStatus.authenticated;
-      // final isLoginRoute =
-      //     state.matchedLocation == AppRoutes.login ||
-      //     state.matchedLocation == AppRoutes.register;
+      final status = authState.status;
+      final isAuth = status == AuthStatus.authenticated;
+      final isLoginRoute =
+          state.matchedLocation == AppRoutes.login ||
+          state.matchedLocation == AppRoutes.register;
 
-      // if (status == AuthStatus.initial) {
-      //   return AppRoutes.splash;
-      // }
+      if (status == AuthStatus.initial) {
+        return AppRoutes.splash;
+      }
 
-      // if (!isAuth && !isLoginRoute) {
-      //   return AppRoutes.login;
-      // }
+      if (!isAuth && !isLoginRoute) {
+        return AppRoutes.login;
+      }
 
-      // if (isAuth && isLoginRoute) {
-      //   return AppRoutes.home;
-      // }
-
-      // return null;
+      if (isAuth && isLoginRoute) {
+        return AppRoutes.home;
+      }
 
       return null;
     },
@@ -287,13 +287,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+      /*********************************************
+      *************  Ai Grammar  ************
+      *********************************************/
       GoRoute(
-        name: AppRoutes.grammar,
+        name: 'grammar',
         path: AppRoutes.grammar,
         builder: (_, _) => const GrammarHomeScreen(),
         routes: [
           GoRoute(
-            name: AppRoutes.grammarConversation,
+            name: 'grammar_conversation',
             path: 'conversation', // Nested path
             builder: (_, _) => const GrammarConversationScreen(),
           ),
@@ -302,4 +305,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-

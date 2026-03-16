@@ -1,121 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:eduprova/theme/theme_model.dart';
-import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eduprova/features/ai_grammar/widgets/live_session_overlay.dart';
+import 'package:eduprova/features/ai_grammar/providers/grammar_socket_provider.dart';
+import 'package:eduprova/features/ai_grammar/providers/grammar_stt_provider.dart';
+import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
 
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final String senderName;
-  final String avatarUrl;
-
-  const ChatMessage({
-    required this.text,
-    required this.isUser,
-    required this.senderName,
-    required this.avatarUrl,
-  });
-}
-
-class ActiveRoleplaySession extends StatefulWidget {
+class ActiveRoleplaySession extends ConsumerStatefulWidget {
   final String title;
   final String difficulty;
+  final String roleType;
   final AppDesignExtension themeExt;
   final VoidCallback onBack;
+  final Map<String, dynamic>? config;
 
   const ActiveRoleplaySession({
     super.key,
     required this.title,
     required this.difficulty,
+    required this.roleType,
     required this.themeExt,
     required this.onBack,
+    this.config,
   });
 
   @override
-  State<ActiveRoleplaySession> createState() => _ActiveRoleplaySessionState();
+  ConsumerState<ActiveRoleplaySession> createState() =>
+      _ActiveRoleplaySessionState();
 }
 
-class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
-  final List<ChatMessage> _messages = [
-    const ChatMessage(
-      text: "Welcome to your Senior Product Designer interview. Let's start with your design process. How do you handle ambiguity in the early stages of a product lifecycle?",
-      isUser: false,
-      senderName: "AI INTERVIEWER",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150",
-    ),
-    const ChatMessage(
-      text: "I begin by conducting stakeholder interviews and user research to define the core problem space. I find that creating a shared understanding of the \"Why\" before moving into wireframing helps navigate any initial uncertainty.",
-      isUser: true,
-      senderName: "YOU",
-      avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150",
-    ),
-    const ChatMessage(
-      text: "That's a solid approach. Can you describe a time you had a significant conflict with a developer regarding a design decision? How did you resolve it?",
-      isUser: false,
-      senderName: "AI INTERVIEWER",
-      avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150",
-    ),
-  ];
-
+class _ActiveRoleplaySessionState extends ConsumerState<ActiveRoleplaySession> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final SpeechToText _speechToText = SpeechToText();
-  bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
-    _initSpeech();
-  }
-
-  Future<void> _initSpeech() async {
-    await _speechToText.initialize();
-  }
-
-  Future<void> _toggleListening() async {
-    if (_isListening) {
-      await _speechToText.stop();
-      setState(() => _isListening = false);
-    } else {
-      final available = await _speechToText.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        await _speechToText.listen(
-          listenOptions: SpeechListenOptions(
-            partialResults: true,
-            listenMode: ListenMode.deviceDefault,
-          ),
-          onResult: (result) {
-            setState(() {
-              _controller.text = result.recognizedWords;
-              // Move cursor to the end
-              _controller.selection = TextSelection.fromPosition(
-                TextPosition(offset: _controller.text.length),
-              );
-            });
-            if (result.finalResult) {
-              setState(() => _isListening = false);
-            }
-          },
-        );
-      }
-    }
+    // Start roleplay on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(grammarSocketProvider.notifier)
+          .startRoleplay(
+            roleType: widget.roleType,
+            difficulty: widget.difficulty,
+            experienceLevel: widget.config?['experienceLevel'],
+            companyType: widget.config?['companyType'],
+            jobTitle: widget.config?['jobTitle'],
+            techStack: widget.config?['techStack'] != null
+                ? List<String>.from(widget.config!['techStack'])
+                : null,
+            seniorityLevel: widget.config?['seniorityLevel'],
+            customPrompt: widget.config?['customPrompt'],
+          );
+    });
   }
 
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    setState(() {
-      _messages.add(ChatMessage(
-        text: text,
-        isUser: true,
-        senderName: "YOU",
-        avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150",
-      ));
-      _controller.clear();
-    });
+    ref.read(grammarSocketProvider.notifier).sendUserText(text);
+    _controller.clear();
     _scrollToBottom();
   }
 
@@ -135,12 +81,35 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    ref.read(grammarAudioPlayerProvider.notifier).stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final socketState = ref.watch(grammarSocketProvider);
+    final isAiSpeakingAudibly = ref.watch(grammarAudioPlayerProvider);
+    final sttState = ref.watch(grammarSttProvider);
+    final isAiActive = socketState.isAiSpeaking || isAiSpeakingAudibly;
+
+    // Auto scroll when new messages arrive
+    ref.listen(grammarSocketProvider, (previous, next) {
+      if (previous?.messages.length != next.messages.length) {
+        _scrollToBottom();
+      }
+    });
+
+    // Update text field when STT transcript changes
+    ref.listen(grammarSttProvider, (previous, next) {
+      if (next.transcript.isNotEmpty &&
+          next.transcript != previous?.transcript) {
+        _controller.text = next.transcript;
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),
+        );
+      }
+    });
 
     return Container(
       color: widget.themeExt.scaffoldBackgroundColor,
@@ -151,13 +120,48 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) => _buildChatBubble(_messages[index]),
+              itemCount: socketState.messages.length,
+              itemBuilder: (context, index) {
+                final message = socketState.messages[index];
+                return _buildChatBubble(message);
+              },
             ),
           ),
-          _buildInputArea(colorScheme),
+          if (socketState.isAiSpeaking)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildVoiceWaves(),
+            ),
+          _buildInputArea(colorScheme, sttState, isAiActive),
         ],
       ),
+    );
+  }
+
+  Widget _buildVoiceWaves() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (int i = 0; i < 4; i++)
+          Container(
+            width: 4,
+            height: 15,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0066FF),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        const SizedBox(width: 8),
+        Text(
+          'AI is speaking...',
+          style: TextStyle(
+            color: widget.themeExt.secondaryText,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -176,19 +180,27 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
                   icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2)),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Text(
-                  'END SESSION',
-                  style: TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    letterSpacing: 1.1,
+              GestureDetector(
+                onTap: widget.onBack,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Text(
+                    'END SESSION',
+                    style: TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 1.1,
+                    ),
                   ),
                 ),
               ),
@@ -208,9 +220,13 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildBadge('LIVE SESSION', widget.themeExt.borderColor),
+              _buildBadge('LIVE Feedback', widget.themeExt.borderColor),
               const SizedBox(width: 8),
-              _buildBadge(widget.difficulty, const Color(0xFF2563EB).withValues(alpha: 0.1), textColor: const Color(0xFF2563EB)),
+              _buildBadge(
+                widget.difficulty,
+                const Color(0xFF2563EB).withValues(alpha: 0.1),
+                textColor: const Color(0xFF2563EB),
+              ),
             ],
           ),
         ],
@@ -223,30 +239,40 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
     return MouseRegion(
       cursor: isLive ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: GestureDetector(
-        onTap: isLive ? () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => LiveSessionOverlay(
-                themeExt: widget.themeExt,
-                onFinish: () => Navigator.pop(context),
-              ),
-            ),
-          );
-        } : null,
+        onTap: isLive
+            ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LiveSessionOverlay(
+                      themeExt: widget.themeExt,
+                      onFinish: () => Navigator.pop(context),
+                    ),
+                  ),
+                );
+              }
+            : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(30),
-            border: isLive ? Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.1)) : null,
+            border: isLive
+                ? Border.all(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  )
+                : null,
           ),
           child: Row(
             children: [
-              if (label.contains('ADVANCED')) 
+              if (label.contains('ADVANCED'))
                 const Padding(
                   padding: EdgeInsets.only(right: 6),
-                  child: Icon(Icons.bar_chart, size: 14, color: Color(0xFF2563EB)),
+                  child: Icon(
+                    Icons.bar_chart,
+                    size: 14,
+                    color: Color(0xFF2563EB),
+                  ),
                 ),
               Text(
                 label,
@@ -263,17 +289,21 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
     );
   }
 
-  Widget _buildChatBubble(ChatMessage message) {
+  Widget _buildChatBubble(GrammarMessage message) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isUser = message.role == 'user';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
-        crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              message.senderName,
+              isUser ? "YOU" : "AI",
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -283,50 +313,106 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
             ),
           ),
           Row(
-            mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (!message.isUser) ...[
+              if (!isUser) ...[
                 CircleAvatar(
                   radius: 18,
-                  backgroundImage: NetworkImage(message.avatarUrl),
+                  backgroundColor: const Color(
+                    0xFF2563EB,
+                  ).withValues(alpha: 0.1),
+                  child: const Icon(
+                    Icons.psychology_outlined,
+                    size: 20,
+                    color: Color(0xFF2563EB),
+                  ),
                 ),
                 const SizedBox(width: 12),
               ],
               Flexible(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: message.isUser ? const Color(0xFF2563EB) : widget.themeExt.cardColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(24),
-                      topRight: const Radius.circular(24),
-                      bottomLeft: Radius.circular(message.isUser ? 24 : 4),
-                      bottomRight: Radius.circular(message.isUser ? 4 : 24),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.themeExt.shadowColor,
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                child: Column(
+                  crossAxisAlignment: .end,
+                  children: [
+                    Container(
+                      padding: const .all(20),
+                      decoration: BoxDecoration(
+                        color: isUser
+                            ? const .new(0xFF2563EB)
+                            : widget.themeExt.cardColor,
+                        borderRadius: .only(
+                          topLeft: const .circular(24),
+                          topRight: const .circular(24),
+                          bottomLeft: .circular(isUser ? 24 : 4),
+                          bottomRight: .circular(isUser ? 4 : 24),
+                        ),
+                        boxShadow: [
+                          .new(
+                            color: widget.themeExt.shadowColor,
+                            blurRadius: 10,
+                            offset: const .new(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white : colorScheme.onSurface,
-                      fontSize: 16,
-                      height: 1.5,
+                      child: Text(
+                        message.text,
+                        style: .new(
+                          color: isUser ? Colors.white : colorScheme.onSurface,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (isUser && message.feedback != null)
+                      Padding(
+                        padding: const .only(top: 8, right: 4),
+                        child: InkWell(
+                          onTap: () => _showFeedbackDialog(message.feedback!),
+                          borderRadius: .circular(20),
+                          child: Padding(
+                            padding: const .symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            child: Row(
+                              mainAxisSize: .min,
+                              children: [
+                                const Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.amber,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Review Feedback',
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    fontWeight: .bold,
+                                    color: const .new(0xFF2563EB),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (message.isUser) ...[
+              if (isUser) ...[
                 const SizedBox(width: 12),
                 CircleAvatar(
                   radius: 18,
-                  backgroundImage: NetworkImage(message.avatarUrl),
+                  backgroundColor: const Color(
+                    0xFF2563EB,
+                  ).withValues(alpha: 0.1),
+                  child: const Icon(
+                    Icons.person_outline,
+                    size: 20,
+                    color: Color(0xFF2563EB),
+                  ),
                 ),
               ],
             ],
@@ -336,12 +422,14 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
     );
   }
 
-  Widget _buildInputArea(ColorScheme colorScheme) {
+  Widget _buildInputArea(
+    ColorScheme colorScheme,
+    GrammarSttState sttState,
+    bool isAiActive,
+  ) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-      decoration: BoxDecoration(
-        color: widget.themeExt.scaffoldBackgroundColor,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      decoration: BoxDecoration(color: widget.themeExt.scaffoldBackgroundColor),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
@@ -361,17 +449,33 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
-                onTap: _toggleListening,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.all(8),
+                onTap: isAiActive
+                    ? null
+                    : () {
+                        if (sttState.isListening) {
+                          ref.read(grammarSttProvider.notifier).stopListening();
+                        } else {
+                          ref
+                              .read(grammarSttProvider.notifier)
+                              .startListening();
+                        }
+                      },
+                child: Container(
+                  height: 64,
+                  width: 64,
                   decoration: BoxDecoration(
-                    color: _isListening ? const Color(0xFF2563EB).withValues(alpha: 0.1) : Colors.transparent,
+                    color: isAiActive
+                        ? widget.themeExt.secondaryText.withValues(alpha: 0.1)
+                        : (sttState.isListening
+                              ? const Color(0xFF0066FF)
+                              : widget.themeExt.cardColor),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _isListening ? Icons.mic : Icons.mic_none_outlined,
-                    color: _isListening ? const Color(0xFF2563EB) : widget.themeExt.secondaryText,
+                    sttState.isListening ? Icons.mic : Icons.mic_none_outlined,
+                    color: sttState.isListening
+                        ? const Color(0xFF2563EB)
+                        : widget.themeExt.secondaryText,
                   ),
                 ),
               ),
@@ -392,12 +496,16 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
                     color: colorScheme.onSurface,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Type your response here',
+                    hintText: sttState.isListening
+                        ? 'Listening...'
+                        : 'Type your response here',
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     hintStyle: TextStyle(
-                      color: widget.themeExt.secondaryText.withValues(alpha: 0.5),
+                      color: widget.themeExt.secondaryText.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
                 ),
@@ -406,7 +514,10 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
             GestureDetector(
               onTap: _sendMessage,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(25),
@@ -415,7 +526,10 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
                   children: [
                     Text(
                       'Send',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(width: 8),
                     Icon(Icons.near_me_rounded, color: Colors.white, size: 18),
@@ -424,6 +538,139 @@ class _ActiveRoleplaySessionState extends State<ActiveRoleplaySession> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showFeedbackDialog(Map<String, dynamic> feedback) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final themeExt = widget.themeExt;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const .symmetric(horizontal: 16),
+        child: Container(
+          padding: const .all(24),
+          decoration: BoxDecoration(
+            color: themeExt.cardColor,
+            borderRadius: .circular(32),
+            border: .all(color: themeExt.borderColor),
+            boxShadow: [
+              .new(
+                color: themeExt.shadowColor,
+                blurRadius: 24,
+                offset: const .new(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: .min,
+            crossAxisAlignment: .start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Colors.amber, size: 28),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Grammar Feedback',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontWeight: .bold,
+                      fontSize: 22,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              if (feedback['grammarFix'] != null) ...[
+                const Text(
+                  'CORRECTED VERSION',
+                  style: .new(
+                    fontSize: 11,
+                    fontWeight: .w800,
+                    color: .new(0xFF3B82F6),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const .all(20),
+                  decoration: BoxDecoration(
+                    color: themeExt.scaffoldBackgroundColor,
+                    borderRadius: .circular(20),
+                    border: .all(
+                      color: Color(0xFF3B82F6).withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    feedback['grammarFix'],
+                    style: .new(
+                      fontSize: 16,
+                      fontWeight: .w600,
+                      color: colorScheme.onSurface,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+              if (feedback['betterWay'] != null) ...[
+                const Text(
+                  'BETTER PHRASING',
+                  style: .new(
+                    fontSize: 11,
+                    fontWeight: .w800,
+                    color: .new(0xFF10B981),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const .all(20),
+                  decoration: BoxDecoration(
+                    color: themeExt.scaffoldBackgroundColor,
+                    borderRadius: .circular(20),
+                    border: .all(
+                      color: Color(0xFF10B981).withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    feedback['betterWay'],
+                    style: .new(
+                      fontSize: 16,
+                      fontWeight: .w600,
+                      color: colorScheme.onSurface,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+              Align(
+                alignment: .centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const .symmetric(horizontal: 24, vertical: 12),
+                    foregroundColor: const .new(0xFF3B82F6),
+                  ),
+                  child: const Text(
+                    'GOT IT',
+                    style: .new(
+                      fontWeight: .w900,
+                      letterSpacing: 1.0,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

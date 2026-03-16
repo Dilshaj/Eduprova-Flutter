@@ -63,7 +63,9 @@ class _InterviewBotPageState extends State<InterviewBotPage> {
   // Staging buffer: raw base64 chunks accumulate here until AI_AUDIO_SEGMENT_DONE
   final List<String> _incomingChunks = [];
   // Queue of ready-to-play temp file paths (one per sentence/segment)
-  final List<String> _audioQueue = [];
+  final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
+  bool _isPlaylistInitialized = false;
+  final List<String> _audioQueue = []; // Still needed for tracking/enabling mic
   bool _isPlaying = false;
 
   // Whether we should enable microphone once audio queue drains
@@ -151,22 +153,34 @@ class _InterviewBotPageState extends State<InterviewBotPage> {
     _socket.on('AI_AUDIO_SEGMENT_DONE', (_) async {
       if (_ignoreIncomingAi || _incomingChunks.isEmpty) return;
 
-      // Concatenate all raw bytes of this segment into one MP3 file
-      final allBytes = _incomingChunks
-          .map(base64.decode)
-          .expand((b) => b)
-          .toList();
-      _incomingChunks.clear();
+      try {
+        final allBytes = _incomingChunks
+            .map(base64.decode)
+            .expand((b) => b)
+            .toList();
+        _incomingChunks.clear();
 
-      final dir = await getTemporaryDirectory();
-      final file = File(
-        '${dir.path}/seg_${DateTime.now().millisecondsSinceEpoch}.mp3',
-      );
-      await file.writeAsBytes(allBytes);
+        final dir = await getTemporaryDirectory();
+        final file = File(
+          '${dir.path}/seg_${DateTime.now().microsecondsSinceEpoch}.mp3',
+        );
+        await file.writeAsBytes(allBytes);
 
-      _audioQueue.add(file.path);
-      if (!_isPlaying) {
-        _playNextInQueue();
+        _audioQueue.add(file.path);
+        
+        if (!_isPlaylistInitialized) {
+          await _audioPlayer.setAudioSource(_playlist);
+          _isPlaylistInitialized = true;
+        }
+        
+        await _playlist.add(AudioSource.file(file.path));
+
+        // Start loop if not already running
+        if (!_isPlaying) {
+          _startPlaybackLoop();
+        }
+      } catch (e) {
+        debugPrint('Error processing audio segment: $e');
       }
     });
 
@@ -228,45 +242,62 @@ class _InterviewBotPageState extends State<InterviewBotPage> {
     });
   }
 
-  Future<void> _playNextInQueue() async {
-    if (_audioQueue.isEmpty) {
-      if (mounted) setState(() => _isPlaying = false);
-      // Only enable mic if BOTH conditions are met:
-      // 1. ENABLE_MICROPHONE was received
-      // 2. AUDIO_DONE was received (all segments transmitted)
-      if (_shouldEnableMicrophone && _audioTransmissionDone) {
-        _enableMicrophoneNow();
-      }
-      return;
-    }
+  Future<void> _startPlaybackLoop() async {
+    if (_isPlaying) return;
+    _isPlaying = true;
 
     if (mounted) {
-      setState(() => _isPlaying = true);
-      // Stop microphone so AI doesn't hear itself
+      setState(() => _isAiSpeaking = true);
       if (_isListening) await _stopListening();
     }
 
-    final filePath = _audioQueue.removeAt(0);
-
     try {
-      await _audioPlayer.setFilePath(filePath);
+      // Just call play. The ConcatenatingAudioSource will play all items in order.
       await _audioPlayer.play();
-      // Wait for natural playback completion with a timeout as safety
-      await _audioPlayer.playerStateStream
-          .firstWhere((s) => s.processingState == ProcessingState.completed)
-          .timeout(const Duration(seconds: 30));
+      
+      // Keep checking if the playlist has more items and wait for them to finish
+      // We loop here as long as there are items in the queue OR the player is still active
+      while (mounted && 
+             (_playlist.length > 0) && 
+             (_audioPlayer.processingState != ProcessingState.completed)) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        // If we reached the end of the current playlist but it's not "completed" yet, keep waiting
+        if (_audioPlayer.processingState == ProcessingState.completed && _playlist.length > 0) {
+           // This shouldn't happen with ConcatenatingAudioSource if we append correctly,
+           // but added as a safety check.
+           break; 
+        }
+      }
+      
+      // Extra wait to catch the very end of the last chunk
+      await Future.delayed(const Duration(milliseconds: 300));
+
     } catch (e) {
-      debugPrint('Error playing audio segment: $e');
+      debugPrint('Error in playback loop: $e');
     } finally {
-      if (mounted) setState(() => _isPlaying = false);
+      _isPlaying = false;
+      
+      // Only clear if we really have nothing left in the queue
+      if (_playlist.length == 0 || _audioPlayer.processingState == ProcessingState.completed) {
+        try {
+          await _audioPlayer.stop();
+          await _playlist.clear();
+          _audioQueue.clear();
+        } catch (e) {
+          debugPrint('Error clearing playlist: $e');
+        }
+      }
+      
+      if (mounted) {
+        setState(() => _isAiSpeaking = false);
+      }
+      
+      // Only enable mic if BOTH conditions are met and queue is truly empty
+      if (_shouldEnableMicrophone && _audioTransmissionDone && !_isPlaying) {
+        _enableMicrophoneNow();
+      }
     }
-
-    // Delete temp file
-    try {
-      File(filePath).deleteSync();
-    } catch (_) {}
-
-    _playNextInQueue();
   }
 
   Future<void> _initSpeech() async {

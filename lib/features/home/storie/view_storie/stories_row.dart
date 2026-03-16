@@ -3,6 +3,7 @@ import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'stories_provider.dart';
 
 class StatusRow extends ConsumerStatefulWidget {
@@ -15,21 +16,46 @@ class StatusRow extends ConsumerStatefulWidget {
 class _StatusRowState extends ConsumerState<StatusRow> {
   @override
   Widget build(BuildContext context) {
-    final profiles = ref.watch(statusProfilesProvider);
+    final profilesAsync = ref.watch(statusProfilesProvider);
 
     return SizedBox(
       height: 105,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        scrollDirection: Axis.horizontal,
-        itemCount: profiles.length + 1,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _buildAddStoryCard(context);
-          }
-          return _buildStatusCard(context, index - 1, profiles[index - 1]);
-        },
+      child: profilesAsync.when(
+        data: (profiles) => ListView.separated(
+          padding: const .symmetric(horizontal: 10),
+          scrollDirection: .horizontal,
+          itemCount: profiles.length + 1,
+          separatorBuilder: (context, index) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return _buildAddStoryCard(context);
+            }
+            return _buildStatusCard(context, index - 1, profiles[index - 1]);
+          },
+        ),
+        loading: () => Skeletonizer(
+          enabled: true,
+          child: ListView.separated(
+            padding: const .symmetric(horizontal: 10),
+            scrollDirection: .horizontal,
+            itemCount: 6,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              if (index == 0) return _buildAddStoryCard(context);
+              return _buildStatusCard(
+                context,
+                index - 1,
+                const .new(
+                  id: 'dummy',
+                  name: 'Loading...',
+                  profileUrl: 'https://picsum.photos/seed/default/50/50',
+                  statuses: [],
+                ),
+              );
+            },
+          ),
+        ),
+        error: (err, st) => const Center(child: Icon(Icons.error_outline)),
       ),
     );
   }

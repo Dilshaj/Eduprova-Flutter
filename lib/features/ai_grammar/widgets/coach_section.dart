@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:eduprova/theme/theme_model.dart';
-import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eduprova/core/services/deepgram_stt_service.dart';
+import 'package:eduprova/features/ai_grammar/repositories/grammar_repository.dart';
+import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-class CoachSection extends StatefulWidget {
+class CoachSection extends ConsumerStatefulWidget {
   final AppDesignExtension themeExt;
   final VoidCallback onBack;
 
@@ -14,34 +18,25 @@ class CoachSection extends StatefulWidget {
   });
 
   @override
-  State<CoachSection> createState() => _CoachSectionState();
+  ConsumerState<CoachSection> createState() => _CoachSectionState();
 }
 
-class _CoachSectionState extends State<CoachSection> with SingleTickerProviderStateMixin {
+class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerProviderStateMixin {
   late AnimationController _voiceController;
   final ScrollController _chatScrollController = ScrollController();
+
   bool _isMuted = false;
+  bool _isLoading = true;
+  bool _isAnalysing = false;
   
-  final SpeechToText _speechToText = SpeechToText();
+  final DeepgramSttService _sttService = DeepgramSttService();
   bool _isListening = false;
   String _lastWords = '';
 
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'isUser': true,
-      'text': "I'm presenting the quarterly results and I want to explain the future strategy.",
-      'time': '12:45 PM',
-      'label': 'CLEAR INTENT'
-    },
-    {
-      'isUser': false,
-      'text': "That sounds like a solid transition. Remember to focus on the 'why' behind the numbers to keep your audience engaged.",
-      'time': '12:46 PM',
-      'type': 'coach',
-      'alternatives': ["I'd like to outline the strategy for operational efficiency..."],
-      'alerts': ['165 wpm — Consider a brief pause after \'operations\'.']
-    },
-  ];
+  GrammarPracticeQuestion? _currentQuestion;
+  GrammarAnalysisResult? _lastAnalysis;
+
+  final List<Map<String, dynamic>> _messages = [];
 
   @override
   void initState() {
@@ -50,43 +45,83 @@ class _CoachSectionState extends State<CoachSection> with SingleTickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat();
-    _initSpeech();
+    _loadInitialQuestion();
   }
 
-  Future<void> _initSpeech() async {
-    await _speechToText.initialize();
-  }
-
-  Future<void> _toggleListening() async {
-    if (_isMuted) return;
-
-    if (_isListening) {
-      await _speechToText.stop();
-      setState(() => _isListening = false);
-    } else {
-      setState(() {
-        _lastWords = '';
-      });
-      final available = await _speechToText.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        await _speechToText.listen(
-          onResult: (result) {
-            setState(() {
-              _lastWords = result.recognizedWords;
-            });
-          },
-          listenOptions: SpeechListenOptions(
-            partialResults: true,
-            // listenMode: ListenMode.dictation,
-          ),
-        );
+  Future<void> _loadInitialQuestion() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _lastAnalysis = null;
+      _messages.clear();
+    });
+    try {
+      final repo = ref.read(grammarRepositoryProvider);
+      final question = await repo.fetchPracticeQuestion('fluency');
+      if (mounted) {
+        setState(() {
+          _currentQuestion = question;
+          _messages.add({
+            'isUser': false,
+            'text': question.question,
+            'time': 'Just now',
+            'type': 'coach',
+          });
+          _isLoading = false;
+        });
+        if (question.audio != null) {
+          ref.read(grammarAudioPlayerProvider.notifier).playBase64(question.audio!);
+        }
+      }
+    } catch (e) {
+      debugPrint('Question load error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _messages.add({
+            'isUser': false,
+            'text': "Failed to load question: ${e.toString()}",
+            'time': 'Just now',
+            'type': 'coach',
+          });
+        });
       }
     }
   }
 
-  void _sendMessage(String text) {
-    if (text.trim().isEmpty) return;
+  Future<void> _toggleListening() async {
+    if (_isMuted || _isAnalysing) return;
+
+    if (_isListening) {
+      await _sttService.stop();
+      setState(() => _isListening = false);
+      if (_lastWords.isNotEmpty) {
+        _sendMessage(_lastWords);
+      }
+    } else {
+      setState(() {
+        _lastWords = '';
+        _isListening = true;
+      });
+      await _sttService.start(
+        onTranscript: (text) {
+          setState(() {
+            _lastWords = text;
+          });
+        },
+        onError: (err) {
+          setState(() => _isListening = false);
+        },
+        onDone: () {
+          setState(() => _isListening = false);
+        },
+      );
+    }
+  }
+
+  Future<void> _sendMessage(String text) async {
+    if (text.trim().isEmpty || _isAnalysing) return;
+    
     setState(() {
       _messages.add({
         'isUser': true,
@@ -94,23 +129,48 @@ class _CoachSectionState extends State<CoachSection> with SingleTickerProviderSt
         'time': 'Just now',
       });
       _lastWords = '';
+      _isAnalysing = true;
     });
     
     _scrollToBottom();
     
-    // Mock coach response
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      final repo = ref.read(grammarRepositoryProvider);
+      final result = await repo.analyzePracticeResponse(
+        _currentQuestion?.question ?? '', 
+        text,
+        audio: null,
+      );
+      
       if (!mounted) return;
+
       setState(() {
+        _lastAnalysis = result;
         _messages.add({
           'isUser': false,
-          'text': "I heard: $text. Good delivery, keep practicing!",
+          'text': result.improvedResponse,
           'time': 'Just now',
           'type': 'coach',
+          'alternatives': [result.improvedResponse],
+          'alerts': result.suggestions['alerts']?.cast<String>() ?? [],
         });
+        _isAnalysing = false;
       });
       _scrollToBottom();
-    });
+    } catch (e) {
+      debugPrint('Analysis error: $e');
+      if (mounted) {
+        setState(() {
+          _isAnalysing = false;
+          _messages.add({
+            'isUser': false,
+            'text': "Analysis failed: ${e.toString()}",
+            'time': 'Just now',
+            'type': 'coach',
+          });
+        });
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -136,29 +196,33 @@ class _CoachSectionState extends State<CoachSection> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        // Top compact metrics & AI Status
-        _buildTopCompactHeader(colorScheme),
-        
-        // Chat Viewport
-        Expanded(
-          child: ListView.builder(
-            controller: _chatScrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              final msg = _messages[index];
-              return _buildChatMessage(msg, colorScheme);
-            },
+    return Skeletonizer(
+      enabled: _isLoading,
+      child: Column(
+        children: [
+          // Top compact metrics & AI Status
+          _buildTopCompactHeader(colorScheme),
+          
+          // Chat Viewport
+          Expanded(
+            child: ListView.builder(
+              controller: _chatScrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                return _buildChatMessage(msg, colorScheme);
+              },
+            ),
           ),
-        ),
-        
-        // Chat Input
-        _buildChatInput(colorScheme),
-        const SizedBox(height: 10),
-      ],
+          
+          // Chat Input
+          _buildChatInput(colorScheme),
+          const SizedBox(height: 10),
+        ],
+      ),
     );
+
   }
 
   Widget _buildTopCompactHeader(ColorScheme colorScheme) {
@@ -234,7 +298,7 @@ class _CoachSectionState extends State<CoachSection> with SingleTickerProviderSt
                     setState(() {
                       _isMuted = !_isMuted;
                       if (_isMuted && _isListening) {
-                        _speechToText.stop();
+                        // _speechToText.stop();
                         _isListening = false;
                       }
                     });
@@ -276,9 +340,9 @@ class _CoachSectionState extends State<CoachSection> with SingleTickerProviderSt
           const SizedBox(height: 20),
           Row(
             children: [
-              _buildMetricBadge('CONFIDENCE', '84%', const Color(0xFF0066FF), Icons.insights),
+              _buildMetricBadge('FLUENCY', '${_lastAnalysis?.fluencyScore ?? 0}%', const Color(0xFF0066FF), Icons.insights),
               const SizedBox(width: 12),
-              _buildMetricBadge('GRAMMAR', '92/100', const Color(0xFF059669), Icons.spellcheck),
+              _buildMetricBadge('GRAMMAR', '${_lastAnalysis?.grammarScore ?? 0}/100', const Color(0xFF059669), Icons.spellcheck),
             ],
           ),
         ],

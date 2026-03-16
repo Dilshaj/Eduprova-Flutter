@@ -44,7 +44,6 @@ dependencies:
   intl: ^0.20.2
   socket_io_client: ^3.1.4
   file_picker: ^10.3.10
-  speech_to_text: ^7.3.0
   just_audio: ^0.10.5
   flutter_tts: ^4.2.5
   livekit_client: ^2.6.5
@@ -64,3 +63,4 @@ flutter:
     - assets/logos/
     - assets/ai/
     - assets/grammar-assistant/
+    - assets/images/roles/

@@ -1,6 +1,5 @@
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
 import 'package:eduprova/theme/theme.dart';
-import 'package:eduprova/ui/background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -449,7 +448,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     VoidCallback? onToggleVisibility,
   }) {
     final dividerClr = Theme.of(context).dividerColor.withValues(alpha: 0.8);
-    final cs = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

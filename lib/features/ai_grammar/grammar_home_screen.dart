@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -151,17 +150,15 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
     return const RocketLaunchButton();
   }
 
-
-
   // Fixed rectangular canvas so absolute Positioned math always works.
   // Extra height at the bottom prevents icon labels from being clipped.
-  static const double _canvasW = 430;
-  static const double _canvasH = 490;
-  static const double _iconRadius = 170; // increased gap from bot center
-  static const double _cx = _canvasW / 2; // 215
-  static const double _cy = _canvasH / 2 - 10; // 235 — slightly above center
-  static const double _iconW = 82;
-  static const double _iconH = 110; // card (82) + gap (8) + label (20)
+  static const double _canvasW = 360;
+  static const double _canvasH = 420;
+  static const double _iconRadius = 130; // Reduced radius
+  static const double _cx = _canvasW / 2; // 180
+  static const double _cy = _canvasH / 2 - 10; // 200 — slightly above center
+  static const double _iconW = 68;
+  static const double _iconH = 90; // card (68) + gap (6) + label (16)
 
   Widget _buildCircularLayout() {
     return Center(
@@ -173,7 +170,7 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
             // Dashed circles — painted around the actual center
             CustomPaint(
               size: const Size(_canvasW, _canvasH),
-              painter: CirclePainter(cx: _cx, cy: _cy),
+              painter: CirclePainter(cx: _cx, cy: _cy, iconRadius: _iconRadius),
             ),
 
             // Outer soft glow — centered at _cx, _cy
@@ -200,11 +197,11 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
 
             // Central Bot Circle — centered at _cx, _cy
             Positioned(
-              left: _cx - 72,
-              top: _cy - 72,
+              left: _cx - 60,
+              top: _cy - 60,
               child: Container(
-                width: 144,
-                height: 144,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: .circle,
                   gradient: LinearGradient(
@@ -226,8 +223,8 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
                 child: Center(
                   child: Image.asset(
                     'assets/grammar-assistant/ai-bot.png',
-                    width: 105,
-                    height: 105,
+                    width: 85,
+                    height: 85,
                     fit: .contain,
                   ),
                 ),
@@ -257,7 +254,7 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
       ),
       ('REFINER', Icons.auto_awesome_rounded, const Color(0xFFE056FD)),
       ('LIVE COACH', Icons.smart_toy_outlined, const Color(0xFF3E4EA0)),
-      ('PRESENTATION', Icons.person_pin_outlined, const Color(0xFFE056FD)),
+      // ('PRESENTATION', Icons.person_pin_outlined, const Color(0xFFE056FD)),
       ('SHADOWING', Icons.settings_voice_outlined, const Color(0xFF3B82F6)),
       ('ROLEPLAY', Icons.theater_comedy_outlined, const Color(0xFFE056FD)),
     ];
@@ -419,7 +416,8 @@ class RocketLaunchButton extends StatefulWidget {
   State<RocketLaunchButton> createState() => _RocketLaunchButtonState();
 }
 
-class _RocketLaunchButtonState extends State<RocketLaunchButton> with TickerProviderStateMixin {
+class _RocketLaunchButtonState extends State<RocketLaunchButton>
+    with TickerProviderStateMixin {
   late AnimationController _launchController;
   late AnimationController _flameController;
   late Animation<Offset> _rocketPosition;
@@ -440,29 +438,46 @@ class _RocketLaunchButtonState extends State<RocketLaunchButton> with TickerProv
       duration: const Duration(milliseconds: 100),
     )..repeat(reverse: true);
 
-    _rocketPosition = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(8.0, -8.0), // Fly up and right out of screen
-    ).animate(CurvedAnimation(
-      parent: _launchController,
-      curve: const Interval(0.2, 1.0, curve: Curves.easeInCirc),
-    ));
+    _rocketPosition =
+        Tween<Offset>(
+          begin: Offset.zero,
+          end: const Offset(8.0, -8.0), // Fly up and right out of screen
+        ).animate(
+          CurvedAnimation(
+            parent: _launchController,
+            curve: const Interval(0.2, 1.0, curve: Curves.easeInCirc),
+          ),
+        );
 
-    _rocketOpacity = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _launchController,
-      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
-    ));
+    _rocketOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _launchController,
+        curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+      ),
+    );
 
-    _rocketScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.85).chain(CurveTween(curve: Curves.easeOutCubic)), weight: 20),
-      TweenSequenceItem(tween: Tween(begin: 0.85, end: 1.5).chain(CurveTween(curve: Curves.easeInQuad)), weight: 80),
-    ]).animate(CurvedAnimation(
-      parent: _launchController,
-      curve: const Interval(0.0, 0.4),
-    ));
+    _rocketScale =
+        TweenSequence<double>([
+          TweenSequenceItem(
+            tween: Tween(
+              begin: 1.0,
+              end: 0.85,
+            ).chain(CurveTween(curve: Curves.easeOutCubic)),
+            weight: 20,
+          ),
+          TweenSequenceItem(
+            tween: Tween(
+              begin: 0.85,
+              end: 1.5,
+            ).chain(CurveTween(curve: Curves.easeInQuad)),
+            weight: 80,
+          ),
+        ]).animate(
+          CurvedAnimation(
+            parent: _launchController,
+            curve: const Interval(0.0, 0.4),
+          ),
+        );
   }
 
   @override
@@ -475,10 +490,10 @@ class _RocketLaunchButtonState extends State<RocketLaunchButton> with TickerProv
   Future<void> _handleTap() async {
     if (_isLaunched) return;
     setState(() => _isLaunched = true);
-    
+
     await _launchController.forward();
     if (mounted) {
-      context.pushNamed(AppRoutes.grammarConversation);
+      context.pushNamed('grammar_conversation');
       // Reset after transition for when user comes back
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
@@ -522,17 +537,22 @@ class _RocketLaunchButtonState extends State<RocketLaunchButton> with TickerProv
               ),
               const SizedBox(width: 10),
               AnimatedBuilder(
-                animation: Listenable.merge([_launchController, _flameController]),
+                animation: Listenable.merge([
+                  _launchController,
+                  _flameController,
+                ]),
                 builder: (context, child) {
                   double offsetX = 0;
                   double offsetY = 0;
-                  
+
                   // Intense rumble effect before takeoff
                   if (_isLaunched && _launchController.value < 0.2) {
                     final progress = _launchController.value / 0.2;
                     final intensity = math.sin(progress * math.pi);
-                    offsetX = (math.Random().nextDouble() - 0.5) * 6 * intensity;
-                    offsetY = (math.Random().nextDouble() - 0.5) * 6 * intensity;
+                    offsetX =
+                        (math.Random().nextDouble() - 0.5) * 6 * intensity;
+                    offsetY =
+                        (math.Random().nextDouble() - 0.5) * 6 * intensity;
                   }
 
                   return Transform.translate(
@@ -560,7 +580,11 @@ class _RocketLaunchButtonState extends State<RocketLaunchButton> with TickerProv
                                   ),
                                 ),
                               // Rocket
-                              const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 22),
+                              const Icon(
+                                Icons.rocket_launch_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
                             ],
                           ),
                         ),
@@ -578,8 +602,8 @@ class _RocketLaunchButtonState extends State<RocketLaunchButton> with TickerProv
 }
 
 class FlamePainter extends CustomPainter {
-  final double progress; 
-  final double flicker;  
+  final double progress;
+  final double flicker;
   final bool isLaunched;
 
   FlamePainter({
@@ -595,10 +619,10 @@ class FlamePainter extends CustomPainter {
     double fireScale = progress < 0.2 ? progress * 5.0 : 1.0 + (progress * 0.5);
 
     final paint = Paint()..style = PaintingStyle.fill;
-    
+
     // The rocket nozzle in `rocket_launch_rounded` is at bottom-left roughly
     final Offset nozzle = Offset(size.width * 0.1, size.height * 0.9);
-    
+
     canvas.save();
     canvas.translate(nozzle.dx, nozzle.dy);
     // Angle pointing down-left (approx 135 deg = 2.356 radians)
@@ -618,38 +642,48 @@ class FlamePainter extends CustomPainter {
     _drawFlameShape(canvas, fireLength * 0.8, fireWidth * 0.8, paint);
 
     canvas.restore();
-    
+
     // Dynamic smoke particles
     if (progress > 0.1) {
-       final smokePaint = Paint()..style = PaintingStyle.fill;
-       final random = math.Random(1234); // Seeded for consistent but random-looking particles
-       
-       for (int i = 0; i < 15; i++) {
-         double angle = 2.356 + (random.nextDouble() - 0.5) * 1.2; // Cone spread
-         double speed = 20.0 + random.nextDouble() * 60.0;
-         // Particles travel progressively further based on launch progress
-         double dist = ((progress - 0.1) / 0.9) * speed * 2;
-         
-         double sx = nozzle.dx + math.cos(angle) * dist;
-         double sy = nozzle.dy + math.sin(angle) * dist;
-         
-         double particleSize = 4.0 + random.nextDouble() * 6.0 + (progress * 12);
-         // Fade out smoke as it expands
-         double opacity = math.max(0.0, 1.0 - (progress * 1.5) - random.nextDouble() * 0.2);
-         
-         if (opacity > 0) {
-           smokePaint.color = Colors.white.withValues(alpha: opacity * 0.5);
-           canvas.drawCircle(Offset(sx, sy), particleSize, smokePaint);
-           
-           // Inner grey smoke
-           smokePaint.color = Colors.grey.withValues(alpha: opacity * 0.3);
-           canvas.drawCircle(Offset(sx, sy), particleSize * 0.6, smokePaint);
-         }
-       }
+      final smokePaint = Paint()..style = PaintingStyle.fill;
+      final random = math.Random(
+        1234,
+      ); // Seeded for consistent but random-looking particles
+
+      for (int i = 0; i < 15; i++) {
+        double angle = 2.356 + (random.nextDouble() - 0.5) * 1.2; // Cone spread
+        double speed = 20.0 + random.nextDouble() * 60.0;
+        // Particles travel progressively further based on launch progress
+        double dist = ((progress - 0.1) / 0.9) * speed * 2;
+
+        double sx = nozzle.dx + math.cos(angle) * dist;
+        double sy = nozzle.dy + math.sin(angle) * dist;
+
+        double particleSize = 4.0 + random.nextDouble() * 6.0 + (progress * 12);
+        // Fade out smoke as it expands
+        double opacity = math.max(
+          0.0,
+          1.0 - (progress * 1.5) - random.nextDouble() * 0.2,
+        );
+
+        if (opacity > 0) {
+          smokePaint.color = Colors.white.withValues(alpha: opacity * 0.5);
+          canvas.drawCircle(Offset(sx, sy), particleSize, smokePaint);
+
+          // Inner grey smoke
+          smokePaint.color = Colors.grey.withValues(alpha: opacity * 0.3);
+          canvas.drawCircle(Offset(sx, sy), particleSize * 0.6, smokePaint);
+        }
+      }
     }
   }
 
-  void _drawFlameShape(Canvas canvas, double length, double width, Paint paint) {
+  void _drawFlameShape(
+    Canvas canvas,
+    double length,
+    double width,
+    Paint paint,
+  ) {
     final Path path = Path();
     path.moveTo(0, 0);
     // Creates a teardrop flame pointing rightwards along X-axis
@@ -661,16 +695,21 @@ class FlamePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant FlamePainter oldDelegate) {
-    return oldDelegate.progress != progress || 
-           oldDelegate.flicker != flicker || 
-           oldDelegate.isLaunched != isLaunched;
+    return oldDelegate.progress != progress ||
+        oldDelegate.flicker != flicker ||
+        oldDelegate.isLaunched != isLaunched;
   }
 }
 
 class CirclePainter extends CustomPainter {
   final double cx;
   final double cy;
-  const CirclePainter({required this.cx, required this.cy});
+  final double iconRadius;
+  const CirclePainter({
+    required this.cx,
+    required this.cy,
+    required this.iconRadius,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -687,9 +726,9 @@ class CirclePainter extends CustomPainter {
       ..strokeWidth = 2;
 
     // Inner dashed circle
-    _drawDashedCircle(canvas, center, 115, mainPaint);
+    _drawDashedCircle(canvas, center, iconRadius * 0.65, mainPaint);
     // Outer dashed circle (matches icon orbit radius)
-    _drawDashedCircle(canvas, center, 170, glowPaint);
+    _drawDashedCircle(canvas, center, iconRadius, glowPaint);
   }
 
   void _drawDashedCircle(
@@ -718,5 +757,6 @@ class CirclePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CirclePainter old) => old.cx != cx || old.cy != cy;
+  bool shouldRepaint(CirclePainter old) =>
+      old.cx != cx || old.cy != cy || old.iconRadius != iconRadius;
 }

@@ -1,4 +1,3 @@
-import 'package:eduprova/constants.dart';
 import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:eduprova/core/widgets/app_loaders.dart';

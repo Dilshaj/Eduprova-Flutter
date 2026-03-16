@@ -27,4 +27,13 @@ class CacheManagers {
       maxNrOfCacheObjects: 100,
     ),
   );
+
+  static const postCacheKey = 'postCacheKey';
+  static final CacheManager postCacheManager = CacheManager(
+    Config(
+      postCacheKey,
+      stalePeriod: const Duration(days: 7), // 7 days for posts
+      maxNrOfCacheObjects: 200, // accommodate more posts in feed
+    ),
+  );
 }

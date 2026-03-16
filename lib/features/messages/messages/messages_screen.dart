@@ -1,4 +1,3 @@
-import 'package:eduprova/constants.dart';
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
@@ -231,7 +230,6 @@ class _MessagesListScreenState extends State<MessagesListScreen>
   }
 
   Widget _buildTabBar(Color textColor, Color subTextColor) {
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final cs = Theme.of(context).colorScheme;
     return TabBar(
       controller: _tabController,

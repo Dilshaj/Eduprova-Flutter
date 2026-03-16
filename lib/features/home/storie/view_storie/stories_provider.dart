@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'story_repository.dart';
 
 enum StatusType { image, video }
 
@@ -20,67 +21,42 @@ class StatusProfile {
   final String name;
   final String profileUrl;
   final List<StatusItem> statuses;
+  final bool hasUnseen;
 
   const StatusProfile({
     required this.id,
     required this.name,
     required this.profileUrl,
     required this.statuses,
+    this.hasUnseen = false,
   });
 }
 
-final statusProfilesProvider = Provider<List<StatusProfile>>((ref) {
-  return [
-    StatusProfile(
-      id: 'user_1',
-      name: 'Maria',
-      profileUrl: 'https://picsum.photos/seed/user1/50/50',
-      statuses: [
-        const StatusItem(
-          url: 'https://picsum.photos/seed/1_1/800/1200',
-          type: StatusType.image,
-        ),
-        const StatusItem(
-          url:
-              'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-          type: StatusType.video,
-        ),
-        const StatusItem(
-          url: 'https://picsum.photos/seed/1_3/800/1200',
-          type: StatusType.image,
-        ),
-      ],
-    ),
-    StatusProfile(
-      id: 'user_2',
-      name: 'John',
-      profileUrl: 'https://picsum.photos/seed/user2/50/50',
-      statuses: [
-        const StatusItem(
-          url: 'https://picsum.photos/seed/2_1/800/1200',
-          type: StatusType.image,
-        ),
-        const StatusItem(
-          url: 'https://picsum.photos/seed/2_2/800/1200',
-          type: StatusType.image,
-        ),
-      ],
-    ),
-    StatusProfile(
-      id: 'user_3',
-      name: 'Anna',
-      profileUrl: 'https://picsum.photos/seed/user3/50/50',
-      statuses: [
-        const StatusItem(
-          url:
-              'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-          type: StatusType.video,
-        ),
-        const StatusItem(
-          url: 'https://picsum.photos/seed/3_2/800/1200',
-          type: StatusType.image,
-        ),
-      ],
-    ),
-  ];
-});
+final storyRepositoryProvider = Provider<StoryRepository>((ref) => .new());
+
+final statusProfilesProvider =
+    NotifierProvider<StoriesNotifier, AsyncValue<List<StatusProfile>>>(
+  StoriesNotifier.new,
+);
+
+class StoriesNotifier extends Notifier<AsyncValue<List<StatusProfile>>> {
+  @override
+  AsyncValue<List<StatusProfile>> build() {
+    _fetchStories();
+    return const .loading();
+  }
+
+  Future<void> _fetchStories() async {
+    state = const .loading();
+    try {
+      final stories = await ref.read(storyRepositoryProvider).getFeed();
+      state = .data(stories);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> refresh() async {
+    await _fetchStories();
+  }
+}

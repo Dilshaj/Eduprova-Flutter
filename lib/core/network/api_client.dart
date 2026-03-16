@@ -71,7 +71,7 @@ class ApiClient {
     }
     if (!kIsWeb && Platform.isAndroid) {
       // const ip = '192.168.1.4';
-      const ip = '192.168.1.121';
+      const ip = '192.168.1.8';
       debugPrint('Using Android URL: http://$ip:4000');
       return 'http://$ip:4000';
       // return 'http://10.169.69.6:4000';

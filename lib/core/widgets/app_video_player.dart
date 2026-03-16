@@ -13,7 +13,7 @@ import 'package:video_player/video_player.dart' as vp;
 // Storyboard / Trick-play support
 // ─────────────────────────────────────────────────────────────────────────────
 
-typedef _StoryboardCue = ({Duration start, Duration end, Rect crop});
+typedef StoryboardCue = ({Duration start, Duration end, Rect crop});
 
 class MuxStoryboardService {
   MuxStoryboardService._(this.playbackId);
@@ -23,7 +23,7 @@ class MuxStoryboardService {
   String get storyboardImageUrl =>
       'https://image.mux.com/$playbackId/storyboard.jpg';
 
-  List<_StoryboardCue>? _cues;
+  List<StoryboardCue>? _cues;
   bool _loading = false;
   bool _failed = false;
 
@@ -33,7 +33,7 @@ class MuxStoryboardService {
   static MuxStoryboardService forPlaybackId(String id) =>
       _cache.putIfAbsent(id, () => MuxStoryboardService._(id));
 
-  Future<List<_StoryboardCue>?> getCues() async {
+  Future<List<StoryboardCue>?> getCues() async {
     if (_cues != null) return _cues;
     if (_failed || _loading) return null;
     _loading = true;
@@ -53,7 +53,7 @@ class MuxStoryboardService {
     return _cues;
   }
 
-  _StoryboardCue? findCue(Duration position) {
+  StoryboardCue? findCue(Duration position) {
     final list = _cues;
     if (list == null || list.isEmpty) return null;
     for (final cue in list) {
@@ -62,8 +62,8 @@ class MuxStoryboardService {
     return list.last;
   }
 
-  static List<_StoryboardCue> _parseVtt(String vtt) {
-    final cues = <_StoryboardCue>[];
+  static List<StoryboardCue> _parseVtt(String vtt) {
+    final cues = <StoryboardCue>[];
     final lines = vtt.split('\n');
     Duration? start;
     Duration? end;
@@ -153,7 +153,7 @@ class _StoryboardThumbnailState extends State<StoryboardThumbnail> {
   static const double _thumbW = 160.0;
   static const double _thumbH = 90.0;
 
-  List<_StoryboardCue>? _cues;
+  List<StoryboardCue>? _cues;
 
   late final MuxStoryboardService _service;
 
@@ -254,7 +254,7 @@ class _StoryboardThumbnailState extends State<StoryboardThumbnail> {
     );
   }
 
-  Widget _buildCroppedThumbnail(_StoryboardCue cue) {
+  Widget _buildCroppedThumbnail(StoryboardCue cue) {
     // We show just the cue's crop region from the full storyboard image.
     // CachedNetworkImage loads the full sheet; we use a ClipRect + CustomPaint
     // trick: scale the sheet down to _thumbW×_thumbH then offset it.
@@ -290,7 +290,7 @@ class _StoryboardThumbnailState extends State<StoryboardThumbnail> {
           ),
         );
       },
-      errorWidget: (_, __, ___) => const Center(
+      errorWidget: (context, url, error) => const Center(
         child: Icon(
           Icons.image_not_supported_outlined,
           color: Colors.white38,

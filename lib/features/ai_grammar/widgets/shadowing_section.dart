@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'dart:math' as math;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eduprova/features/ai_grammar/repositories/grammar_repository.dart';
+import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
+import 'package:eduprova/core/services/deepgram_stt_service.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-class ShadowingSection extends StatefulWidget {
+class ShadowingSection extends ConsumerStatefulWidget {
   final AppDesignExtension themeExt;
   final VoidCallback onBack;
 
@@ -14,14 +19,21 @@ class ShadowingSection extends StatefulWidget {
   });
 
   @override
-  State<ShadowingSection> createState() => _ShadowingSectionState();
+  ConsumerState<ShadowingSection> createState() => _ShadowingSectionState();
 }
 
-class _ShadowingSectionState extends State<ShadowingSection> with TickerProviderStateMixin {
+class _ShadowingSectionState extends ConsumerState<ShadowingSection> with TickerProviderStateMixin {
   late AnimationController _waveController;
-  late AnimationController _progressController;
   bool _isPlaying = false;
-  double _audioProgress = 0.0;
+  bool _isLoading = true;
+  bool _isAnalysing = false;
+  
+  GrammarPracticeQuestion? _currentQuestion;
+  GrammarAnalysisResult? _lastAnalysis;
+  
+  final DeepgramSttService _sttService = DeepgramSttService();
+  bool _isListening = false;
+  String _lastWords = '';
 
   @override
   void initState() {
@@ -30,77 +42,167 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat();
+    _loadInitialQuestion();
+  }
 
-    _progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 16),
-    )..addListener(() {
+  Future<void> _loadInitialQuestion() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _lastAnalysis = null;
+      _lastWords = '';
+    });
+    try {
+      final repo = ref.read(grammarRepositoryProvider);
+      final question = await repo.fetchPracticeQuestion('shadowing');
+      if (mounted) {
         setState(() {
-          _audioProgress = _progressController.value;
+          _currentQuestion = question;
+          _isLoading = false;
         });
+        if (question.audio != null) {
+          _playModelAudio();
+        }
+      }
+    } catch (e) {
+      debugPrint('Question load error: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _playModelAudio() {
+    if (_currentQuestion?.audio != null) {
+      ref.read(grammarAudioPlayerProvider.notifier).playBase64(_currentQuestion!.audio!);
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (_isLoading || _isAnalysing) return;
+
+    if (_isListening) {
+      await _sttService.stop();
+      if (mounted) setState(() => _isListening = false);
+      if (_lastWords.isNotEmpty) {
+        _analyzeResponse(_lastWords);
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _lastWords = '';
+          _isListening = true;
+        });
+      }
+      await _sttService.start(
+        onTranscript: (text) {
+          if (mounted) {
+            setState(() {
+              _lastWords = text;
+            });
+          }
+        },
+        onError: (err) {
+          if (mounted) setState(() => _isListening = false);
+        },
+        onDone: () {
+          if (mounted) setState(() => _isListening = false);
+        },
+      );
+    }
+  }
+
+  Future<void> _analyzeResponse(String text) async {
+    if (text.trim().isEmpty || _isAnalysing) return;
+    
+    if (mounted) setState(() => _isAnalysing = true);
+    
+    try {
+      final repo = ref.read(grammarRepositoryProvider);
+      final result = await repo.analyzePracticeResponse(_currentQuestion?.question ?? '', text);
+      
+      if (!mounted) return;
+
+      setState(() {
+        _lastAnalysis = result;
+        _isAnalysing = false;
       });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAnalysing = false);
+      }
+    }
   }
 
   @override
   void dispose() {
     _waveController.dispose();
-    _progressController.dispose();
+    _sttService.stop();
     super.dispose();
-  }
-
-  void _toggleAudio() {
-    setState(() {
-      _isPlaying = !_isPlaying;
-      if (_isPlaying) {
-        _progressController.forward();
-      } else {
-        _progressController.stop();
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final audioState = ref.watch(grammarAudioPlayerProvider);
+    _isPlaying = audioState;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(colorScheme),
-          const SizedBox(height: 30),
-          _buildShadowingContent(colorScheme),
-          const SizedBox(height: 40),
-          Text(
-            'YOUR PROGRESS',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: widget.themeExt.secondaryText,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 20),
-          _buildProgressCard(colorScheme),
-          const SizedBox(height: 20),
-          _buildFeedbackCard(colorScheme),
-          const SizedBox(height: 40),
-          Center(
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: TextButton.icon(
-                onPressed: () {},
-                icon: Text(
-                  'Next practice sentence',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: widget.themeExt.secondaryText),
+    return Skeletonizer(
+      enabled: _isLoading,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(colorScheme),
+            const SizedBox(height: 30),
+            _buildShadowingContent(colorScheme),
+            const SizedBox(height: 40),
+            if (_lastAnalysis != null) ...[
+              Text(
+                'YOUR PROGRESS',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: widget.themeExt.secondaryText,
+                  letterSpacing: 1.2,
                 ),
-                label: Icon(Icons.arrow_forward_ios, size: 16, color: widget.themeExt.secondaryText),
+              ),
+              const SizedBox(height: 20),
+              _buildProgressCard(colorScheme),
+              const SizedBox(height: 20),
+              _buildFeedbackCard(colorScheme),
+            ] else if (!_isLoading) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Text(
+                    'Practice the sentence above to see your scores.',
+                    style: TextStyle(
+                      color: widget.themeExt.secondaryText,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 40),
+            Center(
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: TextButton.icon(
+                  onPressed: _loadInitialQuestion,
+                  icon: Text(
+                    'Next practice sentence',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: widget.themeExt.secondaryText),
+                  ),
+                  label: Icon(Icons.arrow_forward_ios, size: 16, color: widget.themeExt.secondaryText),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 40),
-        ],
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
@@ -133,7 +235,7 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onTap: () {}, // Add logic if needed
+            onTap: _loadInitialQuestion,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
@@ -169,6 +271,8 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
   }
 
   Widget _buildShadowingContent(ColorScheme colorScheme) {
+    final question = _currentQuestion?.question ?? 'Loading question...';
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -199,9 +303,9 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                       color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      'INTERMEDIATE',
-                      style: TextStyle(
+                    child: Text(
+                      _currentQuestion?.difficulty.toUpperCase() ?? 'INTERMEDIATE',
+                      style: const TextStyle(
                         color: Color(0xFF2563EB),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -210,7 +314,7 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '• Daily Routine',
+                    '• ${_currentQuestion?.topic ?? 'Daily Routine'}',
                     style: TextStyle(
                       color: widget.themeExt.secondaryText,
                       fontSize: 12,
@@ -219,7 +323,7 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                   ),
                 ],
               ),
-              _buildWaveForm(),
+              if (_isPlaying || _isListening) _buildWaveForm(),
             ],
           ),
           const SizedBox(height: 24),
@@ -232,27 +336,14 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
             ),
           ),
           const SizedBox(height: 24),
-          Wrap(
-            spacing: 8,
-            runSpacing: 12,
-            children: [
-              _buildTextWord('"Establishing'),
-              _buildTextWord('a'),
-              _buildHighlightedWord('regular exercise'),
-              _buildHighlightedWord('routine'),
-              _buildTextWord('is'),
-              _buildTextWord('essential'),
-              _buildTextWord('for'),
-              _buildTextWord('maintaining'),
-              _buildTextWord('both'),
-              _buildTextWord('your'),
-              _buildTextWord('physical'),
-              _buildTextWord('fitness'),
-              _buildTextWord('and'),
-              _buildTextWord('your'),
-              _buildHighlightedWord('mental well-being'),
-              _buildTextWord('."'),
-            ],
+          Text(
+            question,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 40),
           Row(
@@ -260,7 +351,7 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
               Icon(Icons.bar_chart, size: 16, color: const Color(0xFF2563EB)),
               const SizedBox(width: 8),
               Text(
-                _isPlaying ? 'PLAYING AUDIO..' : 'AUDIO READY',
+                _isPlaying ? 'PLAYING MODEL..' : (_isListening ? 'LISTENING..' : 'READY'),
                 style: GoogleFonts.spaceGrotesk(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -269,32 +360,31 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: _audioProgress,
-                    backgroundColor: widget.themeExt.borderColor,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF7C3AED)),
-                    minHeight: 6,
+              if (_isListening)
+                Expanded(
+                  child: Text(
+                    _lastWords.isEmpty ? 'Say it out loud...' : _lastWords,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: widget.themeExt.secondaryText,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ),
+                )
+              else
+                const Spacer(),
               const SizedBox(width: 16),
-              Text(
-                '0:${(_audioProgress * 16).toInt().toString().padLeft(2, '0')} / 0:16',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: widget.themeExt.secondaryText,
-                  fontWeight: FontWeight.w500,
-                ),
+              IconButton(
+                onPressed: _playModelAudio,
+                icon: const Icon(Icons.volume_up, size: 24),
+                color: const Color(0xFF2563EB),
               ),
-              const SizedBox(width: 8),
-              Icon(Icons.volume_up, size: 20, color: widget.themeExt.secondaryText),
             ],
           ),
           const SizedBox(height: 30),
-          _buildActionButton(),
+          _buildActionButton(colorScheme),
         ],
       ),
     );
@@ -323,52 +413,24 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
     );
   }
 
-  Widget _buildTextWord(String text) {
-    return Text(
-      text,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        height: 1.4,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
-    );
-  }
-
-  Widget _buildHighlightedWord(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF166534),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton() {
+  Widget _buildActionButton(ColorScheme colorScheme) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: _toggleAudio,
+        onTap: _toggleListening,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2563EB), Color(0xFFC026D3)],
+            gradient: LinearGradient(
+              colors: _isListening 
+                ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
+                : [const Color(0xFF2563EB), const Color(0xFFC026D3)],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                color: (_isListening ? const Color(0xFFEF4444) : const Color(0xFF2563EB)).withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -377,10 +439,19 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(_isPlaying ? Icons.pause_circle : Icons.mic_none, color: Colors.white, size: 24),
+              if (_isAnalysing)
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
+              else
+                Icon(_isListening ? Icons.stop_circle : Icons.mic_none, color: Colors.white, size: 24),
               const SizedBox(width: 12),
               Text(
-                _isPlaying ? 'STOP PRACTICE' : 'PRACTICE AGAIN',
+                _isAnalysing 
+                  ? 'ANALYSING..' 
+                  : (_isListening ? 'STOP RECORDING' : 'START PRACTICE'),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -395,6 +466,8 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
   }
 
   Widget _buildProgressCard(ColorScheme colorScheme) {
+    if (_lastAnalysis == null) return const SizedBox.shrink();
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -415,17 +488,7 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                 height: 1.6,
               ),
               children: [
-                const TextSpan(text: '"Establishing a regular '),
-                const TextSpan(
-                  text: 'exercise',
-                  style: TextStyle(color: Color(0xFFF43F5E), fontWeight: FontWeight.bold),
-                ),
-                const TextSpan(text: ' routine is essential for maintaining '),
-                const TextSpan(
-                  text: 'both',
-                  style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold),
-                ),
-                const TextSpan(text: ' your physical fitness and your mental well-being."'),
+                TextSpan(text: '"${_lastAnalysis?.transcription ?? _lastWords}"'),
               ],
             ),
           ),
@@ -436,26 +499,20 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '94%',
+                    '${_lastAnalysis?.fluencyScore ?? 0}%',
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF2563EB),
                     ),
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.auto_graph, size: 14, color: Color(0xFF059669)),
-                      const SizedBox(width: 4),
-                      const Text(
-                        '+2% vs. last',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF059669),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'FLUENCY SCORE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -463,12 +520,19 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [for (int i = 0; i < 4; i++) const Icon(Icons.star, color: Color(0xFFF59E0B), size: 18), const Icon(Icons.star_border, color: Color(0xFFF59E0B), size: 18)],
+                   Row(
+                    children: [
+                      for (int i = 0; i < 5; i++) 
+                        Icon(
+                          i < ((_lastAnalysis?.fluencyScore ?? 0) / 20).round() ? Icons.star : Icons.star_border, 
+                          color: const Color(0xFFF59E0B), 
+                          size: 18
+                        )
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'DAILY ROUTINE • +10 PTS',
+                    'POINTS EARNED: +10',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -476,15 +540,6 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(width: 20),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: widget.themeExt.borderColor),
-                ),
-                child: Icon(Icons.play_arrow, color: widget.themeExt.secondaryText),
               ),
             ],
           ),
@@ -494,6 +549,8 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
   }
 
   Widget _buildFeedbackCard(ColorScheme colorScheme) {
+    if (_lastAnalysis == null) return const SizedBox.shrink();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -527,17 +584,14 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
             ],
           ),
           const SizedBox(height: 24),
-          _buildFeedbackItem(
-            'Your rhythm and intonation are highly accurate. Focus on the word "exercise"—the "x" sound was slightly muffled.',
-          ),
-          const SizedBox(height: 20),
-          _buildFeedbackItem(
-            'Your pacing on the second half of the sentence was perfect, showing a strong grasp of natural speech patterns.',
-          ),
-          const SizedBox(height: 20),
-          _buildFeedbackItem(
-            'Try emphasizing the word "essential" a bit more in your next attempt to sound more authoritative.',
-          ),
+          if (_lastAnalysis?.suggestions['alerts'] != null)
+            ...(_lastAnalysis!.suggestions['alerts'] as List).map((alert) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildFeedbackItem(alert.toString()),
+            )),
+          if (_lastAnalysis?.improvedResponse.isNotEmpty ?? false)
+            _buildFeedbackItem('Try this for better natural flow: "${_lastAnalysis!.improvedResponse}"'),
+          
           const SizedBox(height: 30),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,7 +600,7 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'OVERALL SENTIMENT',
+                    'ACCURACY',
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -554,9 +608,9 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
                       letterSpacing: 1.1,
                     ),
                   ),
-                  const Text(
-                    'POSITIVE',
-                    style: TextStyle(
+                  Text(
+                    '${_lastAnalysis?.grammarScore ?? 0}%',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF059669),
@@ -567,10 +621,10 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
               const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: const LinearProgressIndicator(
-                  value: 0.85,
-                  backgroundColor: Color(0xFFF1F5F9),
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
+                child: LinearProgressIndicator(
+                  value: (_lastAnalysis?.grammarScore ?? 0).toDouble() / 100.0,
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
                   minHeight: 8,
                 ),
               ),
@@ -582,13 +636,25 @@ class _ShadowingSectionState extends State<ShadowingSection> with TickerProvider
   }
 
   Widget _buildFeedbackItem(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 16,
-        color: const Color(0xFF475569),
-        height: 1.6,
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 6),
+          child: Icon(Icons.check_circle, size: 12, color: Color(0xFF059669)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF475569),
+              height: 1.6,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
