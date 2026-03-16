@@ -42,7 +42,7 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
         padding: .symmetric(vertical: 60, horizontal: 20),
         child: Column(
           children: [
-            // Badge
+            // Badge at the very top
             _buildBadge(),
             const SizedBox(height: 30),
 
@@ -60,24 +60,28 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
 
             // Gradient Title
             ShaderMask(
+              blendMode: BlendMode.srcIn,
               shaderCallback: (bounds) => const LinearGradient(
                 colors: [Color(0xFF3B82F6), Color(0xFFE056FD)],
               ).createShader(bounds),
-              child: Text(
+              child: const Text(
                 'Ai Grammar Assistant',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
+                  color: Colors.white,
                   letterSpacing: -1,
                 ),
                 textAlign: .center,
               ),
             ),
 
+            // Circular Layout
+            _buildCircularLayout(),
+
             const SizedBox(height: 20),
 
-            // Sub-headline
+            // Sub-headline (Description)
             Padding(
               padding: .symmetric(horizontal: 20),
               child: Text(
@@ -95,11 +99,6 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
 
             // Get Started Button
             _buildGetStartedButton(),
-
-            const SizedBox(height: 60),
-
-            // Circular Layout
-            _buildCircularLayout(),
 
             const SizedBox(height: 60),
 

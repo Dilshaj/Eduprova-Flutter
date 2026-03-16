@@ -86,6 +86,9 @@ class _GrammarConversationScreenState
       _ => 'conversation',
     };
 
+    // Stop listening to STT
+    ref.read(grammarSttProvider.notifier).stopListening();
+
     // Reset socket and join new practice mode
     ref.read(grammarSocketProvider.notifier).joinPractice(mode);
   }
@@ -233,10 +236,8 @@ class _GrammarConversationScreenState
     // Get last AI message for "current question"
     final lastAiMsg = socketState.messages.reversed.firstWhere(
       (m) => m.role == 'ai' && m.text.isNotEmpty,
-      orElse: () => GrammarMessage(
-        role: 'ai',
-        text: "Initializing practice session...",
-      ),
+      orElse: () =>
+          GrammarMessage(role: 'ai', text: "Initializing practice session..."),
     );
     final currentQuestion = lastAiMsg.text;
 
@@ -1241,7 +1242,9 @@ class _GrammarConversationScreenState
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFF0066FF,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -1250,7 +1253,11 @@ class _GrammarConversationScreenState
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: Colors.white,
+                            size: 14,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'AI FEEDBACK',
@@ -1471,9 +1478,7 @@ class _GrammarConversationScreenState
           text: '${parts[0]}:',
           style: TextStyle(fontWeight: FontWeight.bold, color: color),
         ),
-        TextSpan(
-          text: parts.skip(1).join(':'),
-        ),
+        TextSpan(text: parts.skip(1).join(':')),
       ],
     );
   }

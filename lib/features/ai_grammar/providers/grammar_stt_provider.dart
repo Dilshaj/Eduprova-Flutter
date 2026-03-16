@@ -7,11 +7,7 @@ class GrammarSttState {
   final bool isListening;
   final String? error;
 
-  GrammarSttState({
-    this.transcript = '',
-    this.isListening = false,
-    this.error,
-  });
+  GrammarSttState({this.transcript = '', this.isListening = false, this.error});
 
   GrammarSttState copyWith({
     String? transcript,
@@ -51,7 +47,7 @@ class GrammarSttNotifier extends Notifier<GrammarSttState> {
 
   Future<void> stopListening() async {
     await _sttService.stop();
-    state = state.copyWith(isListening: false);
+    state = state.copyWith(isListening: false, transcript: '');
   }
 
   Future<void> toggleListening() async {
@@ -63,6 +59,7 @@ class GrammarSttNotifier extends Notifier<GrammarSttState> {
   }
 }
 
-final grammarSttProvider = NotifierProvider<GrammarSttNotifier, GrammarSttState>(
-  GrammarSttNotifier.new,
-);
+final grammarSttProvider =
+    NotifierProvider<GrammarSttNotifier, GrammarSttState>(
+      GrammarSttNotifier.new,
+    );
