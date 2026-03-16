@@ -116,7 +116,7 @@ class _AskDoubtsScreenState extends ConsumerState<AskDoubtsScreen> {
   void _openModal() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.25),
+      barrierColor: Colors.black.withValues(alpha: 0.25),
       builder: (BuildContext dialogContext) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

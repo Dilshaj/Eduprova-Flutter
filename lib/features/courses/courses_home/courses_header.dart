@@ -12,10 +12,8 @@ class CoursesHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      // color: themeExt.scaffoldBackgroundColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

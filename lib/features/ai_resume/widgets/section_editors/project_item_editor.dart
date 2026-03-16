@@ -2,7 +2,6 @@ import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -81,8 +80,6 @@ class _ProjectItemEditorState extends ConsumerState<ProjectItemEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final themeExt = theme.extension<AppDesignExtension>()!;
 
     return Scaffold(
       appBar: AppBar(

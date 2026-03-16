@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
