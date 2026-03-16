@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:eduprova/core/network/api_client.dart';
 import '../models/interview_session_model.dart';
 import '../models/interview_feedback_model.dart';
@@ -45,15 +46,15 @@ class InterviewRepository {
         try {
           return InterviewSession.fromJson(s as Map<String, dynamic>);
         } catch (e, stack) {
-          print('Error parsing session: $e');
-          print('Session data: $s');
-          print(stack);
+          debugPrint('Error parsing session: $e');
+          debugPrint('Session data: $s');
+          debugPrint(stack.toString());
           rethrow;
         }
       }).toList();
     } catch (e, stack) {
-      print('InterviewRepository.getHistory error: $e');
-      print(stack);
+      debugPrint('InterviewRepository.getHistory error: $e');
+      debugPrint(stack.toString());
       rethrow;
     }
   }

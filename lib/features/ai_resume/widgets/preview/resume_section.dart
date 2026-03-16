@@ -159,7 +159,7 @@ class ResumeSection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: alignment,
-      children: [if (headingWidget != null) headingWidget, contentWidget],
+      children: [?headingWidget, contentWidget],
     );
   }
 

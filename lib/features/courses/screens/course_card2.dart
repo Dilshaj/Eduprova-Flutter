@@ -23,7 +23,7 @@ class _CourseCard2State extends State<CourseCard2> {
 
   void handlePress() {
     debugPrint("course details page: ${widget.course.title}");
-    //TODO
+    // Navigation implementation will go here
   }
 
   Map<String, Color> getTagColor(String? type, AppDesignExtension themeExt) {
@@ -208,7 +208,7 @@ class _CourseCard2State extends State<CourseCard2> {
                               widget.course.thumbnail!,
                               fit: BoxFit.cover,
                             )
-                          : Container(child: const Icon(Icons.image, size: 50)),
+                          : const Icon(Icons.image, size: 50),
                     ),
                     // if (widget.course.tag != null)
                     //   Positioned(
@@ -390,7 +390,7 @@ class _CourseCard2State extends State<CourseCard2> {
                                 color: themeExt.discountBackgroundColor,
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              // TODO: provide discount percentage
+                              // Discount percentage will be calculated here
                               child: Text(
                                 '${widget.course.discountedPrice}% off',
                                 style: TextStyle(

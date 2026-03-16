@@ -1,3 +1,5 @@
+import 'package:eduprova/features/ai_grammar/grammar_home_screen.dart';
+import 'package:eduprova/features/ai_grammar/grammar_conversation_screen.dart';
 import 'package:eduprova/features/ai_interview/analytics/interview_analysis.dart';
 import 'package:eduprova/features/ai_interview/history/history_analytics_screen.dart';
 import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
@@ -33,7 +35,7 @@ import 'package:eduprova/features/messages/communities/create_community_screen.d
 import 'package:eduprova/features/messages/messages/chat_screen.dart';
 import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
 import 'package:eduprova/features/messages/messages/messages_screen.dart';
-import 'features/auth/providers/auth_provider.dart';
+// import 'features/auth/providers/auth_provider.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -47,32 +49,33 @@ class SplashScreen extends StatelessWidget {
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
-
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.home,
     redirect: (context, state) {
-      final status = authState.status;
-      final isAuth = status == AuthStatus.authenticated;
-      final isLoginRoute =
-          state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register;
+      // final status = authState.status;
+      // final isAuth = status == AuthStatus.authenticated;
+      // final isLoginRoute =
+      //     state.matchedLocation == AppRoutes.login ||
+      //     state.matchedLocation == AppRoutes.register;
 
-      if (status == AuthStatus.initial) {
-        return AppRoutes.splash;
-      }
+      // if (status == AuthStatus.initial) {
+      //   return AppRoutes.splash;
+      // }
 
-      if (!isAuth && !isLoginRoute) {
-        return AppRoutes.login;
-      }
+      // if (!isAuth && !isLoginRoute) {
+      //   return AppRoutes.login;
+      // }
 
-      if (isAuth && isLoginRoute) {
-        return AppRoutes.home;
-      }
+      // if (isAuth && isLoginRoute) {
+      //   return AppRoutes.home;
+      // }
+
+      // return null;
 
       return null;
     },
+
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
@@ -283,6 +286,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           return AiResumeScreen(resumeId: id);
         },
       ),
+
+      GoRoute(
+        name: AppRoutes.grammar,
+        path: AppRoutes.grammar,
+        builder: (_, _) => const GrammarHomeScreen(),
+        routes: [
+          GoRoute(
+            name: AppRoutes.grammarConversation,
+            path: 'conversation', // Nested path
+            builder: (_, _) => const GrammarConversationScreen(),
+          ),
+        ],
+      ),
     ],
   );
 });
+

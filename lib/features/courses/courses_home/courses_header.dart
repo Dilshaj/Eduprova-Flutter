@@ -1,6 +1,5 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/features/home/main_layout.dart';
-import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'courses_menu_modal.dart';
 import '../../../core/navigation/app_routes.dart';
@@ -11,12 +10,9 @@ class CoursesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      // color: themeExt.scaffoldBackgroundColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

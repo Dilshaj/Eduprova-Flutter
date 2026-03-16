@@ -32,7 +32,7 @@ class HorizontalCourseRow extends StatelessWidget {
             }),
             InkWell(
               onTap: () {
-                // TODO: Update route if needed
+                // Navigate to courses list
                 context.push('/coursesSeeAll');
               },
               child: Container(

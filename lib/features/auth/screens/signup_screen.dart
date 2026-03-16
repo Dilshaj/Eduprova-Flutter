@@ -63,7 +63,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     final size = MediaQuery.sizeOf(context);

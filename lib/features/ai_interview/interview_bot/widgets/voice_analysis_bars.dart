@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class VoiceAnalysisBars extends StatelessWidget {
@@ -35,7 +36,7 @@ class VoiceAnalysisBars extends StatelessWidget {
       child: Row(
         children: List.generate(15, (barIndex) {
           double normLevel = 0.0;
-          if (Platform.isIOS || Platform.isMacOS) {
+          if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
             normLevel = ((speechLevel + 50) / 50).clamp(0.0, 1.0);
           } else {
             normLevel = (speechLevel / 10).clamp(0.0, 1.0);
