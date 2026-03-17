@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:eduprova/globals.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io';
 
 // class ApiClient {
 //   static String get baseUrl {
@@ -65,21 +64,24 @@ class ApiClient {
 
   static String get baseUrl {
     final override = prefs.getString(_overrideUrlKey);
+    const ip = '192.168.1.103';
     if (override != null && override.isNotEmpty) {
       debugPrint('Using override URL: $override');
       return override;
     }
-    if (!kIsWeb && Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       // const ip = '192.168.1.4';
-      const ip = '192.168.1.8';
+
       debugPrint('Using Android URL: http://$ip:4000');
       return 'http://$ip:4000';
       // return 'http://10.169.69.6:4000';
     }
     debugPrint('Using iOS/Web URL: http://localhost:4000');
-    return 'http://localhost:4000';
+    // return 'http://localhost:4000';
     // use 0.0.0.0 for both localhost and ipaddress
     // return 'http://0.0.0.0:4000';
+    debugPrint('Using Android URL: http://$ip:4000');
+    return 'http://$ip:4000';
   }
 
   static String? get baseUrlOverride => prefs.getString(_overrideUrlKey);

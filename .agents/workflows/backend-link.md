@@ -4,7 +4,7 @@ description: For linking the backend to this flutter app
 
 You Need to Link the backend to our Flutter Code
 
-the Full source code for both frontend and backend is in this folder: @/Users/jayasuryasarisa/work/EDURPOVA
+the Full source code for both frontend and backend is in this folder: ../EDURPOVA
 
 it has source code for  both backend and next.js frontend code.
 
