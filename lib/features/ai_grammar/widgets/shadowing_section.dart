@@ -22,15 +22,16 @@ class ShadowingSection extends ConsumerStatefulWidget {
   ConsumerState<ShadowingSection> createState() => _ShadowingSectionState();
 }
 
-class _ShadowingSectionState extends ConsumerState<ShadowingSection> with TickerProviderStateMixin {
+class _ShadowingSectionState extends ConsumerState<ShadowingSection>
+    with TickerProviderStateMixin {
   late AnimationController _waveController;
   bool _isPlaying = false;
   bool _isLoading = true;
   bool _isAnalysing = false;
-  
+
   GrammarPracticeQuestion? _currentQuestion;
   GrammarAnalysisResult? _lastAnalysis;
-  
+
   final DeepgramSttService _sttService = DeepgramSttService();
   bool _isListening = false;
   String _lastWords = '';
@@ -74,7 +75,9 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
 
   void _playModelAudio() {
     if (_currentQuestion?.audio != null) {
-      ref.read(grammarAudioPlayerProvider.notifier).playBase64(_currentQuestion!.audio!);
+      ref
+          .read(grammarAudioPlayerProvider.notifier)
+          .playBase64(_currentQuestion!.audio!);
     }
   }
 
@@ -114,13 +117,16 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
 
   Future<void> _analyzeResponse(String text) async {
     if (text.trim().isEmpty || _isAnalysing) return;
-    
+
     if (mounted) setState(() => _isAnalysing = true);
-    
+
     try {
       final repo = ref.read(grammarRepositoryProvider);
-      final result = await repo.analyzePracticeResponse(_currentQuestion?.question ?? '', text);
-      
+      final result = await repo.analyzePracticeResponse(
+        _currentQuestion?.question ?? '',
+        text,
+      );
+
       if (!mounted) return;
 
       setState(() {
@@ -194,9 +200,17 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
                   onPressed: _loadInitialQuestion,
                   icon: Text(
                     'Next practice sentence',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: widget.themeExt.secondaryText),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: widget.themeExt.secondaryText,
+                    ),
                   ),
-                  label: Icon(Icons.arrow_forward_ios, size: 16, color: widget.themeExt.secondaryText),
+                  label: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: widget.themeExt.secondaryText,
+                  ),
                 ),
               ),
             ),
@@ -272,7 +286,7 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
 
   Widget _buildShadowingContent(ColorScheme colorScheme) {
     final question = _currentQuestion?.question ?? 'Loading question...';
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -298,13 +312,17 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      _currentQuestion?.difficulty.toUpperCase() ?? 'INTERMEDIATE',
+                      _currentQuestion?.difficulty.toUpperCase() ??
+                          'INTERMEDIATE',
                       style: const TextStyle(
                         color: Color(0xFF2563EB),
                         fontSize: 12,
@@ -351,7 +369,9 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
               Icon(Icons.bar_chart, size: 16, color: const Color(0xFF2563EB)),
               const SizedBox(width: 8),
               Text(
-                _isPlaying ? 'PLAYING MODEL..' : (_isListening ? 'LISTENING..' : 'READY'),
+                _isPlaying
+                    ? 'PLAYING MODEL..'
+                    : (_isListening ? 'LISTENING..' : 'READY'),
                 style: GoogleFonts.spaceGrotesk(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -397,13 +417,16 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
         return AnimatedBuilder(
           animation: _waveController,
           builder: (context, child) {
-            double value = (math.sin(_waveController.value * 2 * math.pi + index) + 1) / 2;
+            double value =
+                (math.sin(_waveController.value * 2 * math.pi + index) + 1) / 2;
             return Container(
               width: 3,
               height: 10 + (20 * value),
               margin: const EdgeInsets.symmetric(horizontal: 1.5),
               decoration: BoxDecoration(
-                color: index % 2 == 0 ? const Color(0xFF2563EB) : const Color(0xFF7C3AED),
+                color: index % 2 == 0
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF7C3AED),
                 borderRadius: BorderRadius.circular(2),
               ),
             );
@@ -423,14 +446,18 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: _isListening 
-                ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
-                : [const Color(0xFF2563EB), const Color(0xFFC026D3)],
+              colors: _isListening
+                  ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
+                  : [const Color(0xFF2563EB), const Color(0xFFC026D3)],
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: (_isListening ? const Color(0xFFEF4444) : const Color(0xFF2563EB)).withValues(alpha: 0.3),
+                color:
+                    (_isListening
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF2563EB))
+                        .withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -443,15 +470,22 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
                 const SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
                 )
               else
-                Icon(_isListening ? Icons.stop_circle : Icons.mic_none, color: Colors.white, size: 24),
+                Icon(
+                  _isListening ? Icons.stop_circle : Icons.mic_none,
+                  color: Colors.white,
+                  size: 24,
+                ),
               const SizedBox(width: 12),
               Text(
-                _isAnalysing 
-                  ? 'ANALYSING..' 
-                  : (_isListening ? 'STOP RECORDING' : 'START PRACTICE'),
+                _isAnalysing
+                    ? 'ANALYSING..'
+                    : (_isListening ? 'STOP RECORDING' : 'START PRACTICE'),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -467,7 +501,7 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
 
   Widget _buildProgressCard(ColorScheme colorScheme) {
     if (_lastAnalysis == null) return const SizedBox.shrink();
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -488,7 +522,9 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
                 height: 1.6,
               ),
               children: [
-                TextSpan(text: '"${_lastAnalysis?.transcription ?? _lastWords}"'),
+                TextSpan(
+                  text: '"${_lastAnalysis?.transcription ?? _lastWords}"',
+                ),
               ],
             ),
           ),
@@ -520,14 +556,16 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                   Row(
+                  Row(
                     children: [
-                      for (int i = 0; i < 5; i++) 
+                      for (int i = 0; i < 5; i++)
                         Icon(
-                          i < ((_lastAnalysis?.fluencyScore ?? 0) / 20).round() ? Icons.star : Icons.star_border, 
-                          color: const Color(0xFFF59E0B), 
-                          size: 18
-                        )
+                          i < ((_lastAnalysis?.fluencyScore ?? 0) / 20).round()
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: const Color(0xFFF59E0B),
+                          size: 18,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -570,7 +608,10 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.chat_bubble_outline, color: Color(0xFF2563EB)),
+                child: const Icon(
+                  Icons.chat_bubble_outline,
+                  color: Color(0xFF2563EB),
+                ),
               ),
               const SizedBox(width: 16),
               Text(
@@ -585,13 +626,17 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
           ),
           const SizedBox(height: 24),
           if (_lastAnalysis?.suggestions['alerts'] != null)
-            ...(_lastAnalysis!.suggestions['alerts'] as List).map((alert) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildFeedbackItem(alert.toString()),
-            )),
+            ...(_lastAnalysis!.suggestions['alerts'] as List).map(
+              (alert) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildFeedbackItem(alert.toString()),
+              ),
+            ),
           if (_lastAnalysis?.improvedResponse.isNotEmpty ?? false)
-            _buildFeedbackItem('Try this for better natural flow: "${_lastAnalysis!.improvedResponse}"'),
-          
+            _buildFeedbackItem(
+              'Try this for better natural flow: "${_lastAnalysis!.improvedResponse}"',
+            ),
+
           const SizedBox(height: 30),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,7 +669,9 @@ class _ShadowingSectionState extends ConsumerState<ShadowingSection> with Ticker
                 child: LinearProgressIndicator(
                   value: (_lastAnalysis?.grammarScore ?? 0).toDouble() / 100.0,
                   backgroundColor: const Color(0xFFF1F5F9),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF059669),
+                  ),
                   minHeight: 8,
                 ),
               ),

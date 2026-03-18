@@ -1,5 +1,5 @@
 import 'package:eduprova/features/ai_grammar/grammar_home_screen.dart';
-import 'package:eduprova/features/ai_grammar/grammar_conversation_screen.dart';
+import 'package:eduprova/features/ai_grammar/grammar_main_screen.dart';
 import 'package:eduprova/features/ai_interview/analytics/interview_analysis.dart';
 import 'package:eduprova/features/ai_interview/history/history_analytics_screen.dart';
 import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
@@ -299,7 +299,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             name: 'grammar_conversation',
             path: 'conversation', // Nested path
-            builder: (_, _) => const GrammarConversationScreen(),
+            builder: (_, _) => const GrammarMainScreen(),
           ),
         ],
       ),

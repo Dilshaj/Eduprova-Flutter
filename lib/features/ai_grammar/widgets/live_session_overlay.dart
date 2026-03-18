@@ -16,7 +16,8 @@ class LiveSessionOverlay extends StatefulWidget {
   State<LiveSessionOverlay> createState() => _LiveSessionOverlayState();
 }
 
-class _LiveSessionOverlayState extends State<LiveSessionOverlay> with SingleTickerProviderStateMixin {
+class _LiveSessionOverlayState extends State<LiveSessionOverlay>
+    with SingleTickerProviderStateMixin {
   late AnimationController _voiceController;
 
   @override
@@ -92,11 +93,16 @@ class _LiveSessionOverlayState extends State<LiveSessionOverlay> with SingleTick
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.2), width: 2),
+                border: Border.all(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                  width: 2,
+                ),
               ),
               child: const CircleAvatar(
                 radius: 80,
-                backgroundImage: NetworkImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300'),
+                backgroundImage: NetworkImage(
+                  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300',
+                ),
               ),
             ),
             Container(
@@ -131,10 +137,7 @@ class _LiveSessionOverlayState extends State<LiveSessionOverlay> with SingleTick
         const SizedBox(height: 8),
         Text(
           'Listening to your response...',
-          style: TextStyle(
-            color: widget.themeExt.secondaryText,
-            fontSize: 16,
-          ),
+          style: TextStyle(color: widget.themeExt.secondaryText, fontSize: 16),
         ),
       ],
     );
@@ -222,7 +225,8 @@ class _LiveSessionOverlayState extends State<LiveSessionOverlay> with SingleTick
         children: [
           _buildInsightCard(
             title: 'Recent Korrection',
-            text: 'Instead of saying "I did some research," try "I conducted comprehensive user research to identify pain points."',
+            text:
+                'Instead of saying "I did some research," try "I conducted comprehensive user research to identify pain points."',
             bgColor: const Color(0xFFFFFBEB),
             titleColor: const Color(0xFF92400E),
             icon: Icons.edit_note,
@@ -231,7 +235,8 @@ class _LiveSessionOverlayState extends State<LiveSessionOverlay> with SingleTick
           const SizedBox(height: 16),
           _buildInsightCard(
             title: 'Pro-Tip',
-            text: "When discussing conflict, focus on the 'Resolution' and 'Impact' rather than the disagreement itself. It shows emotional intelligence.",
+            text:
+                "When discussing conflict, focus on the 'Resolution' and 'Impact' rather than the disagreement itself. It shows emotional intelligence.",
             bgColor: const Color(0xFFEFF6FF),
             titleColor: const Color(0xFF1E40AF),
             icon: Icons.lightbulb_outline,
@@ -306,37 +311,37 @@ class _LiveSessionOverlayState extends State<LiveSessionOverlay> with SingleTick
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: widget.onFinish,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text(
-                    'Finish Session',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text(
+                      'Finish Session',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
           const SizedBox(height: 20),
           Text(

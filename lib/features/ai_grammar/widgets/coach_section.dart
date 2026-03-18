@@ -11,24 +11,21 @@ class CoachSection extends ConsumerStatefulWidget {
   final AppDesignExtension themeExt;
   final VoidCallback onBack;
 
-  const CoachSection({
-    super.key,
-    required this.themeExt,
-    required this.onBack,
-  });
+  const CoachSection({super.key, required this.themeExt, required this.onBack});
 
   @override
   ConsumerState<CoachSection> createState() => _CoachSectionState();
 }
 
-class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerProviderStateMixin {
+class _CoachSectionState extends ConsumerState<CoachSection>
+    with SingleTickerProviderStateMixin {
   late AnimationController _voiceController;
   final ScrollController _chatScrollController = ScrollController();
 
   bool _isMuted = false;
   bool _isLoading = true;
   bool _isAnalysing = false;
-  
+
   final DeepgramSttService _sttService = DeepgramSttService();
   bool _isListening = false;
   String _lastWords = '';
@@ -70,7 +67,9 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
           _isLoading = false;
         });
         if (question.audio != null) {
-          ref.read(grammarAudioPlayerProvider.notifier).playBase64(question.audio!);
+          ref
+              .read(grammarAudioPlayerProvider.notifier)
+              .playBase64(question.audio!);
         }
       }
     } catch (e) {
@@ -121,27 +120,23 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty || _isAnalysing) return;
-    
+
     setState(() {
-      _messages.add({
-        'isUser': true,
-        'text': text,
-        'time': 'Just now',
-      });
+      _messages.add({'isUser': true, 'text': text, 'time': 'Just now'});
       _lastWords = '';
       _isAnalysing = true;
     });
-    
+
     _scrollToBottom();
-    
+
     try {
       final repo = ref.read(grammarRepositoryProvider);
       final result = await repo.analyzePracticeResponse(
-        _currentQuestion?.question ?? '', 
+        _currentQuestion?.question ?? '',
         text,
         audio: null,
       );
-      
+
       if (!mounted) return;
 
       setState(() {
@@ -202,7 +197,7 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
         children: [
           // Top compact metrics & AI Status
           _buildTopCompactHeader(colorScheme),
-          
+
           // Chat Viewport
           Expanded(
             child: ListView.builder(
@@ -215,14 +210,13 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
               },
             ),
           ),
-          
+
           // Chat Input
           _buildChatInput(colorScheme),
           const SizedBox(height: 10),
         ],
       ),
     );
-
   }
 
   Widget _buildTopCompactHeader(ColorScheme colorScheme) {
@@ -250,9 +244,14 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                      border: Border.all(
+                        color: const Color(0xFFF1F5F9),
+                        width: 2,
+                      ),
                       image: const DecorationImage(
-                        image: NetworkImage('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300'),
+                        image: NetworkImage(
+                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300',
+                        ),
                         fit: BoxFit.cover,
                       ),
                       boxShadow: [
@@ -281,10 +280,20 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF22C55E),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                           const SizedBox(width: 4),
-                          const Text('Live Intelligence Active', style: TextStyle(fontSize: 10, color: Color(0xFF166534), fontWeight: FontWeight.w500)),
+                          const Text(
+                            'Live Intelligence Active',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF166534),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -305,12 +314,19 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: _isMuted ? const Color(0xFFFEF2F2) : const Color(0xFFF0F7FF),
+                      color: _isMuted
+                          ? const Color(0xFFFEF2F2)
+                          : const Color(0xFFF0F7FF),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: _isMuted ? const Color(0xFFFEE2E2) : const Color(0xFFE0E7FF),
+                        color: _isMuted
+                            ? const Color(0xFFFEE2E2)
+                            : const Color(0xFFE0E7FF),
                       ),
                     ),
                     child: Row(
@@ -318,7 +334,9 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         Icon(
                           _isMuted ? Icons.mic_off : Icons.mic_none,
                           size: 16,
-                          color: _isMuted ? const Color(0xFFEF4444) : const Color(0xFF0066FF),
+                          color: _isMuted
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF0066FF),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -326,7 +344,9 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
-                            color: _isMuted ? const Color(0xFFEF4444) : const Color(0xFF0066FF),
+                            color: _isMuted
+                                ? const Color(0xFFEF4444)
+                                : const Color(0xFF0066FF),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -340,9 +360,19 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
           const SizedBox(height: 20),
           Row(
             children: [
-              _buildMetricBadge('FLUENCY', '${_lastAnalysis?.fluencyScore ?? 0}%', const Color(0xFF0066FF), Icons.insights),
+              _buildMetricBadge(
+                'FLUENCY',
+                '${_lastAnalysis?.fluencyScore ?? 0}%',
+                const Color(0xFF0066FF),
+                Icons.insights,
+              ),
               const SizedBox(width: 12),
-              _buildMetricBadge('GRAMMAR', '${_lastAnalysis?.grammarScore ?? 0}/100', const Color(0xFF059669), Icons.spellcheck),
+              _buildMetricBadge(
+                'GRAMMAR',
+                '${_lastAnalysis?.grammarScore ?? 0}/100',
+                const Color(0xFF059669),
+                Icons.spellcheck,
+              ),
             ],
           ),
         ],
@@ -350,7 +380,12 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
     );
   }
 
-  Widget _buildMetricBadge(String label, String value, Color color, IconData icon) {
+  Widget _buildMetricBadge(
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -404,10 +439,14 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (!isUser) ...[
@@ -435,18 +474,20 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
               ],
               Flexible(
                 child: Column(
-                  crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment: isUser
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        gradient: isUser 
-                          ? const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF0066FF), Color(0xFF6366F1)],
-                            ) 
-                          : null,
+                        gradient: isUser
+                            ? const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF0066FF), Color(0xFF6366F1)],
+                              )
+                            : null,
                         color: isUser ? null : widget.themeExt.cardColor,
                         borderRadius: BorderRadius.only(
                           topLeft: const Radius.circular(24),
@@ -456,7 +497,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: isUser ? const Color(0xFF0066FF).withValues(alpha: 0.05) : widget.themeExt.shadowColor,
+                            color: isUser
+                                ? const Color(
+                                    0xFF0066FF,
+                                  ).withValues(alpha: 0.05)
+                                : widget.themeExt.shadowColor,
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -466,9 +511,13 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         msg['text'],
                         style: TextStyle(
                           fontSize: 16,
-                          color: isUser ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                          color: isUser
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
                           height: 1.5,
-                          fontWeight: isUser ? FontWeight.w500 : FontWeight.normal,
+                          fontWeight: isUser
+                              ? FontWeight.w500
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -478,7 +527,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.verified, size: 12, color: Color(0xFF22C55E)),
+                            const Icon(
+                              Icons.verified,
+                              size: 12,
+                              color: Color(0xFF22C55E),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               msg['label'],
@@ -495,29 +548,43 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   ],
                 ),
               ),
-              if (isUser) const SizedBox(width: 48), // Padding on the left for user messages
+              if (isUser)
+                const SizedBox(
+                  width: 48,
+                ), // Padding on the left for user messages
             ],
           ),
           if (msg['alternatives'] != null)
-            ...List.generate(msg['alternatives'].length, (i) => _buildSubBubble(
-              msg['alternatives'][i],
-              const Color(0xFFE11D48),
-              'BETTER ALTERNATIVE',
-              Icons.auto_fix_high,
-            )),
+            ...List.generate(
+              msg['alternatives'].length,
+              (i) => _buildSubBubble(
+                msg['alternatives'][i],
+                const Color(0xFFE11D48),
+                'BETTER ALTERNATIVE',
+                Icons.auto_fix_high,
+              ),
+            ),
           if (msg['alerts'] != null)
-            ...List.generate(msg['alerts'].length, (i) => _buildSubBubble(
-              msg['alerts'][i],
-              const Color(0xFFF59E0B),
-              'PACING ALERT',
-              Icons.speed,
-            )),
+            ...List.generate(
+              msg['alerts'].length,
+              (i) => _buildSubBubble(
+                msg['alerts'][i],
+                const Color(0xFFF59E0B),
+                'PACING ALERT',
+                Icons.speed,
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildSubBubble(String text, Color color, String label, IconData icon) {
+  Widget _buildSubBubble(
+    String text,
+    Color color,
+    String label,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(left: 48, top: 14),
       child: Container(
@@ -546,8 +613,8 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 10, 
-                      fontWeight: FontWeight.w900, 
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
                       color: color,
                       letterSpacing: 0.8,
                     ),
@@ -556,8 +623,8 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   Text(
                     text,
                     style: TextStyle(
-                      fontSize: 14, 
-                      color: color.withValues(alpha: 0.9), 
+                      fontSize: 14,
+                      color: color.withValues(alpha: 0.9),
                       fontStyle: FontStyle.italic,
                       height: 1.4,
                       fontWeight: FontWeight.w500,
@@ -592,13 +659,17 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              _isMuted 
-                ? 'Microphone muted' 
-                : (_isListening 
-                    ? (_lastWords.isEmpty ? 'Listening...' : _lastWords)
-                    : (_lastWords.isNotEmpty ? _lastWords : 'Tap mic to dictate...')),
+              _isMuted
+                  ? 'Microphone muted'
+                  : (_isListening
+                        ? (_lastWords.isEmpty ? 'Listening...' : _lastWords)
+                        : (_lastWords.isNotEmpty
+                              ? _lastWords
+                              : 'Tap mic to dictate...')),
               style: TextStyle(
-                color: _isMuted ? const Color(0xFFEF4444) : widget.themeExt.secondaryText,
+                color: _isMuted
+                    ? const Color(0xFFEF4444)
+                    : widget.themeExt.secondaryText,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
@@ -622,24 +693,38 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: _isMuted 
+                    colors: _isMuted
                         ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
-                        : (_isListening 
-                            ? [const Color(0xFF10B981), const Color(0xFF059669)] 
-                            : [const Color(0xFF0066FF), const Color(0xFF7C3AED)]),
+                        : (_isListening
+                              ? [
+                                  const Color(0xFF10B981),
+                                  const Color(0xFF059669),
+                                ]
+                              : [
+                                  const Color(0xFF0066FF),
+                                  const Color(0xFF7C3AED),
+                                ]),
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isMuted ? const Color(0xFFEF4444) : (_isListening ? const Color(0xFF10B981) : const Color(0xFF0066FF))).withValues(alpha: 0.3),
+                      color:
+                          (_isMuted
+                                  ? const Color(0xFFEF4444)
+                                  : (_isListening
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFF0066FF)))
+                              .withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
-                  _isMuted ? Icons.mic_off_rounded : (_isListening ? Icons.stop_rounded : Icons.mic_rounded), 
-                  color: Colors.white, 
+                  _isMuted
+                      ? Icons.mic_off_rounded
+                      : (_isListening ? Icons.stop_rounded : Icons.mic_rounded),
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -670,7 +755,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ),

@@ -1,15 +1,9 @@
-import 'package:eduprova/features/ai_grammar/widgets/roleplay_section.dart';
-import 'package:eduprova/features/ai_grammar/widgets/active_roleplay_session.dart';
-import 'package:eduprova/features/ai_grammar/widgets/shadowing_section.dart';
-import 'package:eduprova/features/ai_grammar/widgets/coach_section.dart';
-import 'package:eduprova/features/ai_grammar/widgets/refiner_section.dart';
 import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:ui';
 import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
 import 'package:eduprova/features/ai_grammar/providers/grammar_socket_provider.dart';
@@ -33,27 +27,6 @@ class _GrammarConversationScreenState
   bool _isTypeMode = false;
   bool? _isCorrect;
   double _fadeOpacity = 0.0;
-  int _activeTabIndex = 0;
-  final List<GlobalKey> _tabKeys = List.generate(5, (index) => GlobalKey());
-  double _indicatorLeft = 20;
-  double _indicatorWidth = 0;
-  int? _hoverTabIndex;
-  double _hoverLeft = 0;
-  double _hoverWidth = 0;
-  bool _isHovering = false;
-
-  // Roleplay Session State
-  RoleplayScenario? _selectedScenario;
-  Map<String, dynamic>? _selectedConfig;
-  bool _isSessionActive = false;
-
-  final List<(String, IconData)> _features = const [
-    ('Conversation', Icons.mic_none_outlined),
-    ('Coach', Icons.lightbulb_outline),
-    ('Refiner', Icons.edit_outlined),
-    ('Shadowing', Icons.record_voice_over_outlined),
-    ('Roleplay', Icons.groups_outlined),
-  ];
 
   @override
   void initState() {
@@ -66,100 +39,6 @@ class _GrammarConversationScreenState
       final newOpacity = _transcriptScrollController.offset > 5 ? 1.0 : 0.0;
       if (_fadeOpacity != newOpacity) {
         setState(() => _fadeOpacity = newOpacity);
-      }
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateIndicator();
-      // Initialize socket for the default tab
-      _joinPracticeMode(0);
-    });
-  }
-
-  void _joinPracticeMode(int index) {
-    final mode = switch (index) {
-      0 => 'conversation',
-      1 => 'live_coach',
-      2 => 'grammar_refiner',
-      3 => 'shadowing',
-      4 => 'roleplay',
-      _ => 'conversation',
-    };
-
-    // Stop listening to STT
-    ref.read(grammarSttProvider.notifier).stopListening();
-
-    // Reset socket and join new practice mode
-    ref.read(grammarSocketProvider.notifier).joinPractice(mode);
-  }
-
-  void _updateIndicator() {
-    final key = _tabKeys[_activeTabIndex];
-    final context = key.currentContext;
-    if (context == null) return;
-
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final RenderBox? stackBox = context
-        .findAncestorRenderObjectOfType<RenderStack>();
-    if (stackBox == null) return;
-
-    final position = renderBox.localToGlobal(Offset.zero, ancestor: stackBox);
-    setState(() {
-      _indicatorLeft = position.dx;
-      _indicatorWidth = renderBox.size.width;
-    });
-  }
-
-  void _onTabTap(int index) {
-    setState(() {
-      _activeTabIndex = index;
-    });
-    _updateIndicatorPosition();
-    _joinPracticeMode(index);
-  }
-
-  void _updateIndicatorPosition() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final key = _tabKeys[_activeTabIndex];
-      final context = key.currentContext;
-      if (context != null) {
-        final RenderBox box = context.findRenderObject() as RenderBox;
-        final RenderBox stackBox = context
-            .findAncestorRenderObjectOfType<RenderStack>()!;
-        final position = box.localToGlobal(Offset.zero, ancestor: stackBox);
-        setState(() {
-          _indicatorLeft = position.dx;
-          _indicatorWidth = box.size.width;
-        });
-      }
-    });
-  }
-
-  void _onHover(int index) {
-    if (_activeTabIndex == index) {
-      if (_isHovering) setState(() => _isHovering = false);
-      return;
-    }
-    setState(() {
-      _hoverTabIndex = index;
-      _isHovering = true;
-    });
-    _updateHoverPosition();
-  }
-
-  void _updateHoverPosition() {
-    if (_hoverTabIndex == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final key = _tabKeys[_hoverTabIndex!];
-      final context = key.currentContext;
-      if (context != null) {
-        final box = context.findRenderObject() as RenderBox;
-        final stackBox = context.findAncestorRenderObjectOfType<RenderStack>()!;
-        final position = box.localToGlobal(Offset.zero, ancestor: stackBox);
-        setState(() {
-          _hoverLeft = position.dx;
-          _hoverWidth = box.size.width;
-        });
       }
     });
   }
@@ -193,31 +72,8 @@ class _GrammarConversationScreenState
     });
   }
 
-  /*
-  void _scrollToBottom() {
-    ...
-  }
-  */
-
-  /*
-  Future<void> _initTts() async {
-    await _flutterTts.setLanguage('en-US');
-    ...
-  }
-  */
-
-  /*
-  Future<void> _initSpeech() async {
-    await _speechToText.initialize();
-  }
-  */
-
-  /* Removed legacy logic */
-
   @override
   void dispose() {
-    // _flutterTts.stop();
-    // _speechToText.stop();
     _transcriptScrollController.dispose();
     _textController.dispose();
     _pulseController.dispose();
@@ -241,382 +97,22 @@ class _GrammarConversationScreenState
     );
     final currentQuestion = lastAiMsg.text;
 
-    return Scaffold(
-      backgroundColor: themeExt.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: _isSessionActive && _selectedScenario != null
-            ? ActiveRoleplaySession(
-                title: _selectedScenario!.title,
-                difficulty: _selectedScenario!.difficulty,
-                roleType: _selectedScenario!.roleType,
-                themeExt: themeExt,
-                config: _selectedConfig,
-                onBack: () => setState(() => _isSessionActive = false),
-              )
-            : Column(
-                children: [
-                  _buildHeader(context, colorScheme),
-                  if (_activeTabIndex != 4 &&
-                      _activeTabIndex != 3 &&
-                      _activeTabIndex != 1 &&
-                      _activeTabIndex != 2)
-                    _buildFeatureTabs(themeExt),
-                  Expanded(
-                    child: _activeTabIndex == 4
-                        ? RoleplaySection(
-                            themeExt: themeExt,
-                            onStartPractice: (scenario, config) {
-                              setState(() {
-                                _selectedScenario = scenario;
-                                _selectedConfig = config;
-                                _isSessionActive = true;
-                              });
-                            },
-                          )
-                        : _activeTabIndex == 3
-                        ? ShadowingSection(
-                            themeExt: themeExt,
-                            onBack: () => setState(() => _activeTabIndex = 0),
-                          )
-                        : _activeTabIndex == 1
-                        ? CoachSection(
-                            themeExt: themeExt,
-                            onBack: () => setState(() => _activeTabIndex = 0),
-                          )
-                        : _activeTabIndex == 2
-                        ? RefinerSection(
-                            themeExt: themeExt,
-                            onBack: () => setState(() => _activeTabIndex = 0),
-                          )
-                        : SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: .start,
-                              children: [
-                                _buildQuestionSection(
-                                  colorScheme,
-                                  themeExt,
-                                  lastAiMsg,
-                                  isAiActive,
-                                ),
-                                _buildVoiceInteractionHub(
-                                  colorScheme,
-                                  themeExt,
-                                  sttState,
-                                  socketState,
-                                  currentQuestion,
-                                  isAiActive,
-                                ),
-                                _buildAnalysisSection(colorScheme, themeExt),
-                                _buildResponseRefinementSection(
-                                  colorScheme,
-                                  themeExt,
-                                ),
-                              ],
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, ColorScheme colorScheme) {
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
-    if (_activeTabIndex == 4 ||
-        _activeTabIndex == 3 ||
-        _activeTabIndex == 5 ||
-        _activeTabIndex == 1 ||
-        _activeTabIndex == 2) {
-      return Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Circle Back Button
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () => setState(() => _activeTabIndex = 0),
-                child: Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: themeExt.cardColor,
-                    border: Border.all(color: themeExt.borderColor),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: themeExt.shadowColor,
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new,
-                    size: 20,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ),
-            // Centered Badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0066FF).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: const Color(0xFF0066FF).withValues(alpha: 0.1),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _activeTabIndex == 4
-                        ? Icons.psychology_outlined
-                        : (_activeTabIndex == 3
-                              ? Icons.record_voice_over_outlined
-                              : (_activeTabIndex == 1
-                                    ? Icons.bolt
-                                    : Icons.auto_awesome_outlined)),
-                    size: 20,
-                    color: const Color(0xFF0066FF),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    _activeTabIndex == 4
-                        ? 'Roleplay'
-                        : (_activeTabIndex == 3
-                              ? 'Shadowing'
-                              : (_activeTabIndex == 1
-                                    ? 'LIVE INTELLIGENCE'
-                                    : 'AI TEXT REFINER')),
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Circle Search Button
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: themeExt.cardColor,
-                  border: Border.all(color: themeExt.borderColor),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: themeExt.shadowColor,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.search,
-                  size: 24,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => context.pop(),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.arrow_back_ios,
-                    size: 20,
-                    color: colorScheme.onSurface,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Back',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          _buildQuestionSection(colorScheme, themeExt, lastAiMsg, isAiActive),
+          _buildVoiceInteractionHub(
+            colorScheme,
+            themeExt,
+            sttState,
+            socketState,
+            currentQuestion,
+            isAiActive,
           ),
-          Row(
-            children: [
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.notifications_none_outlined,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.account_circle_outlined,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildAnalysisSection(colorScheme, themeExt),
+          _buildResponseRefinementSection(colorScheme, themeExt),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureTabs(AppDesignExtension themeExt) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      height: 50,
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-            PointerDeviceKind.trackpad,
-            PointerDeviceKind.stylus,
-          },
-        ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          physics: const BouncingScrollPhysics(),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Hover Indicator
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                left: _hoverLeft,
-                width: _hoverWidth,
-                height: 44,
-                top: 3,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _isHovering ? 1.0 : 0.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0066FF).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
-              ),
-              // Sliding Indicator (Active)
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOutCubic,
-                left: _indicatorLeft,
-                width: _indicatorWidth,
-                height: 44,
-                top: 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0066FF),
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0066FF).withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var (i, feature) in _features.indexed) ...[
-                    _buildTab(
-                      feature.$1,
-                      feature.$2,
-                      _activeTabIndex == i,
-                      i,
-                      themeExt,
-                    ),
-                    if (i < _features.length - 1) const SizedBox(width: 12),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTab(
-    String label,
-    IconData icon,
-    bool isActive,
-    int index,
-    AppDesignExtension themeExt,
-  ) {
-    return MouseRegion(
-      key: _tabKeys[index],
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => _onHover(index),
-      onExit: (_) => setState(() => _isHovering = false),
-      child: GestureDetector(
-        onTap: () {
-          _onTabTap(index);
-          setState(() => _isHovering = false);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: isActive ? Colors.white : themeExt.secondaryText,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? Colors.white : themeExt.secondaryText,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -728,7 +224,7 @@ class _GrammarConversationScreenState
               const SizedBox(width: 16),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
-                child: InkWell(
+                child: GestureDetector(
                   onTap: () {
                     ref
                         .read(grammarSocketProvider.notifier)
@@ -1046,7 +542,11 @@ class _GrammarConversationScreenState
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        // alignment: WrapAlignment.center,
+        spacing: 8,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: .min,
+        // runSpacing: 8,
         children: [
           MouseRegion(
             cursor: SystemMouseCursors.click,

@@ -97,8 +97,11 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
             color: const Color(0xFFF5F3FF),
             borderRadius: BorderRadius.circular(12),
           ),
-          child:
-              const Icon(Icons.auto_awesome_outlined, color: Color(0xFF7C3AED), size: 20),
+          child: const Icon(
+            Icons.auto_awesome_outlined,
+            color: Color(0xFF7C3AED),
+            size: 20,
+          ),
         ),
         const SizedBox(width: 12),
         Text(
@@ -115,7 +118,9 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: isConnected ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+            color: isConnected
+                ? const Color(0xFF22C55E)
+                : const Color(0xFFEF4444),
             shape: BoxShape.circle,
           ),
         ),
@@ -125,7 +130,9 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
           style: GoogleFonts.spaceGrotesk(
             fontSize: 10,
             fontWeight: FontWeight.bold,
-            color: isConnected ? const Color(0xFF166534) : const Color(0xFF991B1B),
+            color: isConnected
+                ? const Color(0xFF166534)
+                : const Color(0xFF991B1B),
             letterSpacing: 0.5,
           ),
         ),
@@ -175,13 +182,17 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
             maxLines: 4,
             enabled: !isRefining,
             style: TextStyle(
-                fontSize: 15, color: widget.themeExt.secondaryText, height: 1.6),
+              fontSize: 15,
+              color: widget.themeExt.secondaryText,
+              height: 1.6,
+            ),
             decoration: InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
               hintText: 'Type a sentence you\'d like to improve...',
               hintStyle: TextStyle(
-                  color: widget.themeExt.secondaryText.withValues(alpha: 0.5)),
+                color: widget.themeExt.secondaryText.withValues(alpha: 0.5),
+              ),
             ),
           ),
         ),
@@ -220,8 +231,11 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
                         const SnackBar(content: Text('Copied to clipboard')),
                       );
                     },
-                    child: Icon(Icons.copy_outlined,
-                        size: 18, color: widget.themeExt.secondaryText),
+                    child: Icon(
+                      Icons.copy_outlined,
+                      size: 18,
+                      color: widget.themeExt.secondaryText,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -229,8 +243,11 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
                     onTap: _handleRefine,
-                    child: Icon(Icons.refresh,
-                        size: 18, color: widget.themeExt.secondaryText),
+                    child: Icon(
+                      Icons.refresh,
+                      size: 18,
+                      color: widget.themeExt.secondaryText,
+                    ),
                   ),
                 ),
               ],
@@ -244,8 +261,9 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
           decoration: BoxDecoration(
             color: const Color(0xFFC026D3).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
-            border:
-                Border.all(color: const Color(0xFFC026D3).withValues(alpha: 0.2)),
+            border: Border.all(
+              color: const Color(0xFFC026D3).withValues(alpha: 0.2),
+            ),
           ),
           child: _renderHighlightedText(text, highlights),
         ),
@@ -258,7 +276,10 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
       return Text(
         text,
         style: TextStyle(
-            fontSize: 16, color: Theme.of(context).colorScheme.onSurface, height: 1.6),
+          fontSize: 16,
+          color: Theme.of(context).colorScheme.onSurface,
+          height: 1.6,
+        ),
       );
     }
 
@@ -274,11 +295,15 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
       String currentMatch = '';
 
       for (final highlight in sortedHighlights) {
-        final index =
-            remainingText.toLowerCase().indexOf(highlight.toLowerCase());
+        final index = remainingText.toLowerCase().indexOf(
+          highlight.toLowerCase(),
+        );
         if (index != -1 && (nextMatchIndex == -1 || index < nextMatchIndex)) {
           nextMatchIndex = index;
-          currentMatch = remainingText.substring(index, index + highlight.length);
+          currentMatch = remainingText.substring(
+            index,
+            index + highlight.length,
+          );
         }
       }
 
@@ -292,14 +317,18 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
       }
 
       spans.add(_buildHighlightedSpan(currentMatch));
-      remainingText =
-          remainingText.substring(nextMatchIndex + currentMatch.length);
+      remainingText = remainingText.substring(
+        nextMatchIndex + currentMatch.length,
+      );
     }
 
     return RichText(
       text: TextSpan(
         style: TextStyle(
-            fontSize: 16, color: Theme.of(context).colorScheme.onSurface, height: 1.6),
+          fontSize: 16,
+          color: Theme.of(context).colorScheme.onSurface,
+          height: 1.6,
+        ),
         children: spans,
       ),
     );
@@ -334,7 +363,7 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
       'CONCISE',
       'ACADEMIC',
       'TECHNICAL',
-      'CREATIVE'
+      'CREATIVE',
     ];
     return IgnorePointer(
       ignoring: isRefining,
@@ -358,7 +387,10 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
                   child: GestureDetector(
                     onTap: () => setState(() => _selectedTone = tone),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: _selectedTone == tone
                             ? const Color(0xFF2563EB)
@@ -394,13 +426,15 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
     if (_originalTextController.text.trim().isEmpty) return;
     final user = ref.read(authProvider).user;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not authenticated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not authenticated')));
       return;
     }
 
-    ref.read(grammarSocketProvider.notifier).correctSentence(
+    ref
+        .read(grammarSocketProvider.notifier)
+        .correctSentence(
           _originalTextController.text,
           user.id,
           tone: _selectedTone,
@@ -445,7 +479,11 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
                     ),
                   )
                 else
-                  const Icon(Icons.auto_fix_high, color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.auto_fix_high,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 const SizedBox(width: 12),
                 Text(
                   isRefining ? 'REFINING...' : 'REFINE TEXT',
@@ -494,7 +532,10 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF22C55E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -530,16 +571,18 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
             Text(
               label,
               style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: widget.themeExt.secondaryText),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: widget.themeExt.secondaryText,
+              ),
             ),
             Text(
               '${(value * 100).toInt()}%',
               style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ],
         ),
@@ -580,7 +623,11 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
           if (keyImprovements.isEmpty)
             const Text(
               'Grammar corrected properly.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B), fontStyle: FontStyle.italic),
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                fontStyle: FontStyle.italic,
+              ),
             )
           else
             for (var improvement in keyImprovements) ...[
@@ -588,7 +635,8 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
                 (improvement['title'] ?? '').toString().toUpperCase(),
                 (improvement['description'] ?? '').toString(),
               ),
-              if (improvement != keyImprovements.last) const SizedBox(height: 24),
+              if (improvement != keyImprovements.last)
+                const SizedBox(height: 24),
             ],
         ],
       ),
@@ -635,6 +683,4 @@ class _RefinerSectionState extends ConsumerState<RefinerSection> {
       ],
     );
   }
-
 }
-
