@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import 'meet.dart';
-import 'user_chat.dart';
-import 'team_chat.dart';
+import '../../messages/chat_screen.dart';
 import 'chat_avatar.dart';
-import '../../providers/chat_socket_provider.dart';
 import '../../models/conversation_model.dart';
 import '../../providers/messages_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -152,9 +151,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatSocketProvider.notifier).init();
-    });
+    // Socket auto-connects in ChatSocketNotifier.build() via Future.microtask
   }
 
   List<Map<String, dynamic>> communities = List.from(initialCommunities);
@@ -175,17 +172,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   }
 
   void _goToChat(ConversationModel item) {
-    if (item.type != ConversationType.direct) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => TeamChatScreen(conversation: item)),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => UserChatScreen(conversation: item)),
-      );
-    }
+    context.push('/chat/${item.id}');
   }
 
   void _toggleFilters() {

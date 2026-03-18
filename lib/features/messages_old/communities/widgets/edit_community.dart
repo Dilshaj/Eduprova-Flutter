@@ -367,7 +367,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
                                       value: isPrivate,
                                       onChanged: (v) =>
                                           setState(() => isPrivate = v),
-                                      activeColor: const Color(0xFF6366F1),
+                                      activeThumbColor: const Color(0xFF6366F1),
                                       inactiveTrackColor: const Color(
                                         0xFFE2E8F0,
                                       ),
@@ -413,7 +413,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
                                       value: isDiscovery,
                                       onChanged: (v) =>
                                           setState(() => isDiscovery = v),
-                                      activeColor: const Color(0xFF6366F1),
+                                      activeThumbColor: const Color(0xFF6366F1),
                                       inactiveTrackColor: const Color(
                                         0xFFE2E8F0,
                                       ),

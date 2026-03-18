@@ -35,11 +35,7 @@ class _MessagesBackgroundState extends State<MessagesBackground>
     return Stack(
       children: [
         // Base background color
-        Positioned.fill(
-          child: Container(
-            color: const Color(0xFFFBFCFF),
-          ),
-        ),
+        Positioned.fill(child: Container(color: const Color(0xFFFBFCFF))),
 
         // Animated Blobs
         AnimatedBuilder(
@@ -48,22 +44,30 @@ class _MessagesBackgroundState extends State<MessagesBackground>
             return Stack(
               children: [
                 _buildBlob(
-                  color: const Color(0xFFF43F5E).withOpacity(0.1), // Rose 500
+                  color: const Color(
+                    0xFFF43F5E,
+                  ).withValues(alpha: 0.1), // Rose 500
                   top: -50 + 20 * math.sin(_controller.value * 2 * math.pi),
                   left: -50 + 20 * math.cos(_controller.value * 2 * math.pi),
                 ),
                 _buildBlob(
-                  color: const Color(0xFF6366F1).withOpacity(0.1), // Indigo 500
+                  color: const Color(
+                    0xFF6366F1,
+                  ).withValues(alpha: 0.1), // Indigo 500
                   bottom: -100 + 30 * math.cos(_controller.value * 2 * math.pi),
                   right: -50 + 20 * math.sin(_controller.value * 2 * math.pi),
                 ),
                 _buildBlob(
-                  color: const Color(0xFF3B82F6).withOpacity(0.1), // Blue 500
+                  color: const Color(
+                    0xFF3B82F6,
+                  ).withValues(alpha: 0.1), // Blue 500
                   top: 200 + 40 * math.sin(_controller.value * 2 * math.pi),
                   right: -100 + 20 * math.cos(_controller.value * 2 * math.pi),
                 ),
                 _buildBlob(
-                  color: const Color(0xFFA855F7).withOpacity(0.1), // Purple 500
+                  color: const Color(
+                    0xFFA855F7,
+                  ).withValues(alpha: 0.1), // Purple 500
                   bottom: 150 + 30 * math.sin(_controller.value * 2 * math.pi),
                   left: -80 + 20 * math.cos(_controller.value * 2 * math.pi),
                 ),
@@ -96,10 +100,7 @@ class _MessagesBackgroundState extends State<MessagesBackground>
         child: Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );

@@ -23,7 +23,7 @@ import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
 import 'package:eduprova/features/jobs/jobs_screen.dart';
-import 'package:eduprova/features/messages/messages_shell.dart';
+import 'package:eduprova/features/messages_old/messages_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,9 +34,9 @@ import 'package:eduprova/features/courses/courses_home/courses_screen.dart';
 import 'package:eduprova/features/courses/course_detail/course_detail_screen.dart';
 // import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
 // import 'package:eduprova/features/messages/communities/create_community_screen.dart';
-// import 'package:eduprova/features/messages/messages/chat_screen.dart';
-// import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
-// import 'package:eduprova/features/messages/messages/messages_screen.dart';
+import 'package:eduprova/features/messages_old/messages/chat_screen.dart';
+// import 'package:eduprova/features/messages_old/messages/chat_profile_screen.dart';
+// import 'package:eduprova/features/messages_old/messages/messages_screen.dart';
 // import 'features/auth/providers/auth_provider.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -210,13 +210,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   path: AppRoutes.createChannel,
       //   builder: (_, _) => const CreateChannelScreen(),
       // ),
-      // GoRoute(
-      //   path: AppRoutes.chat(':id'),
-      //   builder: (_, state) {
-      //     final chatId = state.pathParameters['id']!;
-      //     return ChatScreen(id: chatId);
-      //   },
-      // ),
+      GoRoute(
+        path: AppRoutes.chat(':id'),
+        builder: (_, state) {
+          final chatId = state.pathParameters['id']!;
+          return ChatScreen(conversationId: chatId);
+        },
+      ),
       // GoRoute(
       //   path: '/contact/:id',
       //   builder: (_, state) {

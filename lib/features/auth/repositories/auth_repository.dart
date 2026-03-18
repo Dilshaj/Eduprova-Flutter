@@ -8,8 +8,8 @@ class AuthRepository {
 
   final Dio _dio = ApiClient.instance;
 
-  Future<UserModel> getProfile(String email) async {
-    final response = await _dio.get('/auth/profile/$email');
+  Future<UserModel> getProfile() async {
+    final response = await _dio.get('/users/profile');
     if (response.statusCode == 200) {
       return UserModel.fromJson(response.data);
     }

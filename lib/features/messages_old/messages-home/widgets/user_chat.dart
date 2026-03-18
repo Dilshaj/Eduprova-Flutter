@@ -57,8 +57,9 @@ class _UserChatScreenState extends ConsumerState<UserChatScreen> {
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty || widget.conversation == null)
+    if (_messageController.text.trim().isEmpty || widget.conversation == null) {
       return;
+    }
 
     ref
         .read(localMessagesProvider.notifier)

@@ -1,10 +1,8 @@
 import 'dart:math' as math;
-import 'package:flutter/rendering.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:ui';
 import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
 import 'package:eduprova/features/ai_grammar/providers/grammar_socket_provider.dart';
 import 'package:eduprova/features/ai_grammar/providers/grammar_stt_provider.dart';

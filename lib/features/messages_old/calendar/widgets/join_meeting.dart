@@ -7,7 +7,7 @@ class JoinMeetingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.05),
+      backgroundColor: Colors.black.withValues(alpha: 0.05),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -18,7 +18,7 @@ class JoinMeetingScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -76,7 +76,9 @@ class JoinMeetingScreen extends StatelessWidget {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: '6-digit ID (e.g., 123456)',
-                      hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
+                      hintStyle: GoogleFonts.inter(
+                        color: const Color(0xFF94A3B8),
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.all(16),
                     ),
@@ -108,7 +110,9 @@ class JoinMeetingScreen extends StatelessWidget {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'https://eduprova.com/join/...',
-                      hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
+                      hintStyle: GoogleFonts.inter(
+                        color: const Color(0xFF94A3B8),
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.all(16),
                     ),
@@ -129,13 +133,16 @@ class JoinMeetingScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFA855F7), Color(0xFF6366F1)], // purple to indigo
+                      colors: [
+                        Color(0xFFA855F7),
+                        Color(0xFF6366F1),
+                      ], // purple to indigo
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFA855F7).withOpacity(0.3),
+                        color: const Color(0xFFA855F7).withValues(alpha: 0.3),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

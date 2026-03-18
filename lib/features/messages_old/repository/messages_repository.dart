@@ -43,7 +43,7 @@ class MessagesRepository {
     try {
       final response = await _client.get(
         '/messages/$conversationId',
-        queryParameters: {if (cursor != null) 'cursor': cursor, 'limit': limit},
+        queryParameters: {'cursor': ?cursor, 'limit': limit},
       );
 
       if (response.statusCode == 200) {
@@ -76,7 +76,7 @@ class MessagesRepository {
           'conversationId': conversationId,
           'content': content,
           'type': type.toJson(),
-          if (replyTo != null) 'replyTo': replyTo,
+          'replyTo': ?replyTo,
         },
       );
 
@@ -97,6 +97,28 @@ class MessagesRepository {
     }
   }
 
+  Future<void> addReaction(String messageId, String emoji) async {
+    try {
+      await _client.post(
+        '/messages/$messageId/reactions',
+        data: {'emoji': emoji},
+      );
+    } catch (e) {
+      debugPrint('Error adding reaction: $e');
+    }
+  }
+
+  Future<void> removeReaction(String messageId, String emoji) async {
+    try {
+      await _client.delete(
+        '/messages/$messageId/reactions',
+        data: {'emoji': emoji},
+      );
+    } catch (e) {
+      debugPrint('Error removing reaction: $e');
+    }
+  }
+
   Future<ConversationModel?> createConversation(
     List<String> userIds, {
     String? name,
@@ -108,8 +130,8 @@ class MessagesRepository {
         data: {
           'participants': userIds,
           'type': userIds.length > 1 ? 'group' : 'direct',
-          if (name != null) 'name': name,
-          if (avatar != null) 'avatar': avatar,
+          'name': ?name,
+          'avatar': ?avatar,
         },
       );
 

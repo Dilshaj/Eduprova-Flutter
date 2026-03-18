@@ -77,11 +77,9 @@ class ApiClient {
       // return 'http://10.169.69.6:4000';
     }
     debugPrint('Using iOS/Web URL: http://localhost:4000');
-    // return 'http://localhost:4000';
-    // use 0.0.0.0 for both localhost and ipaddress
-    // return 'http://0.0.0.0:4000';
-    debugPrint('Using Android URL: http://$ip:4000');
-    return 'http://$ip:4000';
+    return 'http://localhost:4000';
+    // debugPrint('Using Android URL: http://$ip:4000');
+    // return 'http://$ip:4000';
   }
 
   static String? get baseUrlOverride => prefs.getString(_overrideUrlKey);

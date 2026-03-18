@@ -654,7 +654,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
     );
   }
 
-  List<Map<String, dynamic>> _myCommunities = List.from(initialCommunities);
+  final List<Map<String, dynamic>> _myCommunities = List.from(initialCommunities);
 
   void _addNewCommunity(Map<String, dynamic> data) {
     setState(() {

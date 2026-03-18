@@ -27,7 +27,7 @@ class CommunitiesGroupsScreen extends StatefulWidget {
 class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
-  String _searchQuery = '';
+  final String _searchQuery = '';
   final Set<String> _expandedCommunities = {};
 
   @override
