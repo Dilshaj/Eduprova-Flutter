@@ -7,11 +7,15 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../providers/chat_socket_provider.dart';
 import '../providers/messages_provider.dart';
+import '../repository/calling_repository.dart';
 import '../repository/messages_repository.dart';
+import 'live_call_screen.dart';
+import 'image_preview_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -32,6 +36,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Map<String, dynamic>? _replyToMessage;
   Timer? _typingDebounce;
   bool _isTyping = false;
+  bool _startingAudioCall = false;
+  bool _startingVideoCall = false;
 
   // Unsubscribe callbacks
   VoidCallback? _unsubscribeMessages;
@@ -162,6 +168,84 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return other.userId;
   }
 
+  Future<void> _startCall({required bool video}) async {
+    if (_conversation == null) return;
+
+    final type = _conversation!.type == ConversationType.direct
+        ? 'dm'
+        : 'group';
+    final recipientIds = _conversation!.participants
+        .map((participant) => participant.userId)
+        .where((userId) => userId != _currentUserId)
+        .toList();
+
+    if (recipientIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No other participants found for this call'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      if (video) {
+        _startingVideoCall = true;
+      } else {
+        _startingAudioCall = true;
+      }
+    });
+
+    try {
+      final room = await CallingRepository().createRoom(
+        type: type,
+        conversationId: _conversation!.type == ConversationType.group
+            ? _conversation!.id
+            : null,
+        participantIds: _conversation!.type == ConversationType.direct
+            ? recipientIds
+            : const [],
+      );
+
+      final authUser = ref.read(authProvider).user;
+      final callerName =
+          '${authUser?.firstName ?? ''} ${authUser?.lastName ?? ''}'.trim();
+
+      ref
+          .read(chatSocketProvider.notifier)
+          .emitCallInvite(
+            recipientIds: recipientIds,
+            roomName: room.roomName,
+            conversationType: type,
+            callerName: callerName.isNotEmpty ? callerName : 'Eduprova user',
+            callerAvatar: authUser?.avatar,
+          );
+
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => LiveCallScreen(
+            initialRoom: room,
+            initialVideo: video,
+            initialAudio: true,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to start call: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _startingAudioCall = false;
+          _startingVideoCall = false;
+        });
+      }
+    }
+  }
+
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
@@ -206,6 +290,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _isTyping = false;
       }
     });
+  }
+
+  void _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+
+    if (image == null) return;
+
+    // Show loading or optimistic message? For now, just upload and send
+    final repo = ref.read(messagesRepositoryProvider);
+    final result = await repo.uploadChatFile(
+      chatId: widget.conversationId,
+      filePath: image.path,
+    );
+
+    if (result != null && result['url'] != null) {
+      final imageUrl = result['url'].toString();
+      ref
+          .read(chatSocketProvider.notifier)
+          .sendImageMessage(
+            conversationId: widget.conversationId,
+            imageUrl: imageUrl,
+            replyTo: _replyToId,
+          );
+
+      setState(() {
+        _replyToId = null;
+        _replyToMessage = null;
+      });
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to upload image')));
+      }
+    }
   }
 
   void _setReply(MessageModel message) {
@@ -347,6 +470,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return AppBar(
       elevation: 0,
+      scrolledUnderElevation: 0,
       backgroundColor: cs.surface,
       leading: IconButton(
         icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface),
@@ -427,18 +551,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       actions: [
         IconButton(
-          icon: Icon(
-            Icons.call_outlined,
-            color: cs.onSurface.withValues(alpha: 0.7),
-          ),
-          onPressed: () {},
+          icon: _startingAudioCall
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  Icons.call_outlined,
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                ),
+          onPressed: _startingAudioCall ? null : () => _startCall(video: false),
         ),
         IconButton(
-          icon: Icon(
-            Icons.videocam_outlined,
-            color: cs.onSurface.withValues(alpha: 0.7),
-          ),
-          onPressed: () {},
+          icon: _startingVideoCall
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  Icons.videocam_outlined,
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                ),
+          onPressed: _startingVideoCall ? null : () => _startCall(video: true),
         ),
         IconButton(
           icon: Icon(
@@ -584,7 +720,66 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (msg.content != null)
+                        // Render image attachments if present
+                        if (msg.attachments.any((a) => a.type == 'image'))
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (var attachment in msg.attachments.where(
+                                  (a) => a.type == 'image',
+                                ))
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ImagePreviewScreen(
+                                              imageUrl: attachment.url,
+                                              heroTag:
+                                                  'msg_${msg.id}_${attachment.url}',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Hero(
+                                        tag: 'msg_${msg.id}_${attachment.url}',
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          child: CachedNetworkImage(
+                                            imageUrl: attachment.url,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                                  height: 200,
+                                                  width: double.infinity,
+                                                  color: cs
+                                                      .surfaceContainerHighest,
+                                                  child: const Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  ),
+                                                ),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(
+                                                      Icons.broken_image,
+                                                      size: 50,
+                                                    ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        if (msg.content != null && msg.content!.isNotEmpty)
                           Text(
                             msg.content!,
                             style: TextStyle(
@@ -810,7 +1005,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       color: cs.onSurface.withValues(alpha: 0.5),
                       size: 22,
                     ),
-                    onPressed: () {},
+                    onPressed: _pickImage,
                   ),
                   Expanded(
                     child: TextField(

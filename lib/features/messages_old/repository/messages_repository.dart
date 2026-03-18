@@ -143,4 +143,36 @@ class MessagesRepository {
       return null;
     }
   }
+
+  Future<Map<String, dynamic>?> uploadChatFile({
+    required String chatId,
+    required String filePath,
+    String? messageId,
+    void Function(int, int)? onProgress,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'chatId': chatId,
+        'messageId': ?messageId,
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: filePath.split('/').last,
+        ),
+      });
+
+      final response = await _client.post(
+        '/upload/chat',
+        data: formData,
+        onSendProgress: onProgress,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error uploading chat file: $e');
+      return null;
+    }
+  }
 }

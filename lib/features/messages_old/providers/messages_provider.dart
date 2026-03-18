@@ -84,16 +84,14 @@ final conversationsProvider =
 // ─── Messages (paginated, per conversation) ───────────────────────────────
 
 /// Fetches initial page of messages — newest returned first from API,
-/// but we reverse them so oldest appears at top / newest at bottom in UI.
+/// already returned oldest-to-newest from the backend for display.
 final messagesFetcherProvider =
     FutureProvider.family<List<MessageModel>, String>((
       ref,
       conversationId,
     ) async {
       final repo = ref.read(messagesRepositoryProvider);
-      final messages = await repo.getMessages(conversationId);
-      // API returns newest-first, reverse so index 0 = oldest (top of list)
-      return messages.reversed.toList();
+      return repo.getMessages(conversationId);
     });
 
 // ─── Local messages (real-time additions) ────────────────────────────────

@@ -1,393 +1,172 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-class CreateRoomScreen extends StatelessWidget {
+import '../../messages/live_call_screen.dart';
+import '../../models/call_room_model.dart';
+import '../../repository/calling_repository.dart';
+
+class CreateRoomScreen extends StatefulWidget {
   const CreateRoomScreen({super.key});
 
-  static const link = 'meet.pro.edu/room/x92-kLp';
-  static const participants = [
-    'https://i.pravatar.cc/100?u=1',
-    'https://i.pravatar.cc/100?u=2',
-    'https://i.pravatar.cc/100?u=3',
-  ];
+  @override
+  State<CreateRoomScreen> createState() => _CreateRoomScreenState();
+}
+
+class _CreateRoomScreenState extends State<CreateRoomScreen> {
+  final CallingRepository _repository = CallingRepository();
+  CallRoomModel? _room;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _createRoom();
+  }
+
+  Future<void> _createRoom() async {
+    try {
+      final room = await _repository.createRoom(type: 'meet');
+      if (!mounted) return;
+      setState(() {
+        _room = room;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text('Instant Meeting')),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(
-                      Icons.chevron_left,
-                      size: 28,
-                      color: Color(0xFF111111),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'Create Room',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111111),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 28),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? _ErrorPanel(message: _error!, onRetry: _createRoom)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 30),
-
-                    // Video Icon Circle
-                    Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        Container(
-                          width: 140,
-                          height: 140,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF9FAFB),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.videocam_outlined,
-                            size: 56,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          right: 8,
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.edit,
-                              size: 16,
-                              color: Color(0xFF555555),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    Text(
-                      'Room is ready',
-                      style: GoogleFonts.inter(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF111111),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Invite your participants and start\nyour professional session.',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: const Color(0xFF6B7280),
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
-
-                    // Participants
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'PARTICIPANTS',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF9CA3AF),
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  ...participants.map(
-                                    (url) => Container(
-                                      width: 44,
-                                      height: 44,
-                                      margin: const EdgeInsets.only(right: 10),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
-                                        ),
-                                        image: DecorationImage(
-                                          image: NetworkImage(url),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color(0xFFE5E7EB),
-                                      ),
-                                      color: Colors.white,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: const Icon(
-                                      Icons.add,
-                                      size: 20,
-                                      color: Color(0xFF555555),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Text(
-                            'Manage',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF111111),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Link Box
                     Container(
-                      height: 52,
-                      padding: const EdgeInsets.only(left: 16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Text(
-                              link,
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: const Color(0xFF374151),
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          const CircleAvatar(
+                            radius: 34,
+                            backgroundColor: Color(0xFFDBEAFE),
+                            child: Icon(
+                              Icons.videocam_rounded,
+                              color: Color(0xFF2563EB),
+                              size: 34,
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () => Clipboard.setData(
-                              const ClipboardData(text: link),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Your meeting room is ready',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
                             ),
-                            child: Container(
-                              height: 40,
-                              margin: const EdgeInsets.only(right: 6),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: const Color(0xFFE5E7EB),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
-                                    blurRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.copy_outlined,
-                                    size: 16,
-                                    color: Color(0xFF111111),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Copy',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF111111),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _room!.roomName,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Color(0xFF64748B)),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Share/Chat buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 52,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: const Color(0xFFE5E7EB),
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.share_outlined,
-                                  size: 20,
-                                  color: Color(0xFF111111),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Share via',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF111111),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Container(
-                            height: 52,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: const Color(0xFFE5E7EB),
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.chat_bubble_outline,
-                                  size: 20,
-                                  color: Color(0xFF111111),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Chat',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF111111),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'Join link',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
                     ),
-
-                    const Expanded(child: SizedBox()),
-
-                    // Join Room button
+                    const SizedBox(height: 8),
                     Container(
-                      height: 56,
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0066FF), Color(0xFFE056FD)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0066FF).withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {},
-                          borderRadius: BorderRadius.circular(16),
-                          child: Center(
-                            child: Text(
-                              'Join Room',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
+                      child: Text(_room!.joinUrl),
+                    ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        await Clipboard.setData(ClipboardData(text: _room!.joinUrl));
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Meeting link copied')),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded),
+                      label: const Text('Copy Link'),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => LiveCallScreen(
+                              initialRoom: _room,
+                              initialVideo: true,
+                              initialAudio: true,
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: const Text('Start Meeting'),
                     ),
-                    const SizedBox(height: 10),
-                    Container(
-                      width: 100,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                   ],
                 ),
-              ),
-            ),
-          ],
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorPanel extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorPanel({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, size: 36, color: Colors.redAccent),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
       ),
     );
   }

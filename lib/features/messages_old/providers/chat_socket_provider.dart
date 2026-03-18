@@ -5,6 +5,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../core/network/api_client.dart';
 import '../../../globals.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+import '../models/call_room_model.dart';
 import '../models/message_model.dart';
 
 // ─── Presence ──────────────────────────────────────────────────────────────
@@ -34,21 +35,26 @@ class ChatSocketState {
   final bool isConnected;
   final Map<String, PresenceInfo> presence;
   final Map<String, TypingState> typing;
+  final IncomingCallModel? incomingCall;
 
   const ChatSocketState({
     this.isConnected = false,
     this.presence = const {},
     this.typing = const {},
+    this.incomingCall,
   });
 
   ChatSocketState copyWith({
     bool? isConnected,
     Map<String, PresenceInfo>? presence,
     Map<String, TypingState>? typing,
+    IncomingCallModel? incomingCall,
+    bool clearIncomingCall = false,
   }) => ChatSocketState(
     isConnected: isConnected ?? this.isConnected,
     presence: presence ?? this.presence,
     typing: typing ?? this.typing,
+    incomingCall: clearIncomingCall ? null : (incomingCall ?? this.incomingCall),
   );
 }
 
@@ -61,6 +67,7 @@ typedef MessageReactionCallback =
       String messageId,
       List<dynamic> reactions,
     );
+typedef MeetingEventCallback = void Function(String event, Map<String, dynamic> data);
 
 // ─── Notifier ─────────────────────────────────────────────────────────────
 
@@ -69,10 +76,13 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
   Timer? _heartbeatTimer;
   final Set<String> _activeRooms = {};
   DateTime? _lastConnectAttempt;
+  bool _listenersBound = false;
+  int _transportStrategyIndex = 0;
 
   final Map<String, List<NewMessageCallback>> _messageListeners = {};
   final List<NewMessageCallback> _globalMessageListeners = [];
   final Map<String, MessageReactionCallback> _reactionListeners = {};
+  final List<MeetingEventCallback> _meetingListeners = [];
 
   @override
   ChatSocketState build() {
@@ -94,6 +104,11 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
 
   // ── Connection ────────────────────────────────────────────────────────────
 
+  static const List<List<String>> _transportStrategies = [
+    ['websocket'],
+    ['polling', 'websocket'],
+  ];
+
   void connect({String? userId}) {
     if (_socket != null && _socket!.connected) return;
 
@@ -114,43 +129,103 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
     _lastConnectAttempt = DateTime.now();
 
     final baseUrl = ApiClient.baseUrl;
-    debugPrint('[ChatSocket] Connecting to $baseUrl (userId=$effectiveUserId)');
+    _connectInternal(baseUrl, effectiveUserId, token);
+  }
 
-    _socket = io.io(baseUrl, <String, dynamic>{
-      'transports': ['polling', 'websocket'],
-      'auth': {'token': token},
-      'query': {'userId': effectiveUserId},
-      'autoConnect': false,
-      'reconnection': true,
-      'reconnectionAttempts': 10,
-      'reconnectionDelay': 1500,
-    });
+  void _connectInternal(String baseUrl, String userId, String token) {
+    final transports = _transportStrategies[_transportStrategyIndex];
+    debugPrint(
+      '[ChatSocket] Connecting to $baseUrl (userId=$userId, transports=$transports)',
+    );
+
+    final options = io.OptionBuilder()
+        .disableAutoConnect()
+        .setTransports(transports)
+        .setAuth({'token': token})
+        .setQuery({'userId': userId})
+        .setReconnectionAttempts(10)
+        .setReconnectionDelay(1500)
+        .setTimeout(20000)
+        .setExtraHeaders({'Authorization': 'Bearer $token'})
+        .enableReconnection()
+        .enableForceNew()
+        .build();
+
+    _socket = io.io(baseUrl, options);
+
+    _bindSocketListeners();
 
     _socket!.onConnect((_) {
-      debugPrint('[ChatSocket] Connected: ${_socket!.id}');
+      debugPrint(
+        '[ChatSocket] Connected to server: ${ApiClient.baseUrl} via $transports',
+      );
+      _transportStrategyIndex = 0;
       state = state.copyWith(isConnected: true);
       _startHeartbeat();
-
-      // Re-join all active rooms
+      setPresenceStatus(isAway: false);
       for (final rid in _activeRooms) {
         _socket!.emit('join-conversation', {'conversationId': rid});
       }
     });
 
-    _socket!.onDisconnect((reason) {
-      debugPrint('[ChatSocket] Disconnected: $reason');
+    _socket!.onDisconnect((_) {
+      debugPrint('[ChatSocket] Disconnected from server');
       state = state.copyWith(isConnected: false);
       _stopHeartbeat();
     });
 
-    _socket!.onConnectError((err) {
-      debugPrint('[ChatSocket] Connect error: $err');
-      debugPrint('[ChatSocket] Current baseUrl: $baseUrl');
+    _socket!.onConnectError((data) {
+      debugPrint('[ChatSocket] Connection Error: $data');
+      state = state.copyWith(isConnected: false);
+      _tryNextTransport(baseUrl, userId, token, source: 'connect_error');
     });
 
-    _socket!.onError((err) {
-      debugPrint('[ChatSocket] Socket error: $err');
+    _socket!.onError((data) {
+      debugPrint('[ChatSocket] Socket Error: $data');
+      _tryNextTransport(baseUrl, userId, token, source: 'socket_error');
     });
+
+    _socket!.on('reconnect_attempt', (data) {
+      debugPrint('[ChatSocket] Reconnect attempt: $data');
+    });
+
+    _socket!.connect();
+  }
+
+  void _tryNextTransport(
+    String baseUrl,
+    String userId,
+    String token, {
+    required String source,
+  }) {
+    if (_socket?.connected == true) return;
+    if (_transportStrategyIndex >= _transportStrategies.length - 1) {
+      if (baseUrl.contains('localhost') || baseUrl.contains('127.0.0.1')) {
+        debugPrint(
+          '[ChatSocket] All transport strategies failed for $baseUrl. '
+          'If this is a physical device, set the Dev API URL to your computer LAN IP.',
+        );
+      }
+      return;
+    }
+
+    _transportStrategyIndex += 1;
+    debugPrint(
+      '[ChatSocket] Retrying with fallback transport after $source: '
+      '${_transportStrategies[_transportStrategyIndex]}',
+    );
+
+    _socket?.disconnect();
+    _socket?.dispose();
+    _socket = null;
+    _listenersBound = false;
+
+    Future.microtask(() => _connectInternal(baseUrl, userId, token));
+  }
+
+  void _bindSocketListeners() {
+    if (_socket == null || _listenersBound) return;
+    _listenersBound = true;
 
     // ── Presence ────────────────────────────────────────────────────────────
     _socket!.on('presence-initial', (data) {
@@ -238,7 +313,26 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
       _updateTyping(convId, uid, add: false);
     });
 
-    _socket!.connect();
+    _socket!.on('call:incoming', (data) {
+      if (data is! Map) return;
+      final call = IncomingCallModel.fromJson(Map<String, dynamic>.from(data));
+      state = state.copyWith(incomingCall: call);
+    });
+
+    for (final event in const [
+      'meeting:scheduled',
+      'meeting:updated',
+      'meeting:started',
+      'meeting:cancelled',
+    ]) {
+      _socket!.on(event, (data) {
+        if (data is! Map) return;
+        final parsed = Map<String, dynamic>.from(data);
+        for (final cb in List<MeetingEventCallback>.from(_meetingListeners)) {
+          cb(event, parsed);
+        }
+      });
+    }
   }
 
   void _updateTyping(String convId, String uid, {required bool add}) {
@@ -259,6 +353,8 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;
+    _listenersBound = false;
+    state = const ChatSocketState();
   }
 
   // ── Heartbeat ─────────────────────────────────────────────────────────────
@@ -298,19 +394,54 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
     required String content,
     String? replyTo,
     Map<String, dynamic>? replyToMessage,
-    List<String>? attachments,
+    List<dynamic>? attachments,
+    String? type,
   }) {
     if (_socket?.connected != true) {
       debugPrint('[ChatSocket] Not connected — cannot send');
       return;
     }
-    _socket!.emit('send-message', {
+    final messageData = {
       'conversationId': conversationId,
       'content': content,
-      'replyTo': ?replyTo,
-      'replyToMessage': ?replyToMessage,
-      'attachments': ?attachments,
-    });
+      'type': type ?? 'text',
+      'attachments': attachments ?? [],
+      'replyTo': replyTo ?? replyToMessage?['_id'] ?? replyToMessage?['id'],
+    };
+
+    debugPrint('[ChatSocket] Sending message: $messageData');
+
+    _socket?.emitWithAck(
+      'send-message',
+      messageData,
+      ack: (data) {
+        if (data != null && data['error'] != null) {
+          debugPrint('[ChatSocket] Error sending message: ${data['error']}');
+        } else {
+          debugPrint('[ChatSocket] Message sent successfully');
+        }
+      },
+    );
+  }
+
+  Future<void> sendImageMessage({
+    required String conversationId,
+    required String imageUrl,
+    String? replyTo,
+  }) async {
+    sendMessage(
+      conversationId: conversationId,
+      content: '', // Images often have empty content unless there's a caption
+      type: 'image',
+      attachments: [
+        {
+          'type': 'image',
+          'url': imageUrl,
+          'storageProvider': 'cloudinary', // Default or from upload result
+        },
+      ],
+      replyTo: replyTo,
+    );
   }
 
   void emitTypingStart(String conversationId) =>
@@ -318,6 +449,50 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
 
   void emitTypingStop(String conversationId) =>
       _socket?.emit('typing-stop', {'conversationId': conversationId});
+
+  void setPresenceStatus({required bool isAway}) {
+    if (_socket?.connected != true) return;
+    _socket!.emit('presence:status', {'status': isAway ? 'away' : 'active'});
+  }
+
+  void emitCallInvite({
+    required List<String> recipientIds,
+    required String roomName,
+    required String conversationType,
+    required String callerName,
+    String? callerAvatar,
+  }) {
+    if (_socket?.connected != true || recipientIds.isEmpty) return;
+    _socket!.emit('call:invite', {
+      'recipientIds': recipientIds,
+      'roomName': roomName,
+      'conversationType': conversationType,
+      'callerName': callerName,
+      'callerAvatar': callerAvatar,
+    });
+  }
+
+  void emitCallAccepted(IncomingCallModel call) {
+    if (_socket?.connected != true) return;
+    _socket!.emit('call:accepted', {
+      'callerId': call.callerId,
+      'roomName': call.roomName,
+    });
+    clearIncomingCall();
+  }
+
+  void emitCallRejected(IncomingCallModel call) {
+    if (_socket?.connected != true) return;
+    _socket!.emit('call:rejected', {
+      'callerId': call.callerId,
+      'roomName': call.roomName,
+    });
+    clearIncomingCall();
+  }
+
+  void clearIncomingCall() {
+    state = state.copyWith(clearIncomingCall: true);
+  }
 
   // ── Subscription helpers ──────────────────────────────────────────────────
 
@@ -335,6 +510,11 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
   VoidCallback onGlobalMessage(NewMessageCallback cb) {
     _globalMessageListeners.add(cb);
     return () => _globalMessageListeners.remove(cb);
+  }
+
+  VoidCallback onMeetingEvent(MeetingEventCallback cb) {
+    _meetingListeners.add(cb);
+    return () => _meetingListeners.remove(cb);
   }
 
   // ── Query helpers ─────────────────────────────────────────────────────────

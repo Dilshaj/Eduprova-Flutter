@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import 'meet.dart';
-import '../../messages/chat_screen.dart';
 import 'chat_avatar.dart';
 import '../../models/conversation_model.dart';
 import '../../providers/messages_provider.dart';

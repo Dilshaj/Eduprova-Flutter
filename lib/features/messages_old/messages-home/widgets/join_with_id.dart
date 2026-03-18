@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import '../../messages/live_call_screen.dart';
 
 class JoinWithIdScreen extends StatefulWidget {
   const JoinWithIdScreen({super.key});
@@ -9,275 +10,91 @@ class JoinWithIdScreen extends StatefulWidget {
 }
 
 class _JoinWithIdScreenState extends State<JoinWithIdScreen> {
-  String code = '';
+  final TextEditingController _controller = TextEditingController();
 
-  void handlePress(String val) {
-    if (code.length < 9) {
-      setState(() => code = code + val);
-    }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
-  void handleDelete() {
-    if (code.isNotEmpty) {
-      setState(() => code = code.substring(0, code.length - 1));
+  void _join() {
+    final parsed = _parseRoomName(_controller.text);
+    if (parsed == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid room name or meeting link')),
+      );
+      return;
     }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LiveCallScreen(
+          roomName: parsed,
+          initialVideo: true,
+          initialAudio: true,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final btnWidth = (screenWidth - 40 - 32) / 3;
-    final formattedCode = code.split('').join(' ');
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(title: const Text('Join Meeting')),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(
-                      Icons.chevron_left,
-                      size: 28,
-                      color: Color(0xFF111111),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'Join with ID',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111111),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 28),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Paste a room name or a full Eduprova meeting link.',
+                style: TextStyle(color: Color(0xFF64748B)),
               ),
-            ),
-
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
-                    Text(
-                      'Enter the meeting ID or code provided by the organizer',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: const Color(0xFF6B7280),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Code display
-                    Container(
-                      width: double.infinity,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFE5E7EB),
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            formattedCode,
-                            style: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF111111),
-                              letterSpacing: 4,
-                            ),
-                          ),
-                          Container(
-                            width: 2,
-                            height: 32,
-                            color: const Color(0xFF0066FF),
-                            margin: const EdgeInsets.only(left: 4),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-
-                    const Expanded(child: SizedBox()),
-
-                    // Join button
-                    Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0066FF), Color(0xFFE056FD)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0066FF).withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {},
-                          borderRadius: BorderRadius.circular(16),
-                          child: Center(
-                            child: Text(
-                              'Join Now',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: _controller,
+                minLines: 1,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Room / Link',
+                  hintText: 'meeting:abc123 or https://.../dashboard/meet/meeting:abc123',
+                  border: OutlineInputBorder(),
                 ),
               ),
-            ),
-
-            // Keypad
-            Container(
-              color: const Color(0xFFF9FAFB),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              child: Column(
-                children: [
-                  _buildKeyRow(['1', '2', '3'], btnWidth, isDeleteRow: false),
-                  const SizedBox(height: 16),
-                  _buildKeyRow(['4', '5', '6'], btnWidth, isDeleteRow: false),
-                  const SizedBox(height: 16),
-                  _buildKeyRow(['7', '8', '9'], btnWidth, isDeleteRow: false),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(width: btnWidth),
-                      _KeyButton(
-                        label: '0',
-                        width: btnWidth,
-                        onTap: () => handlePress('0'),
-                      ),
-                      _KeyButton(
-                        isDelete: true,
-                        width: btnWidth,
-                        onTap: handleDelete,
-                      ),
-                    ],
-                  ),
-                ],
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _join,
+                icon: const Icon(Icons.login_rounded),
+                label: const Text('Join Now'),
               ),
-            ),
-
-            Container(
-              color: const Color(0xFFF9FAFB),
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Center(
-                child: Container(
-                  width: 100,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1D5DB),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildKeyRow(
-    List<String> keys,
-    double btnWidth, {
-    required bool isDeleteRow,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: keys
-          .map(
-            (k) => _KeyButton(
-              label: k,
-              width: btnWidth,
-              onTap: () => handlePress(k),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
+  String? _parseRoomName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.startsWith('dm:') ||
+        trimmed.startsWith('grp:') ||
+        trimmed.startsWith('meet:') ||
+        trimmed.startsWith('meeting:')) {
+      return trimmed;
+    }
 
-class _KeyButton extends StatelessWidget {
-  final String? label;
-  final bool isDelete;
-  final double width;
-  final VoidCallback onTap;
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null) {
+      final segments = uri.pathSegments;
+      final meetIndex = segments.indexOf('meet');
+      if (meetIndex != -1 && meetIndex + 1 < segments.length) {
+        return Uri.decodeComponent(segments[meetIndex + 1]);
+      }
+    }
 
-  const _KeyButton({
-    this.label,
-    this.isDelete = false,
-    required this.width,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: 50,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: isDelete
-            ? const Icon(
-                Icons.backspace_outlined,
-                size: 28,
-                color: Color(0xFF4B5563),
-              )
-            : Text(
-                label!,
-                style: GoogleFonts.inter(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF111111),
-                ),
-              ),
-      ),
-    );
+    return null;
   }
 }

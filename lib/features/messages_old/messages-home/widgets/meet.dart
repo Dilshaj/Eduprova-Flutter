@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'create_link.dart';
-import 'schedule_meeting.dart';
+import 'package:flutter/services.dart';
+
+import '../../messages/live_call_screen.dart';
+import '../../models/meeting_model.dart';
+import '../../repository/calling_repository.dart';
+import 'create_room.dart';
 import 'join_with_id.dart';
+import 'schedule_meeting.dart';
 
 class MeetScreen extends StatefulWidget {
   const MeetScreen({super.key});
@@ -12,385 +16,199 @@ class MeetScreen extends StatefulWidget {
 }
 
 class _MeetScreenState extends State<MeetScreen> {
-  String activeTab = 'All';
-  String searchQuery = '';
-  bool isSearchActive = false;
-  final TextEditingController searchController = TextEditingController();
-  final FocusNode searchFocusNode = FocusNode();
+  final CallingRepository _repository = CallingRepository();
+  final TextEditingController _searchController = TextEditingController();
+  List<MeetingModel> _meetings = const [];
+  bool _loading = true;
+  String _query = '';
+  String? _error;
 
-  static final recentCalls = [
-    {
-      'id': '1',
-      'name': 'Person 1',
-      'duration': '0sec',
-      'time': '10:48',
-      'initials': 'P1',
-      'color': const Color(0xFFDBEAFE),
-      'textColor': const Color(0xFF0066FF),
-      'type': 'outgoing',
-      'category': 'Calls',
-    },
-    {
-      'id': '2',
-      'name': 'Person 1',
-      'duration': '11sec',
-      'time': '10:41',
-      'initials': 'P2',
-      'color': const Color(0xFFFCE7F3),
-      'textColor': const Color(0xFFDB2777),
-      'type': 'outgoing',
-      'category': 'Calls',
-    },
-    {
-      'id': '3',
-      'name': 'Person 1',
-      'duration': '0sec',
-      'time': '10:40',
-      'initials': 'P3',
-      'color': const Color(0xFFF3F4F6),
-      'textColor': const Color(0xFF4B5563),
-      'type': 'outgoing',
-      'category': 'Calls',
-    },
-    {
-      'id': '4',
-      'name': 'Person 7',
-      'duration': '0sec',
-      'time': '09:12',
-      'initials': 'P7',
-      'color': const Color(0xFFF3E8FF),
-      'textColor': const Color(0xFF9333EA),
-      'type': 'outgoing',
-      'category': 'Calls',
-    },
-    {
-      'id': '5',
-      'name': 'Person 7',
-      'duration': 'Missed',
-      'time': 'Yesterday',
-      'initials': 'P7',
-      'color': const Color(0xFFFEF3C7),
-      'textColor': const Color(0xFFD97706),
-      'type': 'missed',
-      'category': 'Calls',
-    },
-    {
-      'id': '6',
-      'name': 'Design Sync',
-      'duration': 'Scheduled',
-      'time': '12:00 PM',
-      'initials': 'DS',
-      'color': const Color(0xFFE0F2F1),
-      'textColor': const Color(0xFF00695C),
-      'type': 'scheduled',
-      'category': 'Scheduled',
-    },
-    {
-      'id': '7',
-      'name': 'My Personal Room',
-      'duration': 'Link',
-      'time': 'Created',
-      'initials': 'L',
-      'color': const Color(0xFFE3F2FD),
-      'textColor': const Color(0xFF1565C0),
-      'type': 'link',
-      'category': 'Links',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadMeetings();
+  }
 
   @override
   void dispose() {
-    searchController.dispose();
-    searchFocusNode.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get filteredCalls {
-    var calls = recentCalls.cast<Map<String, dynamic>>();
-    if (activeTab != 'All') {
-      calls = calls.where((c) => c['category'] == activeTab).toList();
+  Future<void> _loadMeetings() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final meetings = await _repository.getMeetings();
+      if (!mounted) return;
+      setState(() {
+        _meetings = meetings;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
-    if (searchQuery.isNotEmpty) {
-      calls = calls
-          .where(
-            (c) => (c['name'] as String).toLowerCase().contains(
-              searchQuery.toLowerCase(),
-            ),
-          )
-          .toList();
+  }
+
+  List<MeetingModel> get _filteredMeetings {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return _meetings;
+    return _meetings.where((meeting) {
+      return meeting.title.toLowerCase().contains(q) ||
+          (meeting.description?.toLowerCase().contains(q) ?? false);
+    }).toList();
+  }
+
+  Future<void> _cancelMeeting(MeetingModel meeting) async {
+    final updated = await _repository.cancelMeeting(meeting.id);
+    if (!mounted) return;
+    setState(() {
+      _meetings = [
+        for (final item in _meetings) if (item.id == updated.id) updated else item,
+      ];
+    });
+  }
+
+  Future<void> _joinMeeting(MeetingModel meeting) async {
+    if (meeting.status == MeetingStatus.scheduled &&
+        DateTime.now().isAfter(meeting.startTime)) {
+      try {
+        await _repository.updateMeetingStatus(meeting.id, 'ongoing');
+      } catch (_) {}
     }
-    return calls;
+
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LiveCallScreen(
+          roomName: meeting.roomName,
+          initialVideo: true,
+          initialAudio: true,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Meet'),
+        actions: [
+          IconButton(onPressed: _loadMeetings, icon: const Icon(Icons.refresh)),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: SizedBox(
-                height: 70,
-                child: isSearchActive
-                    ? GestureDetector(
-                        onTap: () => searchFocusNode.requestFocus(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(left: 16),
-                                child: Icon(
-                                  Icons.search,
-                                  size: 22,
-                                  color: Color(0xFF9CA3AF),
-                                ),
-                              ),
-                              Expanded(
-                                child: TextField(
-                                  controller: searchController,
-                                  focusNode: searchFocusNode,
-                                  autofocus: true,
-                                  onChanged: (v) =>
-                                      setState(() => searchQuery = v),
-                                  decoration: InputDecoration(
-                                    hintText: 'Search calls...',
-                                    hintStyle: GoogleFonts.inter(
-                                      color: const Color(0xFF9CA3AF),
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    isSearchActive = false;
-                                    searchQuery = '';
-                                    searchController.clear();
-                                  });
-                                },
-                                child: const Padding(
-                                  padding: EdgeInsets.only(right: 12),
-                                  child: Icon(
-                                    Icons.cancel,
-                                    size: 20,
-                                    color: Color(0xFF9CA3AF),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(
-                              Icons.chevron_left,
-                              size: 28,
-                              color: Color(0xFF1F2937),
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Meet',
-                              style: GoogleFonts.inter(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF111111),
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => setState(() => isSearchActive = true),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF3F4F6),
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.search,
-                                size: 24,
-                                color: Color(0xFF555555),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 80),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Action Cards
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      child: Row(
-                        children: [
-                          _ActionCard(
-                            icon: Icons.link,
-                            label: 'Create link',
-                            iconBg: const Color(0xFFEFF6FF),
-                            iconColor: const Color(0xFF0066FF),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CreateLinkScreen(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          _ActionCard(
-                            icon: Icons.calendar_today,
-                            label: 'Schedule',
-                            iconBg: const Color(0xFFFCE7F3),
-                            iconColor: const Color(0xFFDB2777),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ScheduleMeetingScreen(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          _ActionCard(
-                            icon: Icons.grid_view,
-                            label: 'Join with ID',
-                            iconBg: const Color(0xFFF3F4F6),
-                            iconColor: const Color(0xFF4B5563),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const JoinWithIdScreen(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Filter Tabs
-                    SizedBox(
-                      height: 40,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        children: ['All', 'Links', 'Scheduled', 'Calls'].map((
-                          tab,
-                        ) {
-                          final isActive = activeTab == tab;
-                          return GestureDetector(
-                            onTap: () => setState(() => activeTab = tab),
-                            child: Container(
-                              height: 40,
-                              margin: const EdgeInsets.only(right: 12),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                gradient: isActive
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Color(0xFF0066FF),
-                                          Color(0xFFE056FD),
-                                        ],
-                                        begin: Alignment.centerLeft,
-                                        end: Alignment.centerRight,
-                                      )
-                                    : null,
-                                color: isActive
-                                    ? null
-                                    : const Color(0xFFF3F4F6),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                tab,
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: isActive
-                                      ? Colors.white
-                                      : const Color(0xFF1F2937),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Calls List Header
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            activeTab == 'All' ? 'Recent calls' : activeTab,
-                            style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF111111),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Text(
-                              'See all',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF0066FF),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Calls List
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: filteredCalls
-                            .map((item) => _CallItem(item: item))
-                            .toList(),
-                      ),
-                    ),
-                  ],
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _query = value),
+                decoration: InputDecoration(
+                  hintText: 'Search meetings',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                 ),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ActionCard(
+                      icon: Icons.video_call_rounded,
+                      label: 'Instant',
+                      color: const Color(0xFF2563EB),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const CreateRoomScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionCard(
+                      icon: Icons.schedule_rounded,
+                      label: 'Schedule',
+                      color: const Color(0xFFDB2777),
+                      onTap: () async {
+                        final created = await Navigator.of(context).push<MeetingModel>(
+                          MaterialPageRoute(
+                            builder: (_) => const ScheduleMeetingScreen(),
+                          ),
+                        );
+                        if (created != null && mounted) {
+                          setState(() => _meetings = [created, ..._meetings]);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ActionCard(
+                      icon: Icons.login_rounded,
+                      label: 'Join',
+                      color: const Color(0xFF475569),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const JoinWithIdScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? _ErrorBody(message: _error!, onRetry: _loadMeetings)
+                  : _filteredMeetings.isEmpty
+                  ? const _EmptyMeetings()
+                  : RefreshIndicator(
+                      onRefresh: _loadMeetings,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                        itemCount: _filteredMeetings.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final meeting = _filteredMeetings[index];
+                          return _MeetingCard(
+                            meeting: meeting,
+                            onJoin: () => _joinMeeting(meeting),
+                            onCopy: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              await Clipboard.setData(
+                                ClipboardData(text: meeting.meetingLink),
+                              );
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                const SnackBar(content: Text('Meeting link copied')),
+                              );
+                            },
+                            onCancel: meeting.status == MeetingStatus.cancelled
+                                ? null
+                                : () => _cancelMeeting(meeting),
+                          );
+                        },
+                      ),
+                    ),
             ),
           ],
         ),
@@ -402,151 +220,229 @@ class _MeetScreenState extends State<MeetScreen> {
 class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color iconBg;
-  final Color iconColor;
+  final Color color;
   final VoidCallback onTap;
 
   const _ActionCard({
     required this.icon,
     required this.label,
-    required this.iconBg,
-    required this.iconColor,
+    required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF3F4F6)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 24, color: iconColor),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF374151),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.16)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 10),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+          ],
         ),
       ),
     );
   }
 }
 
-class _CallItem extends StatelessWidget {
-  final Map<String, dynamic> item;
-  const _CallItem({required this.item});
+class _MeetingCard extends StatelessWidget {
+  final MeetingModel meeting;
+  final VoidCallback onJoin;
+  final VoidCallback onCopy;
+  final VoidCallback? onCancel;
+
+  const _MeetingCard({
+    required this.meeting,
+    required this.onJoin,
+    required this.onCopy,
+    this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final type = item['type'] as String;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
+    final now = DateTime.now();
+    final canJoin =
+        meeting.status != MeetingStatus.cancelled &&
+        now.isAfter(meeting.startTime) &&
+        now.isBefore(meeting.endTime);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: item['color'] as Color,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: type == 'link'
-                ? Icon(Icons.link, size: 20, color: item['textColor'] as Color)
-                : type == 'scheduled'
-                ? Icon(
-                    Icons.calendar_today,
-                    size: 20,
-                    color: item['textColor'] as Color,
-                  )
-                : Text(
-                    item['initials'] as String,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: item['textColor'] as Color,
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['name'] as String,
-                  style: GoogleFonts.inter(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  meeting.title,
+                  style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF111111),
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (type == 'missed')
-                      const Icon(
-                        Icons.call_missed,
-                        size: 16,
-                        color: Color(0xFFEF4444),
-                      ),
-                    if (type == 'outgoing')
-                      const Icon(
-                        Icons.arrow_forward,
-                        size: 16,
-                        color: Color(0xFF6B7280),
-                      ),
-                    const SizedBox(width: 4),
-                    Text(
-                      type == 'missed'
-                          ? 'Missed'
-                          : type == 'link'
-                          ? 'Permanent Link'
-                          : type == 'scheduled'
-                          ? 'Scheduled Call'
-                          : 'Duration: ${item['duration']}',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: const Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
+              ),
+              _StatusChip(status: meeting.status),
+            ],
+          ),
+          if (meeting.description != null && meeting.description!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              meeting.description!,
+              style: const TextStyle(color: Color(0xFF64748B)),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            '${_formatDate(meeting.startTime)} • ${_formatTime(meeting.startTime)} - ${_formatTime(meeting.endTime)}',
+            style: const TextStyle(color: Color(0xFF475569)),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${meeting.participants.length} participant(s)',
+            style: const TextStyle(color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: canJoin ? onJoin : null,
+                  icon: const Icon(Icons.video_call_rounded),
+                  label: Text(canJoin ? 'Join now' : 'Starts later'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: onCopy,
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text('Copy'),
+              ),
+              if (onCancel != null) ...[
+                const SizedBox(width: 10),
+                IconButton(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
-            ),
-          ),
-          Text(
-            item['time'] as String,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: const Color(0xFF9CA3AF),
-            ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  static String _formatDate(DateTime value) {
+    final local = value.toLocal();
+    return '${local.day}/${local.month}/${local.year}';
+  }
+
+  static String _formatTime(DateTime value) {
+    final local = value.toLocal();
+    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final minutes = local.minute.toString().padLeft(2, '0');
+    final suffix = local.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minutes $suffix';
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final MeetingStatus status;
+
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      MeetingStatus.ongoing => ('Live', const Color(0xFF16A34A)),
+      MeetingStatus.completed => ('Done', const Color(0xFF475569)),
+      MeetingStatus.cancelled => ('Cancelled', const Color(0xFFDC2626)),
+      MeetingStatus.scheduled => ('Scheduled', const Color(0xFF2563EB)),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+      ),
+    );
+  }
+}
+
+class _EmptyMeetings extends StatelessWidget {
+  const _EmptyMeetings();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.video_camera_front_outlined, size: 40, color: Color(0xFF94A3B8)),
+            SizedBox(height: 12),
+            Text(
+              'No meetings yet',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Create an instant meeting or schedule one for later.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBody extends StatelessWidget {
+  final String message;
+  final Future<void> Function() onRetry;
+
+  const _ErrorBody({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => onRetry(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -41,17 +41,81 @@ class MessageReaction {
   const MessageReaction({required this.emoji, required this.userIds});
 
   factory MessageReaction.fromJson(Map<String, dynamic> json) {
-    final users = json['users'] ?? json['userIds'] ?? [];
     final ids = <String>[];
-    for (final u in users) {
-      if (u is String) {
-        ids.add(u);
-      } else if (u is Map) {
-        ids.add(u['_id']?.toString() ?? u['id']?.toString() ?? '');
+
+    final singleUser = json['userId'];
+    if (singleUser != null) {
+      if (singleUser is String) {
+        ids.add(singleUser);
+      } else if (singleUser is Map) {
+        final id =
+            singleUser['_id']?.toString() ?? singleUser['id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          ids.add(id);
+        }
       }
     }
+
+    final users = json['users'] ?? json['userIds'];
+    if (users is List) {
+      for (final u in users) {
+        if (u is String) {
+          ids.add(u);
+        } else if (u is Map) {
+          final id = u['_id']?.toString() ?? u['id']?.toString();
+          if (id != null && id.isNotEmpty) {
+            ids.add(id);
+          }
+        }
+      }
+    }
+
     return MessageReaction(emoji: json['emoji'] ?? '', userIds: ids);
   }
+}
+
+class MessageAttachment {
+  final String type;
+  final String url;
+  final String? thumbnailUrl;
+  final String? mimeType;
+  final String? fileName;
+  final int? fileSize;
+
+  const MessageAttachment({
+    required this.type,
+    required this.url,
+    this.thumbnailUrl,
+    this.mimeType,
+    this.fileName,
+    this.fileSize,
+  });
+
+  factory MessageAttachment.fromJson(dynamic json) {
+    if (json is String) {
+      return MessageAttachment(type: 'image', url: json);
+    }
+    if (json is Map) {
+      return MessageAttachment(
+        type: json['type']?.toString() ?? 'image',
+        url: json['url']?.toString() ?? '',
+        thumbnailUrl: json['thumbnailUrl']?.toString(),
+        mimeType: json['mimeType']?.toString(),
+        fileName: json['fileName']?.toString(),
+        fileSize: json['fileSize'] as int?,
+      );
+    }
+    return const MessageAttachment(type: 'image', url: '');
+  }
+
+  Map<String, dynamic> toJson() => {
+    'type': type,
+    'url': url,
+    if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+    if (mimeType != null) 'mimeType': mimeType,
+    if (fileName != null) 'fileName': fileName,
+    if (fileSize != null) 'fileSize': fileSize,
+  };
 }
 
 class MessageModel {
@@ -62,7 +126,7 @@ class MessageModel {
   final String? content;
   final MessageType type;
   final DateTime createdAt;
-  final List<dynamic> attachments;
+  final List<MessageAttachment> attachments;
   final String? replyTo; // ID of replied-to message
   final Map<String, dynamic>? replyToMessage; // populated reply message
   final bool isForwarded;
@@ -85,6 +149,30 @@ class MessageModel {
     this.readBy = const [],
   });
 
+  static String? _replySenderName(Map<String, dynamic> replyMessage) {
+    final sender = replyMessage['senderId'];
+    if (sender is Map<String, dynamic>) {
+      final fullName = [
+        sender['firstName']?.toString(),
+        sender['lastName']?.toString(),
+      ].where((part) => part != null && part.trim().isNotEmpty).join(' ');
+
+      if (fullName.isNotEmpty) {
+        return fullName;
+      }
+
+      final fallback =
+          sender['name']?.toString() ??
+          sender['username']?.toString() ??
+          sender['email']?.toString();
+      if (fallback != null && fallback.isNotEmpty) {
+        return fallback;
+      }
+    }
+
+    return replyMessage['senderName']?.toString();
+  }
+
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     // senderId can be a string or populated object
     final senderRaw = json['senderId'];
@@ -102,7 +190,10 @@ class MessageModel {
         ? (replyRaw['_id']?.toString() ?? replyRaw['id']?.toString())
         : replyRaw?.toString();
     final replyToMessage = replyRaw is Map
-        ? Map<String, dynamic>.from(replyRaw)
+        ? {
+            ...Map<String, dynamic>.from(replyRaw),
+            'senderName': _replySenderName(Map<String, dynamic>.from(replyRaw)),
+          }
         : null;
 
     // Reactions
@@ -123,7 +214,11 @@ class MessageModel {
       content: json['content'],
       type: MessageType.fromString(json['type'] ?? 'text'),
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      attachments: json['attachments'] ?? [],
+      attachments:
+          (json['attachments'] as List?)
+              ?.map(MessageAttachment.fromJson)
+              .toList() ??
+          const [],
       replyTo: replyTo,
       replyToMessage: replyToMessage,
       isForwarded: json['isForwarded'] ?? false,
