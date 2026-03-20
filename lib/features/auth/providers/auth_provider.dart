@@ -55,7 +55,8 @@ class AuthNotifier extends Notifier<AuthState> {
       final email = prefs.getString('user_email');
 
       if (token != null && email != null) {
-        final user = await _repository.getProfile(email);
+        final user = await _repository.getProfile();
+        prefs.setString('user_id', user.id);
         state = state.copyWith(
           status: .authenticated,
           user: user,
@@ -71,6 +72,7 @@ class AuthNotifier extends Notifier<AuthState> {
     // await _storage.delete(key: 'user_email');
     prefs.remove('access_token');
     prefs.remove('user_email');
+    prefs.remove('user_id');
     state = state.copyWith(status: .unauthenticated, clearError: true);
   }
 
@@ -82,6 +84,7 @@ class AuthNotifier extends Notifier<AuthState> {
       // await _storage.write(key: 'user_email', value: result.user.email);
       prefs.setString('access_token', result.token);
       prefs.setString('user_email', result.user.email);
+      prefs.setString('user_id', result.user.id);
 
       state = state.copyWith(
         status: .authenticated,
@@ -137,6 +140,7 @@ class AuthNotifier extends Notifier<AuthState> {
       // await _storage.write(key: 'user_email', value: result.user.email);
       prefs.setString('access_token', result.token);
       prefs.setString('user_email', result.user.email);
+      prefs.setString('user_id', result.user.id);
 
       state = state.copyWith(
         status: .authenticated,
@@ -159,6 +163,7 @@ class AuthNotifier extends Notifier<AuthState> {
     // await _storage.delete(key: 'user_email');
     prefs.remove('access_token');
     prefs.remove('user_email');
+    prefs.remove('user_id');
     state = state.copyWith(
       status: .unauthenticated,
       user: null,

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
+import '../../../core/network/livekit_config.dart';
 import '../core/repositories/interview_repository.dart';
 import 'ai_theme.dart';
 
@@ -133,7 +134,7 @@ class _LiveAgentPageState extends State<LiveAgentPage>
         }
       });
 
-      await room.connect('wss://rahul-h1jumjl8.livekit.cloud', token);
+      await room.connect(LiveKitConfig.serverUrl, token);
 
       // Route audio to speakerphone
       // await Hardware.instance.setSpeakerphoneOn(true);

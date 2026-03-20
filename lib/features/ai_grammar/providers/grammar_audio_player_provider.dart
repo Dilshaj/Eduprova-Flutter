@@ -7,7 +7,9 @@ import 'package:flutter/foundation.dart';
 
 class GrammarAudioPlayerNotifier extends Notifier<bool> {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
+  final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(
+    children: [],
+  );
   bool _initialized = false;
 
   @override
@@ -17,7 +19,8 @@ class GrammarAudioPlayerNotifier extends Notifier<bool> {
     });
 
     _audioPlayer.playerStateStream.listen((playerState) {
-      final isActuallyPlaying = playerState.playing && 
+      final isActuallyPlaying =
+          playerState.playing &&
           playerState.processingState != ProcessingState.completed;
       if (state != isActuallyPlaying) {
         state = isActuallyPlaying;
@@ -30,9 +33,12 @@ class GrammarAudioPlayerNotifier extends Notifier<bool> {
   Future<void> addChunk(String base64String) async {
     if (base64String.isEmpty) return;
     try {
-      final normalizedBase64 = base64String.trim().replaceAll(RegExp(r'\s+'), '');
+      final normalizedBase64 = base64String.trim().replaceAll(
+        RegExp(r'\s+'),
+        '',
+      );
       final bytes = base64Decode(normalizedBase64);
-      
+
       final tempDir = await getTemporaryDirectory();
       final tempFile = File(
         '${tempDir.path}/grammar_ai_${DateTime.now().microsecondsSinceEpoch}.mp3',
@@ -58,14 +64,17 @@ class GrammarAudioPlayerNotifier extends Notifier<bool> {
     if (base64String.isEmpty) return;
     try {
       // Use Data URI for single chunk playback to avoid file I/O latency
-      final normalizedBase64 = base64String.trim().replaceAll(RegExp(r'\s+'), '');
+      final normalizedBase64 = base64String.trim().replaceAll(
+        RegExp(r'\s+'),
+        '',
+      );
       final dataUri = 'data:audio/mp3;base64,$normalizedBase64';
-      
+
       await _audioPlayer.stop();
       await _playlist.clear();
       await _audioPlayer.seek(Duration.zero, index: 0);
       _initialized = false;
-      
+
       await _audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(dataUri)));
       await _audioPlayer.play();
     } catch (e) {
@@ -85,6 +94,7 @@ class GrammarAudioPlayerNotifier extends Notifier<bool> {
   }
 }
 
-final grammarAudioPlayerProvider = NotifierProvider<GrammarAudioPlayerNotifier, bool>(
-  GrammarAudioPlayerNotifier.new,
-);
+final grammarAudioPlayerProvider =
+    NotifierProvider<GrammarAudioPlayerNotifier, bool>(
+      GrammarAudioPlayerNotifier.new,
+    );

@@ -6,6 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 import 'post_provider.dart';
+import 'widgets/pdf_preview_widget.dart';
+import 'widgets/video_preview_widget.dart';
 
 class PostModel {
   final String id;
@@ -21,6 +23,8 @@ class PostModel {
   final bool isLiked;
   final bool isSaved;
   final String? mediaType;
+  final String? videoUrl;
+  final String? pdfUrl;
 
   PostModel({
     required this.id,
@@ -36,6 +40,8 @@ class PostModel {
     this.isLiked = false,
     this.isSaved = false,
     this.mediaType,
+    this.videoUrl,
+    this.pdfUrl,
   });
 
   factory PostModel.fromMap(Map<String, dynamic> map) {
@@ -50,14 +56,23 @@ class PostModel {
       designation: author?['designation'] ?? 'Student',
       timeAgo: _formatTimeAgo(map['createdAt']),
       content: map['caption'],
-      imageUrl: media?['url'],
+      imageUrl:
+          (media != null && media['type'] != 'video' && media['type'] != 'pdf')
+          ? media['url']
+          : null,
+      videoUrl: (media != null && media['type'] == 'video')
+          ? media['url']
+          : null,
+      pdfUrl:
+          map['pdfUrl'] ??
+          ((media != null && media['type'] == 'pdf') ? media['url'] : null),
       authorAvatar: author?['avatar'] ?? 'assets/avatars/1.png',
       createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
       likeCount: map['likeCount'] ?? 0,
       commentCount: map['commentCount'] ?? 0,
       isLiked: map['isLiked'] ?? false,
       isSaved: map['isSaved'] ?? false,
-      mediaType: media?['type'],
+      mediaType: map['fileType'] ?? media?['type'],
     );
   }
 
@@ -108,12 +123,14 @@ class _PostState extends ConsumerState<Post> {
                   children: [
                     CircleAvatar(
                       radius: 22,
-                      backgroundImage: widget.post.authorAvatar.startsWith('http')
+                      backgroundImage:
+                          widget.post.authorAvatar.startsWith('http')
                           ? CachedNetworkImageProvider(
                               widget.post.authorAvatar,
                               cacheManager: CacheManagers.avatarCacheManager,
                             )
-                          : AssetImage(widget.post.authorAvatar) as ImageProvider,
+                          : AssetImage(widget.post.authorAvatar)
+                                as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -122,10 +139,7 @@ class _PostState extends ConsumerState<Post> {
                         children: [
                           Text(
                             widget.post.name,
-                            style: const .new(
-                              fontWeight: .w600,
-                              fontSize: 17,
-                            ),
+                            style: const .new(fontWeight: .w600, fontSize: 17),
                           ),
                           if (widget.post.designation != null ||
                               widget.post.timeAgo != null)
@@ -150,35 +164,42 @@ class _PostState extends ConsumerState<Post> {
                   ),
                 ),
               ],
-                if (widget.post.imageUrl != null) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: .infinity,
-                    height: 200,
-                    child: ClipRRect(
-                      child: CachedNetworkImage(
-                        imageUrl: widget.post.imageUrl!,
-                        cacheManager: CacheManagers.postCacheManager,
-                        fit: .cover,
-                        placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: Container(
-                            color: Colors.white,
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => const Icon(Icons.error),
+              if (widget.post.pdfUrl != null) ...[
+                const SizedBox(height: 12),
+                PdfPreviewWidget(pdfUrl: widget.post.pdfUrl!),
+              ] else if (widget.post.videoUrl != null) ...[
+                const SizedBox(height: 12),
+                VideoPreviewWidget(videoUrl: widget.post.videoUrl!),
+              ] else if (widget.post.imageUrl != null) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: .infinity,
+                  height: 200,
+                  child: ClipRRect(
+                    child: CachedNetworkImage(
+                      imageUrl: widget.post.imageUrl!,
+                      cacheManager: CacheManagers.postCacheManager,
+                      fit: .cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(color: Colors.white),
                       ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
                     ),
                   ),
-                ],
+                ),
+              ],
               const SizedBox(height: 16),
               Padding(
                 padding: const .symmetric(horizontal: padding),
                 child: Row(
                   children: [
                     GestureDetector(
-                      onTap: () => ref.read(postsProvider.notifier).toggleLike(widget.post.id),
+                      onTap: () => ref
+                          .read(postsProvider.notifier)
+                          .toggleLike(widget.post.id),
                       child: _buildActionItem(
                         widget.post.isLiked
                             ? HugeIcons.strokeRoundedFavourite
@@ -215,7 +236,11 @@ class _PostState extends ConsumerState<Post> {
     );
   }
 
-  Widget _buildActionItem(List<List<dynamic>> icon, String label, {Color? color}) {
+  Widget _buildActionItem(
+    List<List<dynamic>> icon,
+    String label, {
+    Color? color,
+  }) {
     return Column(
       mainAxisSize: .min,
       children: [

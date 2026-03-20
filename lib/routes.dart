@@ -1,5 +1,7 @@
 import 'package:eduprova/features/ai_grammar/grammar_home_screen.dart';
-import 'package:eduprova/features/ai_grammar/grammar_conversation_screen.dart';
+import 'package:eduprova/features/ai_grammar/grammar_main_screen.dart';
+import 'package:eduprova/features/ai_grammar/screens/grammar_coach_session_screen.dart';
+import 'package:eduprova/features/ai_grammar/screens/grammar_roleplay_session_screen.dart';
 import 'package:eduprova/features/ai_interview/analytics/interview_analysis.dart';
 import 'package:eduprova/features/ai_interview/history/history_analytics_screen.dart';
 import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
@@ -36,9 +38,9 @@ import 'package:eduprova/features/courses/courses_home/courses_screen.dart';
 import 'package:eduprova/features/courses/course_detail/course_detail_screen.dart';
 // import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
 // import 'package:eduprova/features/messages/communities/create_community_screen.dart';
-// import 'package:eduprova/features/messages/messages/chat_screen.dart';
-// import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
-// import 'package:eduprova/features/messages/messages/messages_screen.dart';
+import 'package:eduprova/features/messages_old/messages/chat_screen.dart';
+// import 'package:eduprova/features/messages_old/messages/chat_profile_screen.dart';
+// import 'package:eduprova/features/messages_old/messages/messages_screen.dart';
 // import 'features/auth/providers/auth_provider.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -228,13 +230,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   path: AppRoutes.createChannel,
       //   builder: (_, _) => const CreateChannelScreen(),
       // ),
-      // GoRoute(
-      //   path: AppRoutes.chat(':id'),
-      //   builder: (_, state) {
-      //     final chatId = state.pathParameters['id']!;
-      //     return ChatScreen(id: chatId);
-      //   },
-      // ),
+      GoRoute(
+        path: AppRoutes.chat(':id'),
+        builder: (_, state) {
+          final chatId = state.pathParameters['id']!;
+          return ChatScreen(conversationId: chatId);
+        },
+      ),
       // GoRoute(
       //   path: '/contact/:id',
       //   builder: (_, state) {
@@ -317,7 +319,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             name: 'grammar_conversation',
             path: 'conversation', // Nested path
-            builder: (_, _) => const GrammarConversationScreen(),
+            builder: (_, _) => const GrammarMainScreen(),
+          ),
+          GoRoute(
+            name: 'grammar_roleplay_session',
+            path: 'roleplay/session',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>;
+              return GrammarRoleplaySessionScreen(
+                title: extra['title'] as String,
+                difficulty: extra['difficulty'] as String,
+                roleType: extra['roleType'] as String,
+                config: extra['config'] as Map<String, dynamic>?,
+              );
+            },
+          ),
+          GoRoute(
+            name: 'grammar_coach_session',
+            path: 'coach/session',
+            builder: (_, _) => const GrammarCoachSessionScreen(),
           ),
         ],
       ),

@@ -58,10 +58,9 @@ class GrammarAnalysisResult {
 
 class GrammarRepository {
   Future<GrammarPracticeQuestion> fetchPracticeQuestion(String topic) async {
-
     final response = await ApiClient.instance.get(
       '/ai/practice/question',
-      queryParameters: {'topic': topic},
+      // queryParameters: {'topic': topic},
     );
     return GrammarPracticeQuestion.fromJson(response.data);
   }
@@ -73,11 +72,7 @@ class GrammarRepository {
   }) async {
     final response = await ApiClient.instance.post(
       '/ai/practice/analyze',
-      data: {
-        'question': question,
-        'answer': answer,
-        'audio': ?audio,
-      },
+      data: {'question': question, 'answer': answer, 'audio': ?audio},
     );
     return GrammarAnalysisResult.fromJson(response.data);
   }

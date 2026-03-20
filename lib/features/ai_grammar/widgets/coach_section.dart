@@ -1,176 +1,221 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:eduprova/theme/theme_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:eduprova/core/services/deepgram_stt_service.dart';
-import 'package:eduprova/features/ai_grammar/repositories/grammar_repository.dart';
-import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:eduprova/core/network/api_client.dart';
+import 'package:eduprova/core/network/livekit_config.dart';
+import 'package:livekit_client/livekit_client.dart';
 
 class CoachSection extends ConsumerStatefulWidget {
   final AppDesignExtension themeExt;
   final VoidCallback onBack;
+  final String? mode;
+  final String? topic;
 
   const CoachSection({
     super.key,
     required this.themeExt,
     required this.onBack,
+    this.mode,
+    this.topic,
   });
 
   @override
   ConsumerState<CoachSection> createState() => _CoachSectionState();
 }
 
-class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerProviderStateMixin {
-  late AnimationController _voiceController;
+class _CoachSectionState extends ConsumerState<CoachSection> {
   final ScrollController _chatScrollController = ScrollController();
 
+  Room? _room;
+  EventsListener<RoomEvent>? _listener;
+  String? _token;
+
+  bool _isConnecting = true;
   bool _isMuted = false;
-  bool _isLoading = true;
-  bool _isAnalysing = false;
-  
-  final DeepgramSttService _sttService = DeepgramSttService();
   bool _isListening = false;
+  String _agentState = 'loading';
   String _lastWords = '';
 
-  GrammarPracticeQuestion? _currentQuestion;
-  GrammarAnalysisResult? _lastAnalysis;
+  int _fluencyScore = 0;
+  int _grammarScore = 0;
 
-  final List<Map<String, dynamic>> _messages = [];
+  final Map<String, Map<String, dynamic>> _messagesById = {};
+
+  List<Map<String, dynamic>> get _messages {
+    final list = _messagesById.values.toList();
+    list.sort((a, b) => (a['rawTime'] as int).compareTo(b['rawTime'] as int));
+    return list;
+  }
 
   @override
   void initState() {
     super.initState();
-    _voiceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat();
-    _loadInitialQuestion();
+    _connect();
   }
 
-  Future<void> _loadInitialQuestion() async {
+  Future<void> _connect() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _lastAnalysis = null;
-      _messages.clear();
-    });
+    setState(() => _isConnecting = true);
+
     try {
-      final repo = ref.read(grammarRepositoryProvider);
-      final question = await repo.fetchPracticeQuestion('fluency');
-      if (mounted) {
-        setState(() {
-          _currentQuestion = question;
-          _messages.add({
-            'isUser': false,
-            'text': question.question,
-            'time': 'Just now',
-            'type': 'coach',
+      final String participantName =
+          'User-${DateTime.now().millisecondsSinceEpoch}';
+      final String roomName = 'coach-${DateTime.now().millisecondsSinceEpoch}';
+      final String metadata = jsonEncode({
+        'mode': widget.mode ?? 'free_talk',
+        'topic': widget.topic ?? '',
+      });
+
+      final response = await ApiClient.instance.post(
+        '/interview/livekit-token-coach',
+        data: {
+          'participantName': participantName,
+          'roomName': roomName,
+          'metadata': metadata,
+        },
+      );
+
+      if (response.data['token'] != null) {
+        _token = response.data['token'];
+        _room = Room();
+        _listener = _room!.createListener();
+        _setupListeners();
+
+        final String livekitUrl = LiveKitConfig.serverUrl;
+        await _room!.connect(livekitUrl, _token!);
+
+        // Auto-enable mic on connect
+        await _room!.localParticipant?.setMicrophoneEnabled(true);
+
+        if (mounted) {
+          setState(() {
+            _isConnecting = false;
+            _isListening = true;
+            _agentState = 'active';
           });
-          _isLoading = false;
-        });
-        if (question.audio != null) {
-          ref.read(grammarAudioPlayerProvider.notifier).playBase64(question.audio!);
         }
       }
     } catch (e) {
-      debugPrint('Question load error: $e');
+      debugPrint('[LiveKit Coach] Connection error: $e');
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _messages.add({
+          _isConnecting = false;
+          _agentState = 'error';
+          final errorMsgId = 'err_${DateTime.now().millisecondsSinceEpoch}';
+          _messagesById[errorMsgId] = {
+            'id': errorMsgId,
             'isUser': false,
-            'text': "Failed to load question: ${e.toString()}",
+            'text': "Failed to connect: $e",
             'time': 'Just now',
             'type': 'coach',
-          });
+            'rawTime': DateTime.now().millisecondsSinceEpoch,
+          };
         });
       }
     }
   }
 
-  Future<void> _toggleListening() async {
-    if (_isMuted || _isAnalysing) return;
-
-    if (_isListening) {
-      await _sttService.stop();
-      setState(() => _isListening = false);
-      if (_lastWords.isNotEmpty) {
-        _sendMessage(_lastWords);
-      }
-    } else {
-      setState(() {
-        _lastWords = '';
-        _isListening = true;
-      });
-      await _sttService.start(
-        onTranscript: (text) {
+  void _setupListeners() {
+    if (_listener == null) return;
+    _listener!
+      ..on<RoomDisconnectedEvent>((event) {
+        if (mounted) {
           setState(() {
-            _lastWords = text;
+            _agentState = 'disconnected';
+            _isListening = false;
           });
-        },
-        onError: (err) {
-          setState(() => _isListening = false);
-        },
-        onDone: () {
-          setState(() => _isListening = false);
-        },
-      );
-    }
+        }
+      })
+      ..on<TranscriptionEvent>((event) {
+        _handleTranscription(event);
+      })
+      ..on<ParticipantMetadataUpdatedEvent>((event) {
+        if (event.participant is RemoteParticipant) {
+          _parseAgentMetadata(event.participant.metadata);
+        }
+      })
+      ..on<DataReceivedEvent>((event) {
+        _handleDataReceived(event);
+      })
+      ..on<ParticipantConnectedEvent>((event) {
+        debugPrint(
+          '[LiveKit] Participant connected: ${event.participant.identity}',
+        );
+      });
   }
 
-  Future<void> _sendMessage(String text) async {
-    if (text.trim().isEmpty || _isAnalysing) return;
-    
-    setState(() {
-      _messages.add({
-        'isUser': true,
-        'text': text,
-        'time': 'Just now',
-      });
-      _lastWords = '';
-      _isAnalysing = true;
-    });
-    
-    _scrollToBottom();
-    
+  void _parseAgentMetadata(String? metadata) {
+    if (metadata == null) return;
     try {
-      final repo = ref.read(grammarRepositoryProvider);
-      final result = await repo.analyzePracticeResponse(
-        _currentQuestion?.question ?? '', 
-        text,
-        audio: null,
-      );
-      
-      if (!mounted) return;
-
-      setState(() {
-        _lastAnalysis = result;
-        _messages.add({
-          'isUser': false,
-          'text': result.improvedResponse,
-          'time': 'Just now',
-          'type': 'coach',
-          'alternatives': [result.improvedResponse],
-          'alerts': result.suggestions['alerts']?.cast<String>() ?? [],
+      final data = jsonDecode(metadata);
+      if (mounted) {
+        setState(() {
+          if (data['agent_state'] != null) _agentState = data['agent_state'];
+          if (data['fluency'] != null) _fluencyScore = data['fluency'];
+          if (data['grammar'] != null) _grammarScore = data['grammar'];
         });
-        _isAnalysing = false;
+      }
+    } catch (_) {}
+  }
+
+  void _handleDataReceived(DataReceivedEvent event) {
+    try {
+      final raw = utf8.decode(event.data);
+      final decoded = jsonDecode(raw);
+      if (decoded['type'] == 'analysis' && decoded['id'] != null) {
+        final id = decoded['id'];
+        if (_messagesById.containsKey(id)) {
+          setState(() {
+            _messagesById[id]!['alternatives'] = decoded['alternatives'];
+            _messagesById[id]!['alerts'] = decoded['alerts'];
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _handleTranscription(TranscriptionEvent event) {
+    if (event.segments.isEmpty) return;
+    final isUser = event.participant is LocalParticipant;
+
+    if (mounted) {
+      setState(() {
+        for (final segment in event.segments) {
+          if (segment.text.trim().isEmpty && !segment.isFinal) {
+            continue;
+          }
+          if (isUser && !segment.isFinal) {
+            _lastWords = segment.text;
+          } else if (isUser && segment.isFinal) {
+            _lastWords = ''; // clear on final
+          }
+
+          _messagesById[segment.id] = {
+            'id': segment.id,
+            'isUser': isUser,
+            'text': segment.text,
+            'type': isUser ? 'user' : 'coach',
+            'time': 'Just now',
+            'rawTime': segment.firstReceivedTime.millisecondsSinceEpoch,
+            'alternatives': _messagesById[segment.id]?['alternatives'],
+            'alerts': _messagesById[segment.id]?['alerts'],
+          };
+        }
       });
       _scrollToBottom();
-    } catch (e) {
-      debugPrint('Analysis error: $e');
-      if (mounted) {
-        setState(() {
-          _isAnalysing = false;
-          _messages.add({
-            'isUser': false,
-            'text': "Analysis failed: ${e.toString()}",
-            'time': 'Just now',
-            'type': 'coach',
-          });
-        });
-      }
     }
+  }
+
+  Future<void> _disconnect() async {
+    try {
+      await _room?.disconnect();
+    } catch (_) {}
+    _listener?.dispose();
+    _room = null;
   }
 
   void _scrollToBottom() {
@@ -185,9 +230,56 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
     });
   }
 
+  void _toggleListening() async {
+    if (_room?.localParticipant == null) return;
+    setState(() {
+      _isMuted = !_isMuted;
+      _isListening = !_isMuted;
+    });
+    try {
+      await _room!.localParticipant!.setMicrophoneEnabled(!_isMuted);
+    } catch (e) {
+      debugPrint('[LiveKit Coach] Microphone toggle error: $e');
+    }
+  }
+
+  void _sendMessage(String text) {
+    if (text.trim().isEmpty) return;
+    if (_room?.localParticipant == null) return;
+
+    final payload = {
+      'type': 'chat',
+      'id': 'msg_${DateTime.now().millisecondsSinceEpoch}',
+      'text': text,
+    };
+
+    try {
+      _room!.localParticipant!.publishData(
+        utf8.encode(jsonEncode(payload)),
+        reliable: true,
+        topic: 'chat',
+      );
+    } catch (_) {}
+
+    setState(() {
+      _lastWords = '';
+      _messagesById[payload['id']!] = {
+        'id': payload['id'],
+        'isUser': true,
+        'text': text,
+        'type': 'user',
+        'time': 'Just now',
+        'rawTime': DateTime.now().millisecondsSinceEpoch,
+        'alternatives': null,
+        'alerts': null,
+      };
+    });
+    _scrollToBottom();
+  }
+
   @override
   void dispose() {
-    _voiceController.dispose();
+    _disconnect();
     _chatScrollController.dispose();
     super.dispose();
   }
@@ -197,13 +289,10 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
     final colorScheme = Theme.of(context).colorScheme;
 
     return Skeletonizer(
-      enabled: _isLoading,
+      enabled: _isConnecting,
       child: Column(
         children: [
-          // Top compact metrics & AI Status
           _buildTopCompactHeader(colorScheme),
-          
-          // Chat Viewport
           Expanded(
             child: ListView.builder(
               controller: _chatScrollController,
@@ -215,14 +304,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
               },
             ),
           ),
-          
-          // Chat Input
           _buildChatInput(colorScheme),
           const SizedBox(height: 10),
         ],
       ),
     );
-
   }
 
   Widget _buildTopCompactHeader(ColorScheme colorScheme) {
@@ -250,9 +336,14 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+                      border: Border.all(
+                        color: const Color(0xFFF1F5F9),
+                        width: 2,
+                      ),
                       image: const DecorationImage(
-                        image: NetworkImage('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300'),
+                        image: NetworkImage(
+                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300',
+                        ),
                         fit: BoxFit.cover,
                       ),
                       boxShadow: [
@@ -281,10 +372,22 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF22C55E),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                           const SizedBox(width: 4),
-                          const Text('Live Intelligence Active', style: TextStyle(fontSize: 10, color: Color(0xFF166534), fontWeight: FontWeight.w500)),
+                          Text(
+                            _isConnecting
+                                ? 'Connecting...'
+                                : 'Live Intelligence Active',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF166534),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -295,22 +398,23 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _isMuted = !_isMuted;
-                      if (_isMuted && _isListening) {
-                        // _speechToText.stop();
-                        _isListening = false;
-                      }
-                    });
+                    _toggleListening();
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: _isMuted ? const Color(0xFFFEF2F2) : const Color(0xFFF0F7FF),
+                      color: _isMuted
+                          ? const Color(0xFFFEF2F2)
+                          : const Color(0xFFF0F7FF),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: _isMuted ? const Color(0xFFFEE2E2) : const Color(0xFFE0E7FF),
+                        color: _isMuted
+                            ? const Color(0xFFFEE2E2)
+                            : const Color(0xFFE0E7FF),
                       ),
                     ),
                     child: Row(
@@ -318,7 +422,9 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         Icon(
                           _isMuted ? Icons.mic_off : Icons.mic_none,
                           size: 16,
-                          color: _isMuted ? const Color(0xFFEF4444) : const Color(0xFF0066FF),
+                          color: _isMuted
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF0066FF),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -326,7 +432,9 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
-                            color: _isMuted ? const Color(0xFFEF4444) : const Color(0xFF0066FF),
+                            color: _isMuted
+                                ? const Color(0xFFEF4444)
+                                : const Color(0xFF0066FF),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -340,9 +448,19 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
           const SizedBox(height: 20),
           Row(
             children: [
-              _buildMetricBadge('FLUENCY', '${_lastAnalysis?.fluencyScore ?? 0}%', const Color(0xFF0066FF), Icons.insights),
+              _buildMetricBadge(
+                'FLUENCY',
+                '$_fluencyScore%',
+                const Color(0xFF0066FF),
+                Icons.insights,
+              ),
               const SizedBox(width: 12),
-              _buildMetricBadge('GRAMMAR', '${_lastAnalysis?.grammarScore ?? 0}/100', const Color(0xFF059669), Icons.spellcheck),
+              _buildMetricBadge(
+                'GRAMMAR',
+                '$_grammarScore/100',
+                const Color(0xFF059669),
+                Icons.spellcheck,
+              ),
             ],
           ),
         ],
@@ -350,7 +468,12 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
     );
   }
 
-  Widget _buildMetricBadge(String label, String value, Color color, IconData icon) {
+  Widget _buildMetricBadge(
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -404,10 +527,14 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (!isUser) ...[
@@ -435,18 +562,20 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
               ],
               Flexible(
                 child: Column(
-                  crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                  crossAxisAlignment: isUser
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        gradient: isUser 
-                          ? const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF0066FF), Color(0xFF6366F1)],
-                            ) 
-                          : null,
+                        gradient: isUser
+                            ? const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF0066FF), Color(0xFF6366F1)],
+                              )
+                            : null,
                         color: isUser ? null : widget.themeExt.cardColor,
                         borderRadius: BorderRadius.only(
                           topLeft: const Radius.circular(24),
@@ -456,7 +585,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: isUser ? const Color(0xFF0066FF).withValues(alpha: 0.05) : widget.themeExt.shadowColor,
+                            color: isUser
+                                ? const Color(
+                                    0xFF0066FF,
+                                  ).withValues(alpha: 0.05)
+                                : widget.themeExt.shadowColor,
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -466,9 +599,13 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         msg['text'],
                         style: TextStyle(
                           fontSize: 16,
-                          color: isUser ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                          color: isUser
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
                           height: 1.5,
-                          fontWeight: isUser ? FontWeight.w500 : FontWeight.normal,
+                          fontWeight: isUser
+                              ? FontWeight.w500
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -478,7 +615,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.verified, size: 12, color: Color(0xFF22C55E)),
+                            const Icon(
+                              Icons.verified,
+                              size: 12,
+                              color: Color(0xFF22C55E),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               msg['label'],
@@ -495,29 +636,43 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   ],
                 ),
               ),
-              if (isUser) const SizedBox(width: 48), // Padding on the left for user messages
+              if (isUser)
+                const SizedBox(
+                  width: 48,
+                ), // Padding on the left for user messages
             ],
           ),
           if (msg['alternatives'] != null)
-            ...List.generate(msg['alternatives'].length, (i) => _buildSubBubble(
-              msg['alternatives'][i],
-              const Color(0xFFE11D48),
-              'BETTER ALTERNATIVE',
-              Icons.auto_fix_high,
-            )),
+            ...List.generate(
+              msg['alternatives'].length,
+              (i) => _buildSubBubble(
+                msg['alternatives'][i],
+                const Color(0xFFE11D48),
+                'BETTER ALTERNATIVE',
+                Icons.auto_fix_high,
+              ),
+            ),
           if (msg['alerts'] != null)
-            ...List.generate(msg['alerts'].length, (i) => _buildSubBubble(
-              msg['alerts'][i],
-              const Color(0xFFF59E0B),
-              'PACING ALERT',
-              Icons.speed,
-            )),
+            ...List.generate(
+              msg['alerts'].length,
+              (i) => _buildSubBubble(
+                msg['alerts'][i],
+                const Color(0xFFF59E0B),
+                'PACING ALERT',
+                Icons.speed,
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildSubBubble(String text, Color color, String label, IconData icon) {
+  Widget _buildSubBubble(
+    String text,
+    Color color,
+    String label,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(left: 48, top: 14),
       child: Container(
@@ -546,8 +701,8 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 10, 
-                      fontWeight: FontWeight.w900, 
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
                       color: color,
                       letterSpacing: 0.8,
                     ),
@@ -556,8 +711,8 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   Text(
                     text,
                     style: TextStyle(
-                      fontSize: 14, 
-                      color: color.withValues(alpha: 0.9), 
+                      fontSize: 14,
+                      color: color.withValues(alpha: 0.9),
                       fontStyle: FontStyle.italic,
                       height: 1.4,
                       fontWeight: FontWeight.w500,
@@ -592,13 +747,17 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              _isMuted 
-                ? 'Microphone muted' 
-                : (_isListening 
-                    ? (_lastWords.isEmpty ? 'Listening...' : _lastWords)
-                    : (_lastWords.isNotEmpty ? _lastWords : 'Tap mic to dictate...')),
+              _isMuted
+                  ? 'Microphone muted'
+                  : (_isListening
+                        ? (_lastWords.isEmpty ? 'Listening...' : _lastWords)
+                        : (_lastWords.isNotEmpty
+                              ? _lastWords
+                              : 'Tap mic to dictate...')),
               style: TextStyle(
-                color: _isMuted ? const Color(0xFFEF4444) : widget.themeExt.secondaryText,
+                color: _isMuted
+                    ? const Color(0xFFEF4444)
+                    : widget.themeExt.secondaryText,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
@@ -610,9 +769,6 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: () {
-                if (_isMuted) {
-                  setState(() => _isMuted = false);
-                }
                 _toggleListening();
               },
               child: AnimatedContainer(
@@ -622,24 +778,38 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: _isMuted 
+                    colors: _isMuted
                         ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
-                        : (_isListening 
-                            ? [const Color(0xFF10B981), const Color(0xFF059669)] 
-                            : [const Color(0xFF0066FF), const Color(0xFF7C3AED)]),
+                        : (_isListening
+                              ? [
+                                  const Color(0xFF10B981),
+                                  const Color(0xFF059669),
+                                ]
+                              : [
+                                  const Color(0xFF0066FF),
+                                  const Color(0xFF7C3AED),
+                                ]),
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isMuted ? const Color(0xFFEF4444) : (_isListening ? const Color(0xFF10B981) : const Color(0xFF0066FF))).withValues(alpha: 0.3),
+                      color:
+                          (_isMuted
+                                  ? const Color(0xFFEF4444)
+                                  : (_isListening
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFF0066FF)))
+                              .withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
-                  _isMuted ? Icons.mic_off_rounded : (_isListening ? Icons.stop_rounded : Icons.mic_rounded), 
-                  color: Colors.white, 
+                  _isMuted
+                      ? Icons.mic_off_rounded
+                      : (_isListening ? Icons.stop_rounded : Icons.mic_rounded),
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -670,7 +840,11 @@ class _CoachSectionState extends ConsumerState<CoachSection> with SingleTickerPr
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ),

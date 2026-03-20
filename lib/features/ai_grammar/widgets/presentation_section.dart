@@ -67,7 +67,11 @@ class _PresentationSectionState extends State<PresentationSection> {
             ),
             child: Row(
               children: [
-                Icon(Icons.copy, size: 14, color: widget.themeExt.secondaryText),
+                Icon(
+                  Icons.copy,
+                  size: 14,
+                  color: widget.themeExt.secondaryText,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'SLIDE 04 / 12',
@@ -94,12 +98,20 @@ class _PresentationSectionState extends State<PresentationSection> {
           ),
           MouseRegion(
             cursor: SystemMouseCursors.click,
-            child: Icon(Icons.description_outlined, color: widget.themeExt.secondaryText, size: 20),
+            child: Icon(
+              Icons.description_outlined,
+              color: widget.themeExt.secondaryText,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           MouseRegion(
             cursor: SystemMouseCursors.click,
-            child: Icon(Icons.settings_outlined, color: widget.themeExt.secondaryText, size: 20),
+            child: Icon(
+              Icons.settings_outlined,
+              color: widget.themeExt.secondaryText,
+              size: 20,
+            ),
           ),
         ],
       ),
@@ -113,7 +125,9 @@ class _PresentationSectionState extends State<PresentationSection> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000'),
+          image: NetworkImage(
+            'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1000',
+          ),
           fit: BoxFit.cover,
         ),
       ),
@@ -205,7 +219,10 @@ class _PresentationSectionState extends State<PresentationSection> {
                 fontStyle: FontStyle.italic,
               ),
               children: [
-                const TextSpan(text: '"Now, moving on to our third pillar: Operational Excellence. This isn\'t just about cutting costs; it\'s about '),
+                const TextSpan(
+                  text:
+                      '"Now, moving on to our third pillar: Operational Excellence. This isn\'t just about cutting costs; it\'s about ',
+                ),
                 TextSpan(
                   text: 'reimagining our core workflows',
                   style: TextStyle(
@@ -213,7 +230,9 @@ class _PresentationSectionState extends State<PresentationSection> {
                     color: const Color(0xFF1E293B),
                     fontStyle: FontStyle.normal,
                     decoration: TextDecoration.underline,
-                    decorationColor: const Color(0xFFC026D3).withValues(alpha: 0.3),
+                    decorationColor: const Color(
+                      0xFFC026D3,
+                    ).withValues(alpha: 0.3),
                     decorationThickness: 4,
                   ),
                 ),
@@ -232,7 +251,9 @@ class _PresentationSectionState extends State<PresentationSection> {
       decoration: BoxDecoration(
         color: widget.themeExt.cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF0066FF).withValues(alpha: 0.1)),
+        border: Border.all(
+          color: const Color(0xFF0066FF).withValues(alpha: 0.1),
+        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0066FF).withValues(alpha: 0.02),
@@ -419,8 +440,15 @@ class _PresentationSectionState extends State<PresentationSection> {
     );
   }
 
-  Widget _buildCheckpointItem(String title, {bool isCompleted = false, bool isActive = false, bool isPending = false}) {
-    Color textColor = widget.themeExt.secondaryText; // Just use secondary if not trying to use context
+  Widget _buildCheckpointItem(
+    String title, {
+    bool isCompleted = false,
+    bool isActive = false,
+    bool isPending = false,
+  }) {
+    Color textColor = widget
+        .themeExt
+        .secondaryText; // Just use secondary if not trying to use context
     if (isCompleted) textColor = const Color(0xFF94A3B8);
     if (isPending) textColor = const Color(0xFFCBD5E1);
 
@@ -446,10 +474,18 @@ class _PresentationSectionState extends State<PresentationSection> {
                 shape: BoxShape.circle,
                 color: const Color(0xFF0066FF).withValues(alpha: 0.1),
               ),
-              child: const Icon(Icons.circle, color: Color(0xFF0066FF), size: 12),
+              child: const Icon(
+                Icons.circle,
+                color: Color(0xFF0066FF),
+                size: 12,
+              ),
             )
           else
-            const Icon(Icons.circle_outlined, color: Color(0xFFE2E8F0), size: 20),
+            const Icon(
+              Icons.circle_outlined,
+              color: Color(0xFFE2E8F0),
+              size: 20,
+            ),
         ],
       ),
     );

@@ -33,7 +33,8 @@ class CorrectionResult {
   factory CorrectionResult.fromJson(Map<String, dynamic> json) {
     return CorrectionResult(
       original: json['original'] as String? ?? '',
-      corrected: json['corrected'] as String? ?? json['refinedText'] as String? ?? '',
+      corrected:
+          json['corrected'] as String? ?? json['refinedText'] as String? ?? '',
       refinedText: json['refinedText'] as String?,
       explanation: json['explanation'] as String?,
       audio: json['audio'] as String?,
@@ -44,7 +45,6 @@ class CorrectionResult {
     );
   }
 }
-
 
 class GrammarMessage {
   final String role;
@@ -125,6 +125,7 @@ class GrammarSocketState {
 class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
   io.Socket? _socket;
   String? _currentAiMessage;
+  String? _currentSessionId;
 
   @override
   GrammarSocketState build() {
@@ -136,35 +137,39 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
   }
 
   void joinPractice(String mode) async {
+    // Session tracking to avoid race conditions
+    _currentSessionId = DateTime.now().toIso8601String();
+    final sessionId = _currentSessionId;
+
     // Disconnect existing socket if it exists
     if (_socket != null) {
       _socket!.disconnect();
       _socket!.dispose();
       _socket = null;
     }
-    
+
     // Reset state for new practice
     state = GrammarSocketState();
+    _currentAiMessage = null;
 
     // Stop ongoing audio
     ref.read(grammarAudioPlayerProvider.notifier).stop();
 
     if (mode == 'conversation') {
-      refreshConversationQuestion();
+      refreshConversationQuestion(sessionId: sessionId);
     }
 
     final baseUrl = ApiClient.baseUrl;
     final socketUrl = '$baseUrl/communication';
-    
+
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
 
     _socket = io.io(socketUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
-      'extraHeaders': {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+      'forceNew': true,
+      'extraHeaders': {if (token != null) 'Authorization': 'Bearer $token'},
     });
 
     _socket!.onConnect((_) {
@@ -182,7 +187,11 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
 
       if (isFirst) {
         _currentAiMessage = chunk;
-        final newMessage = GrammarMessage(role: 'ai', text: _currentAiMessage!, isFinal: false);
+        final newMessage = GrammarMessage(
+          role: 'ai',
+          text: _currentAiMessage!,
+          isFinal: false,
+        );
         state = state.copyWith(
           messages: [...state.messages, newMessage],
           isAiSpeaking: true,
@@ -191,7 +200,9 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
         _currentAiMessage = (_currentAiMessage ?? '') + chunk;
         final messages = List<GrammarMessage>.from(state.messages);
         if (messages.isNotEmpty && messages.last.role == 'ai') {
-          messages[messages.length - 1] = messages.last.copyWith(text: _currentAiMessage);
+          messages[messages.length - 1] = messages.last.copyWith(
+            text: _currentAiMessage,
+          );
           state = state.copyWith(messages: messages);
         }
       }
@@ -240,7 +251,6 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
       }
     });
 
-
     _socket!.on('error', (data) {
       state = state.copyWith(isRefining: false);
     });
@@ -274,9 +284,11 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
     };
 
     if (_socket != null && _socket!.connected) {
+      state = GrammarSocketState(); // Start fresh roleplay session
+      _currentAiMessage = null;
       _socket!.emit('start_roleplay', data);
     } else {
-      _socket!.onConnect((_) {
+      _socket?.onConnect((_) {
         _socket!.emit('join_practice', {'mode': 'roleplay'});
         _socket!.emit('start_roleplay', data);
       });
@@ -299,10 +311,13 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
     });
   }
 
-  Future<void> refreshConversationQuestion() async {
+  Future<void> refreshConversationQuestion({String? sessionId}) async {
+    final activeSessionId = sessionId ?? _currentSessionId;
     try {
       final repo = ref.read(grammarRepositoryProvider);
       final question = await repo.fetchPracticeQuestion('conversation');
+
+      if (activeSessionId != _currentSessionId) return;
 
       final aiMessage = GrammarMessage(
         role: 'ai',
@@ -318,10 +333,13 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
       );
 
       if (question.audio != null) {
-        ref.read(grammarAudioPlayerProvider.notifier).playBase64(question.audio!);
+        ref
+            .read(grammarAudioPlayerProvider.notifier)
+            .playBase64(question.audio!);
       }
     } catch (e) {
       debugPrint('Error loading conversation question: $e');
+      if (activeSessionId != _currentSessionId) return;
       final errorMessage = GrammarMessage(
         role: 'ai',
         text: "Sorry, I couldn't load the practice question. Please try again.",
@@ -331,8 +349,9 @@ class GrammarSocketNotifier extends Notifier<GrammarSocketState> {
   }
 }
 
-final grammarSocketProvider = NotifierProvider<GrammarSocketNotifier, GrammarSocketState>(
-  GrammarSocketNotifier.new,
-);
+final grammarSocketProvider =
+    NotifierProvider<GrammarSocketNotifier, GrammarSocketState>(
+      GrammarSocketNotifier.new,
+    );
 
 // Note: AudioChunksNotifier removed in favor of GrammarAudioPlayerNotifier
