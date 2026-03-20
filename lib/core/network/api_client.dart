@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:eduprova/globals.dart';
 import 'package:flutter/cupertino.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 // class ApiClient {
 //   static String get baseUrl {
-//     if (Platform.isAndroid) {
+//     if (!kIsWeb && io.Platform.isAndroid) {
 //       // Reverted to explicit local IP for physical devices or custom networks
 //       return 'http://192.168.1.5:4000';
 //     }
@@ -69,15 +69,15 @@ class ApiClient {
       debugPrint('Using override URL: $override');
       return override;
     }
-    if (Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       // const ip = '192.168.1.4';
       const ip = '192.168.1.121';
       debugPrint('Using Android URL: http://$ip:4000');
       return 'http://$ip:4000';
       // return 'http://10.169.69.6:4000';
     }
-    debugPrint('Using iOS URL: http://localhost:4000');
-    return 'http://localhost:4000';
+    debugPrint('Using iOS/Web URL: http://localhost:4000');
+    return 'http://192.168.1.112:4000';
   }
 
   static String? get baseUrlOverride => prefs.getString(_overrideUrlKey);

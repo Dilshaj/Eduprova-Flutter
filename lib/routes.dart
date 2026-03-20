@@ -20,6 +20,8 @@ import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
 import 'package:eduprova/features/jobs/jobs_screen.dart';
+import 'package:eduprova/features/jobs/screens/job_details_screen.dart';
+import 'package:eduprova/features/jobs/screens/search_jobs_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -72,6 +74,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       return null;
+
     },
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
@@ -115,7 +118,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/jobs', builder: (_, _) => const JobsScreen()),
+              GoRoute(
+                path: AppRoutes.jobs,
+                builder: (_, _) => const JobsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'detail/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return JobDetailsScreen(jobId: id);
+                    },
+                  ),
+                  GoRoute(
+                    path: 'search',
+                    builder: (context, state) => const SearchJobsScreen(),
+                  ),
+                ],
+              ),
             ],
           ),
         ],

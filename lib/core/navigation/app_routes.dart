@@ -41,4 +41,11 @@ class AppRoutes {
   static const String resumeBuilderList = '/resume-builder/list';
   static String resumeBuilderEditor(String id) => '/resume-builder/$id';
   static const String resumeBuilderImport = '/resume-builder/import';
+
+  // Jobs
+  static const String jobs = '/jobs';
+  static String jobDetail(String id) => '/job/$id';
+  static const String searchJobs = '/jobs/search';
+  static const String savedJobs = '/jobs/saved';
+  static const String myApplications = '/jobs/applications';
 }
