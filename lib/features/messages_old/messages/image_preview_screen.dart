@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/utils/image_cache_manager.dart';
 
 class ImagePreviewScreen extends StatelessWidget {
   final String imageUrl;
@@ -29,6 +30,7 @@ class ImagePreviewScreen extends StatelessWidget {
             maxScale: 4.0,
             child: CachedNetworkImage(
               imageUrl: imageUrl,
+              cacheManager: CacheManagers.messageCacheManager,
               fit: BoxFit.contain,
               width: double.infinity,
               height: double.infinity,

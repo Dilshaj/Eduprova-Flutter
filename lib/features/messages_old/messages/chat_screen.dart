@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../core/utils/image_cache_manager.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/conversation_model.dart';
@@ -298,7 +299,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _isPendingDirectChat && !_isPendingCreator;
 
   Future<void> _acceptInvite() async {
-    final updated = await _messagesRepository.acceptInvite(widget.conversationId);
+    final updated = await _messagesRepository.acceptInvite(
+      widget.conversationId,
+    );
     if (!mounted) return;
     if (updated == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -536,10 +539,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         children: [
           Text(
             'You received a chat invitation',
-            style: TextStyle(
-              color: cs.onSurface,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           Row(
@@ -588,7 +588,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 radius: 20,
                 backgroundColor: cs.primaryContainer,
                 backgroundImage: avatarUrl != null
-                    ? CachedNetworkImageProvider(avatarUrl)
+                    ? CachedNetworkImageProvider(
+                        avatarUrl,
+                        cacheManager: CacheManagers.messageCacheManager,
+                      )
                     : null,
                 child: avatarUrl == null
                     ? Text(
@@ -856,6 +859,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                           ),
                                           child: CachedNetworkImage(
                                             imageUrl: attachment.url,
+                                            cacheManager: CacheManagers
+                                                .messageCacheManager,
                                             fit: BoxFit.cover,
                                             placeholder: (context, url) =>
                                                 Container(
@@ -920,7 +925,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       radius: 14,
       backgroundColor: cs.primaryContainer,
       backgroundImage: avatarUrl != null
-          ? CachedNetworkImageProvider(avatarUrl)
+          ? CachedNetworkImageProvider(
+              avatarUrl,
+              cacheManager: CacheManagers.messageCacheManager,
+            )
           : null,
       child: avatarUrl == null
           ? Text(

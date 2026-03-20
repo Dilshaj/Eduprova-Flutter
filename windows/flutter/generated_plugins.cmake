@@ -11,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   livekit_client
   media_kit_libs_windows_video
   media_kit_video
+  pdfx
   record_windows
   url_launcher_windows
 )

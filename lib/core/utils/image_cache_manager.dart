@@ -36,4 +36,13 @@ class CacheManagers {
       maxNrOfCacheObjects: 200, // accommodate more posts in feed
     ),
   );
+
+  static const messageCacheKey = 'messageCacheKey';
+  static final CacheManager messageCacheManager = CacheManager(
+    Config(
+      messageCacheKey,
+      stalePeriod: const Duration(days: 30), // 30 days for chat messages
+      maxNrOfCacheObjects: 500, // accommodate many chat images
+    ),
+  );
 }

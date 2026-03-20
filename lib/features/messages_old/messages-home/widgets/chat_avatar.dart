@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/utils/image_cache_manager.dart';
 import '../../models/conversation_model.dart';
 
 class ChatAvatar extends StatelessWidget {
@@ -46,6 +47,7 @@ class ChatAvatar extends StatelessWidget {
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: avatar,
+            cacheManager: CacheManagers.messageCacheManager,
             placeholder: (context, url) =>
                 Container(color: Colors.grey.withValues(alpha: 0.1)),
             errorWidget: (context, url, error) =>
@@ -123,7 +125,11 @@ class ChatAvatar extends StatelessWidget {
         height: circleSize,
         decoration: const BoxDecoration(shape: BoxShape.circle),
         child: ClipOval(
-          child: CachedNetworkImage(imageUrl: avatar, fit: BoxFit.cover),
+          child: CachedNetworkImage(
+            imageUrl: avatar,
+            cacheManager: CacheManagers.messageCacheManager,
+            fit: BoxFit.cover,
+          ),
         ),
       );
     }
