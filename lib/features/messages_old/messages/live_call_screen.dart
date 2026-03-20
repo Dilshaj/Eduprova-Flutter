@@ -3,12 +3,16 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../models/call_room_model.dart';
+import '../models/search_user_model.dart';
+import '../providers/chat_socket_provider.dart';
 import '../repository/calling_repository.dart';
+import '../widgets/participant_picker_screen.dart';
 
-class LiveCallScreen extends StatefulWidget {
+class LiveCallScreen extends ConsumerStatefulWidget {
   final CallRoomModel? initialRoom;
   final String? roomName;
   final bool initialVideo;
@@ -23,12 +27,10 @@ class LiveCallScreen extends StatefulWidget {
   });
 
   @override
-  State<LiveCallScreen> createState() => _LiveCallScreenState();
+  ConsumerState<LiveCallScreen> createState() => _LiveCallScreenState();
 }
 
-class _LiveCallScreenState extends State<LiveCallScreen> {
-  static const List<String> _emojis = ['👍', '❤️', '😂', '🎉', '🔥'];
-
+class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
   final CallingRepository _repository = CallingRepository();
   final TextEditingController _chatController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
@@ -88,6 +90,7 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
           }
         })
         ..on<DataReceivedEvent>(_onDataReceived);
+      room.registerTextStreamHandler('chat', _onTextChatReceived);
       room.addListener(_refreshParticipants);
 
       await room.connect(roomData.serverUrl, roomData.token);
@@ -129,28 +132,15 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
         payload['name']?.toString() ??
         senderIdentity;
 
-    if (event.topic == 'chat' && type == 'chat') {
-      final text = payload['text']?.toString().trim() ?? '';
-      if (text.isEmpty) return;
-      final id =
-          payload['id']?.toString() ??
-          '${senderIdentity}_${DateTime.now().microsecondsSinceEpoch}';
-      final exists = _chatMessages.any((message) => message.id == id);
-      if (exists) return;
-      setState(() {
-        _chatMessages = [
-          ..._chatMessages,
-          _CallChatMessage(
-            id: id,
-            senderIdentity: senderIdentity,
-            senderName: senderName,
-            text: text,
-            timestamp: DateTime.tryParse(payload['timestamp']?.toString() ?? ''),
-            isMine: false,
-          ),
-        ];
-      });
-      _scrollChatToEnd();
+    if (type == 'chat') {
+      _appendRemoteChatMessage(
+        id: payload['id']?.toString() ??
+            '${senderIdentity}_${DateTime.now().microsecondsSinceEpoch}',
+        senderIdentity: senderIdentity,
+        senderName: senderName,
+        text: payload['text']?.toString() ?? '',
+        timestamp: DateTime.tryParse(payload['timestamp']?.toString() ?? ''),
+      );
       return;
     }
 
@@ -170,6 +160,62 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
         };
       });
     }
+  }
+
+  Future<void> _onTextChatReceived(
+    TextStreamReader reader,
+    String participantIdentity,
+  ) async {
+    final text = (await reader.readAll()).trim();
+    if (text.isEmpty || !mounted) return;
+    final info = reader.info;
+
+    final sender = _participants.cast<Participant?>().firstWhere(
+      (participant) => participant?.identity == participantIdentity,
+      orElse: () => null,
+    );
+
+    _appendRemoteChatMessage(
+      id: info?.id ?? '${participantIdentity}_${DateTime.now().microsecondsSinceEpoch}',
+      senderIdentity: participantIdentity,
+      senderName: sender?.name.isNotEmpty == true
+          ? sender!.name
+          : participantIdentity,
+      text: text,
+      timestamp: info == null
+          ? DateTime.now().toUtc()
+          : DateTime.fromMillisecondsSinceEpoch(
+              info.timestamp,
+              isUtc: true,
+            ),
+    );
+  }
+
+  void _appendRemoteChatMessage({
+    required String id,
+    required String senderIdentity,
+    required String senderName,
+    required String text,
+    required DateTime? timestamp,
+  }) {
+    final clean = text.trim();
+    if (clean.isEmpty) return;
+    final exists = _chatMessages.any((message) => message.id == id);
+    if (exists) return;
+    setState(() {
+      _chatMessages = [
+        ..._chatMessages,
+        _CallChatMessage(
+          id: id,
+          senderIdentity: senderIdentity,
+          senderName: senderName,
+          text: clean,
+          timestamp: timestamp,
+          isMine: false,
+        ),
+      ];
+    });
+    _scrollChatToEnd();
   }
 
   void _refreshParticipants() {
@@ -229,6 +275,7 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
   Future<void> _disconnect() async {
     await _eventsListener?.dispose();
     _eventsListener = null;
+    _room?.unregisterTextStreamHandler('chat');
     _room?.removeListener(_refreshParticipants);
     await _room?.disconnect();
     await _room?.dispose();
@@ -242,19 +289,25 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
     final local = room?.localParticipant;
     if (text.isEmpty || local == null) return;
 
-    final payload = {
+    final info = await local.sendText(
+      text,
+      options: SendTextOptions(topic: 'chat'),
+    );
+
+    final fallbackPayload = {
       'type': 'chat',
-      'id': '${local.identity}_${DateTime.now().microsecondsSinceEpoch}',
+      'id': info.id,
       'identity': local.identity,
       'name': local.name,
       'text': text,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
     };
-
-    await local.publishData(
-      utf8.encode(jsonEncode(payload)),
-      reliable: true,
-      topic: 'chat',
+    unawaited(
+      local.publishData(
+        utf8.encode(jsonEncode(fallbackPayload)),
+        reliable: true,
+        topic: 'chat',
+      ),
     );
 
     if (!mounted) return;
@@ -262,7 +315,7 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
       _chatMessages = [
         ..._chatMessages,
         _CallChatMessage(
-          id: payload['id']! as String,
+          id: info.id,
           senderIdentity: local.identity,
           senderName: local.name,
           text: text,
@@ -312,6 +365,35 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
       utf8.encode(jsonEncode(payload)),
       reliable: true,
       topic: 'interactions',
+    );
+  }
+
+  Future<void> _inviteParticipants() async {
+    final roomName = _roomData?.roomName ?? widget.roomName;
+    final local = _room?.localParticipant;
+    if (roomName == null || roomName.isEmpty || local == null) return;
+
+    final selected = await Navigator.of(context).push<List<SearchUserModel>>(
+      MaterialPageRoute(
+        builder: (_) => const ParticipantPickerScreen(
+          title: 'Add Participants',
+          submitLabel: 'Invite',
+        ),
+      ),
+    );
+
+    if (!mounted || selected == null || selected.isEmpty) return;
+
+    ref.read(chatSocketProvider.notifier).emitCallInvite(
+      recipientIds: selected.map((item) => item.id).toList(),
+      roomName: roomName,
+      conversationType: roomName.startsWith('grp:') ? 'group' : 'meet',
+      callerName: local.name,
+      callerAvatar: _avatarFromMetadata(local.metadata),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Invited ${selected.length} participant(s)')),
     );
   }
 
@@ -369,6 +451,7 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
     _chatController.dispose();
     _chatScrollController.dispose();
     _eventsListener?.dispose();
+    _room?.unregisterTextStreamHandler('chat');
     _room?.removeListener(_refreshParticipants);
     unawaited(_room?.disconnect());
     unawaited(_room?.dispose());
@@ -467,6 +550,12 @@ class _LiveCallScreenState extends State<LiveCallScreen> {
                                 label: localHandRaised ? 'Hand Up' : 'Raise',
                                 tint: const Color(0xFFF59E0B),
                                 onTap: _toggleHandRaise,
+                              ),
+                              _CallActionButton(
+                                icon: Icons.person_add_alt_1,
+                                active: true,
+                                label: 'Add People',
+                                onTap: _inviteParticipants,
                               ),
                               _CallActionButton(
                                 icon: Icons.call_end,
@@ -1183,4 +1272,18 @@ class _FloatingReaction {
 
 extension<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
+}
+
+String? _avatarFromMetadata(String? metadata) {
+  if (metadata == null || metadata.isEmpty) return null;
+  try {
+    final decoded = jsonDecode(metadata);
+    if (decoded is Map<String, dynamic>) {
+      final value = decoded['avatar']?.toString();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+  } catch (_) {}
+  return null;
 }

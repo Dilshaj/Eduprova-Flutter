@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,10 +9,14 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'meet.dart';
 import 'chat_avatar.dart';
 import '../../models/conversation_model.dart';
+import '../../models/search_user_model.dart';
 import '../../providers/messages_provider.dart';
+import '../../repository/messages_repository.dart';
+import '../../repository/participant_search_repository.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../widgets/messages_background.dart';
 import '../../widgets/messages_button.dart';
+import '../../widgets/participant_picker_screen.dart';
 import '../../communities/widgets/communities_groups.dart';
 import '../../communities/widgets/new_community_dialog.dart';
 import '../../calendar/widgets/calendar_home_screen.dart';
@@ -139,13 +145,19 @@ class MessagesHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
+  final MessagesRepository _messagesRepository = MessagesRepository();
+  final ParticipantSearchRepository _participantSearchRepository =
+      ParticipantSearchRepository();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _searchFocusNode = FocusNode();
+  Timer? _searchDebounce;
   String _searchQuery = '';
   int _selectedTabIndex = 0;
   bool _showAdvancedFilters = false;
   String _activeFilter = 'all';
+  bool _isSearchingUsers = false;
+  List<SearchUserModel> _searchedUsers = const [];
 
   @override
   void initState() {
@@ -157,6 +169,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -168,6 +181,85 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
       context,
       MaterialPageRoute(builder: (_) => const MeetScreen()),
     );
+  }
+
+  Future<void> _openParticipantSearch() async {
+    final selected = await Navigator.of(context).push<List<SearchUserModel>>(
+      MaterialPageRoute(
+        builder: (_) => const ParticipantPickerScreen(
+          title: 'Start Conversation',
+          submitLabel: 'Create',
+        ),
+      ),
+    );
+
+    if (!mounted || selected == null || selected.isEmpty) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final conversation = await _messagesRepository.createConversation(
+      selected.map((user) => user.id).toList(),
+      name: selected.length > 1
+          ? selected.map((user) => user.displayName).take(3).join(', ')
+          : null,
+    );
+
+    if (!mounted) return;
+
+    if (conversation == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Unable to create conversation')),
+      );
+      return;
+    }
+
+    ref.read(conversationsProvider.notifier).loadConversations();
+    context.push('/chat/${conversation.id}');
+  }
+
+  Future<void> _createDirectChat(SearchUserModel user) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final conversation = await _messagesRepository.createConversation([user.id]);
+    if (!mounted) return;
+    if (conversation == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Unable to open conversation')),
+      );
+      return;
+    }
+    ref.read(conversationsProvider.notifier).loadConversations();
+    context.push('/chat/${conversation.id}');
+  }
+
+  void _scheduleUserSearch(String value) {
+    _searchDebounce?.cancel();
+    if (_selectedTabIndex != 0 || value.trim().isEmpty) {
+      setState(() {
+        _searchedUsers = const [];
+        _isSearchingUsers = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearchingUsers = true);
+    _searchDebounce = Timer(const Duration(milliseconds: 320), () async {
+      try {
+        final currentUserId = ref.read(authProvider).user?.id ?? '';
+        final users = await _participantSearchRepository.searchUsers(value);
+        if (!mounted) return;
+        setState(() {
+          _searchedUsers = users
+              .where((user) => user.id != currentUserId)
+              .toList();
+          _isSearchingUsers = false;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _searchedUsers = const [];
+          _isSearchingUsers = false;
+        });
+      }
+    });
   }
 
   void _goToChat(ConversationModel item) {
@@ -319,7 +411,10 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
           return true;
         }).toList();
 
-        if (filteredChats.isEmpty && _searchQuery.isNotEmpty) {
+        if (filteredChats.isEmpty &&
+            _searchedUsers.isEmpty &&
+            _searchQuery.isNotEmpty &&
+            !_isSearchingUsers) {
           return Padding(
             padding: const .only(top: 40),
             child: Column(
@@ -345,14 +440,65 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
         return RefreshIndicator(
           onRefresh: () =>
               ref.read(conversationsProvider.notifier).loadConversations(),
-          child: ListView.builder(
+          child: ListView(
             controller: _scrollController,
             padding: const .only(top: 0, bottom: 100),
-            itemCount: filteredChats.length,
-            itemBuilder: (context, index) {
-              final item = filteredChats[index];
-              return ChatItemWidget(item: item, onPress: () => _goToChat(item));
-            },
+            children: [
+              if (_searchQuery.isNotEmpty) ...[
+                if (_isSearchingUsers)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_searchedUsers.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Text(
+                      'People',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: .w700,
+                        color: isDarkMode
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                  for (final user in _searchedUsers)
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage:
+                            user.avatar != null && user.avatar!.isNotEmpty
+                            ? NetworkImage(user.avatar!)
+                            : null,
+                        child: user.avatar == null || user.avatar!.isEmpty
+                            ? Text(user.displayName.substring(0, 1).toUpperCase())
+                            : null,
+                      ),
+                      title: Text(user.displayName),
+                      subtitle: Text(user.email),
+                      trailing: const Icon(Icons.chat_bubble_outline),
+                      onTap: () => _createDirectChat(user),
+                    ),
+                ],
+                if (filteredChats.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Text(
+                      'Chats',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: .w700,
+                        color: isDarkMode
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+              ],
+              for (final item in filteredChats)
+                ChatItemWidget(item: item, onPress: () => _goToChat(item)),
+            ],
           ),
         );
       },
@@ -405,6 +551,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                           setState(() {
                             _searchQuery = val;
                           });
+                          _scheduleUserSearch(val);
                         },
                         decoration: InputDecoration(
                           hintText: _selectedTabIndex == 1
@@ -590,6 +737,18 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                           ),
                           const SizedBox(width: 12),
                         ],
+                        if (_selectedTabIndex == 0)
+                          GestureDetector(
+                            onTap: _openParticipantSearch,
+                            child: Icon(
+                              Icons.edit_square,
+                              size: 26,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1F2937),
+                            ),
+                          ),
+                        if (_selectedTabIndex == 0) const SizedBox(width: 12),
                         if (_selectedTabIndex == 0)
                           GestureDetector(
                             onTap: _toggleFilters,

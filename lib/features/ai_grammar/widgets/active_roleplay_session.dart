@@ -427,8 +427,9 @@ class _ActiveRoleplaySessionState extends ConsumerState<ActiveRoleplaySession> {
     GrammarSttState sttState,
     bool isAiActive,
   ) {
+    final bottomPadding = MediaQuery.viewPaddingOf(context).bottom;
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      padding: EdgeInsets.fromLTRB(20, 10, 20, bottomPadding > 10 ? 0 : 12),
       decoration: BoxDecoration(color: widget.themeExt.scaffoldBackgroundColor),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class LiveCoachConfigSection extends StatefulWidget {
   final AppDesignExtension themeExt;
-  final VoidCallback onStart;
+  final void Function(String mode, String topic) onStart;
 
   const LiveCoachConfigSection({
     super.key,
@@ -17,43 +17,93 @@ class LiveCoachConfigSection extends StatefulWidget {
 }
 
 class _LiveCoachConfigSectionState extends State<LiveCoachConfigSection> {
-  String _selectedFocus = 'General Fluency';
-  String _selectedDifficulty = 'Intermediate';
+  String _selectedMode = 'free_talk';
+  String _selectedTopic = '';
+
+  final Map<String, List<String>> _topics = {
+    'grammar': [
+      'Tenses',
+      'Articles',
+      'Prepositions',
+      'Subject-Verb Agreement',
+      'Direct/Indirect Speech',
+    ],
+    'shadowing': [
+      'Everyday Phrases',
+      'Business Idioms',
+      'Tech Jargon',
+      'Travel Essentials',
+    ],
+    'roleplay': [
+      'HR Interviewer',
+      'Tech Startup Founder',
+      'Angry Customer',
+      'Cafe Barista',
+    ],
+  };
+
+  final List<({String id, String label, String description, IconData icon})>
+  _modes = [
+    (
+      id: 'free_talk',
+      label: 'Free Talk',
+      description: 'Unstructured conversation with gentle corrections.',
+      icon: Icons.chat_bubble_outline_rounded,
+    ),
+    (
+      id: 'grammar',
+      label: 'Grammar Practice',
+      description: 'Targeted practice on specific grammar rules.',
+      icon: Icons.book_outlined,
+    ),
+    (
+      id: 'shadowing',
+      label: 'Shadowing',
+      description: 'Listen and repeat to improve pronunciation.',
+      icon: Icons.settings_voice_outlined,
+    ),
+    (
+      id: 'roleplay',
+      label: 'Role Play',
+      description: 'Act out specific scenarios like interviews or cafes.',
+      icon: Icons.theater_comedy_outlined,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: .all(24.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: .all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                  borderRadius: .circular(16),
                 ),
                 child: const Icon(
-                  Icons.bolt,
-                  color: Color(0xFF10B981),
+                  Icons.auto_awesome_rounded,
+                  color: Color(0xFF3B82F6),
                   size: 32,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     Text(
                       'AI LIVE COACH',
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF10B981),
+                        color: const Color(0xFF3B82F6),
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -72,7 +122,7 @@ class _LiveCoachConfigSectionState extends State<LiveCoachConfigSection> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Configure your live coaching session. The AI Coach will adapt its feedback and conversational style based on your choices.',
+            'Select how you want to interact with Prova today. The AI Coach will adapt its feedback and conversational style based on your choices.',
             style: TextStyle(
               fontSize: 16,
               color: widget.themeExt.secondaryText,
@@ -80,30 +130,31 @@ class _LiveCoachConfigSectionState extends State<LiveCoachConfigSection> {
             ),
           ),
           const SizedBox(height: 32),
-          _buildConfigCard(
-            title: 'Focus Area',
-            icon: Icons.track_changes,
-            child: _buildDropdown(
-              value: _selectedFocus,
-              items: [
-                'General Fluency',
-                'Pronunciation',
-                'Vocabulary Building',
-                'Business English',
-              ],
-              onChanged: (val) => setState(() => _selectedFocus = val!),
+          Text(
+            'PRACTICE MODE',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: widget.themeExt.secondaryText,
+              letterSpacing: 2.0,
             ),
           ),
-          const SizedBox(height: 24),
-          _buildConfigCard(
-            title: 'Difficulty Level',
-            icon: Icons.bar_chart,
-            child: _buildDropdown(
-              value: _selectedDifficulty,
-              items: ['Beginner', 'Intermediate', 'Advanced', 'Native-like'],
-              onChanged: (val) => setState(() => _selectedDifficulty = val!),
+          const SizedBox(height: 16),
+          ..._modes.map((mode) => _buildModeCard(mode)),
+          if (_selectedMode != 'free_talk') ...[
+            const SizedBox(height: 32),
+            Text(
+              'SELECT FOCUS TOPIC',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: widget.themeExt.secondaryText,
+                letterSpacing: 2.0,
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+            _buildTopicGrid(),
+          ],
           const SizedBox(height: 48),
           _buildStartButton(),
         ],
@@ -111,86 +162,131 @@ class _LiveCoachConfigSectionState extends State<LiveCoachConfigSection> {
     );
   }
 
-  Widget _buildConfigCard({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: widget.themeExt.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: widget.themeExt.borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: widget.themeExt.shadowColor,
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+  Widget _buildModeCard(
+    ({String id, String label, String description, IconData icon}) mode,
+  ) {
+    final isSelected = _selectedMode == mode.id;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedMode = mode.id;
+          if (mode.id != 'free_talk') {
+            _selectedTopic = _topics[mode.id]!.first;
+          } else {
+            _selectedTopic = '';
+          }
+        });
+      },
+      child: Container(
+        margin: .only(bottom: 16),
+        padding: .all(20),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF3B82F6).withValues(alpha: 0.05)
+              : widget.themeExt.cardColor,
+          borderRadius: .circular(24),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF3B82F6).withValues(alpha: 0.5)
+                : widget.themeExt.borderColor,
+            width: isSelected ? 2 : 1,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: const Color(0xFF10B981)),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: .all(12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
+                    : widget.themeExt.scaffoldBackgroundColor,
+                borderRadius: .circular(16),
+              ),
+              child: Icon(
+                mode.icon,
+                color: isSelected
+                    ? const Color(0xFF3B82F6)
+                    : widget.themeExt.secondaryText,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: .start,
+                children: [
+                  Text(
+                    mode.label,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? const Color(0xFF3B82F6)
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    mode.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: widget.themeExt.secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF3B82F6)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDropdown({
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: widget.themeExt.scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: widget.themeExt.borderColor),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: widget.themeExt.cardColor,
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            color: widget.themeExt.secondaryText,
-          ),
-          items: items.map((String item) {
-            return DropdownMenuItem(
-              value: item,
-              child: Text(
-                item,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+  Widget _buildTopicGrid() {
+    final topics = _topics[_selectedMode] ?? [];
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: topics.map((topic) {
+        final isSelected = _selectedTopic == topic;
+        return GestureDetector(
+          onTap: () => setState(() => _selectedTopic = topic),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: .symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF3B82F6) : Colors.transparent,
+              borderRadius: .circular(30),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF3B82F6)
+                    : widget.themeExt.borderColor,
               ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
+            ),
+            child: Text(
+              topic,
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : widget.themeExt.secondaryText,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -198,25 +294,25 @@ class _LiveCoachConfigSectionState extends State<LiveCoachConfigSection> {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: widget.onStart,
+        onTap: () => widget.onStart(_selectedMode, _selectedTopic),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: .symmetric(vertical: 20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
+              colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: .circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: .center,
             children: [
               Text(
                 'Start Live Coaching',

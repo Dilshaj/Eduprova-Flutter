@@ -196,35 +196,56 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
 
             // Central Bot Circle — centered at _cx, _cy
             Positioned(
-              left: _cx - 60,
-              top: _cy - 60,
+              left: _cx - 65,
+              top: _cy - 65,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 130,
+                height: 130,
                 decoration: BoxDecoration(
                   shape: .circle,
                   gradient: LinearGradient(
                     begin: .topLeft,
                     end: .bottomRight,
                     colors: [
-                      const Color(0xFF93C5FD).withValues(alpha: 0.35),
-                      const Color(0xFFC4B5FD).withValues(alpha: 0.25),
+                      const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                      const Color(0xFFE056FD).withValues(alpha: 0.1),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
-                      blurRadius: 24,
-                      spreadRadius: 2,
+                      blurRadius: 40,
+                      spreadRadius: 5,
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFFE056FD).withValues(alpha: 0.15),
+                      blurRadius: 60,
+                      offset: const Offset(5, 5),
                     ),
                   ],
                 ),
                 child: Center(
-                  child: Image.asset(
-                    'assets/grammar-assistant/ai-bot.png',
-                    width: 85,
-                    height: 85,
-                    fit: .contain,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: .circle,
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                          blurRadius: 20,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/grammar-assistant/ai-bot.png',
+                        width: 80,
+                        height: 80,
+                        fit: .contain,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -246,16 +267,15 @@ class _GrammarHomeScreenState extends State<GrammarHomeScreen>
 
   List<Widget> _buildCircularFeatures(double orbitAngle) {
     final List<(String, IconData, Color)> features = [
+      ('LIVE COACH', Icons.smart_toy_outlined, const Color(0xFF3B82F6)),
+      ('ROLEPLAY', Icons.theater_comedy_outlined, const Color(0xFFE056FD)),
+      ('SHADOWING', Icons.settings_voice_outlined, const Color(0xFF6366F1)),
+      ('REFINER', Icons.auto_awesome_rounded, const Color(0xFF8B5CF6)),
       (
         'CONVERSATION',
         Icons.chat_bubble_outline_rounded,
-        const Color(0xFF0066FF),
+        const Color(0xFF3B82F6),
       ),
-      ('REFINER', Icons.auto_awesome_rounded, const Color(0xFFE056FD)),
-      ('LIVE COACH', Icons.smart_toy_outlined, const Color(0xFF3E4EA0)),
-      // ('PRESENTATION', Icons.person_pin_outlined, const Color(0xFFE056FD)),
-      ('SHADOWING', Icons.settings_voice_outlined, const Color(0xFF3B82F6)),
-      ('ROLEPLAY', Icons.theater_comedy_outlined, const Color(0xFFE056FD)),
     ];
 
     return [

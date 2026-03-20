@@ -128,7 +128,7 @@ class MessagesRepository {
       final response = await _client.post(
         '/conversations',
         data: {
-          'participants': userIds,
+          'participantIds': userIds,
           'type': userIds.length > 1 ? 'group' : 'direct',
           'name': ?name,
           'avatar': ?avatar,
@@ -141,6 +141,44 @@ class MessagesRepository {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<ConversationModel?> getConversationById(String id) async {
+    try {
+      final response = await _client.get('/conversations/$id');
+      if (response.statusCode == 200) {
+        return ConversationModel.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching conversation: $e');
+    }
+    return null;
+  }
+
+  Future<ConversationModel?> acceptInvite(String id) async {
+    try {
+      final response = await _client.patch('/conversations/$id/accept');
+      if (response.statusCode == 200) {
+        return ConversationModel.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error accepting invite: $e');
+    }
+    return null;
+  }
+
+  Future<bool> rejectInvite(String id) async {
+    try {
+      final response = await _client.patch('/conversations/$id/reject');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error rejecting invite: $e');
+      return false;
     }
   }
 

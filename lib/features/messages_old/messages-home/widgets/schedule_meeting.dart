@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../models/meeting_model.dart';
+import '../../models/search_user_model.dart';
 import '../../repository/calling_repository.dart';
+import '../../widgets/participant_picker_screen.dart';
 
 class ScheduleMeetingScreen extends StatefulWidget {
   const ScheduleMeetingScreen({super.key});
@@ -14,6 +16,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
   final CallingRepository _repository = CallingRepository();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  List<SearchUserModel> _participants = const [];
   DateTime _startTime = DateTime.now().add(const Duration(hours: 1));
   Duration _duration = const Duration(hours: 1);
   bool _submitting = false;
@@ -68,6 +71,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
             : _descriptionController.text.trim(),
         startTime: _startTime,
         endTime: _startTime.add(_duration),
+        participantIds: _participants.map((user) => user.id).toList(),
       );
       if (!mounted) return;
       Navigator.of(context).pop<MeetingModel>(meeting);
@@ -79,6 +83,20 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Future<void> _pickParticipants() async {
+    final result = await Navigator.of(context).push<List<SearchUserModel>>(
+      MaterialPageRoute(
+        builder: (_) => ParticipantPickerScreen(
+          title: 'Add Participants',
+          submitLabel: 'Done',
+          initialSelected: _participants,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _participants = result);
   }
 
   @override
@@ -143,6 +161,43 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
                 if (value != null) setState(() => _duration = value);
               },
             ),
+            const SizedBox(height: 16),
+            ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              title: const Text('Participants'),
+              subtitle: Text(
+                _participants.isEmpty
+                    ? 'No participants selected'
+                    : _participants.map((user) => user.displayName).join(', '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: const Icon(Icons.group_add_outlined),
+              onTap: _pickParticipants,
+            ),
+            if (_participants.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final participant in _participants)
+                    InputChip(
+                      label: Text(participant.displayName),
+                      onDeleted: () {
+                        setState(() {
+                          _participants = _participants
+                              .where((user) => user.id != participant.id)
+                              .toList();
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),

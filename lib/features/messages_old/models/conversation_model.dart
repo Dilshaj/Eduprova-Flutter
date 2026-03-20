@@ -64,6 +64,7 @@ class ConversationMember {
 class ConversationModel {
   final String id;
   final ConversationType type;
+  final String status;
   final String? name;
   final String? avatar;
   final String? description;
@@ -77,6 +78,7 @@ class ConversationModel {
   ConversationModel({
     required this.id,
     required this.type,
+    this.status = 'active',
     this.name,
     this.avatar,
     this.description,
@@ -92,6 +94,7 @@ class ConversationModel {
     return .new(
       id: json['id'] ?? json['_id'] ?? '',
       type: ConversationType.fromString(json['type'] ?? 'direct'),
+      status: json['status']?.toString() ?? 'active',
       name: json['name'],
       avatar: json['avatar'],
       description: json['description'],

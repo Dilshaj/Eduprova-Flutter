@@ -26,6 +26,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
+  final MessagesRepository _messagesRepository = MessagesRepository();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _inputFocusNode = FocusNode();
@@ -67,13 +68,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       });
     }
 
+    final freshConversation = await _messagesRepository.getConversationById(
+      widget.conversationId,
+    );
+    if (freshConversation != null && mounted) {
+      setState(() {
+        _conversation = freshConversation;
+      });
+    }
+
     // Join socket room
     ref
         .read(chatSocketProvider.notifier)
         .joinConversation(widget.conversationId);
 
     // Mark as read
-    await MessagesRepository().markAsRead(widget.conversationId);
+    await _messagesRepository.markAsRead(widget.conversationId);
 
     // Seed messages for this conversation from API
     final messages = await ref.read(
@@ -248,7 +258,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _isPendingWithoutPermission) return;
 
     _messageController.clear();
 
@@ -275,6 +285,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _replyToId = null;
       _replyToMessage = null;
     });
+  }
+
+  bool get _isPendingDirectChat =>
+      _conversation?.type == ConversationType.direct &&
+      _conversation?.status == 'pending';
+
+  bool get _isPendingCreator =>
+      _isPendingDirectChat && _conversation?.createdBy == _currentUserId;
+
+  bool get _isPendingWithoutPermission =>
+      _isPendingDirectChat && !_isPendingCreator;
+
+  Future<void> _acceptInvite() async {
+    final updated = await _messagesRepository.acceptInvite(widget.conversationId);
+    if (!mounted) return;
+    if (updated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to accept invitation')),
+      );
+      return;
+    }
+    setState(() => _conversation = updated);
+    ref.read(conversationsProvider.notifier).loadConversations();
+  }
+
+  Future<void> _rejectInvite() async {
+    final ok = await _messagesRepository.rejectInvite(widget.conversationId);
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to reject invitation')),
+      );
+      return;
+    }
+    ref.read(conversationsProvider.notifier).loadConversations();
+    context.pop();
   }
 
   void _onTextChanged(String value) {
@@ -450,9 +496,66 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     },
                   ),
           ),
+          if (_isPendingDirectChat) _buildPendingInviteBanner(cs),
           if (isOtherTyping) _buildTypingIndicator(cs),
           if (_replyToMessage != null) _buildReplyBanner(cs),
-          _buildMessageInput(theme, cs),
+          if (!_isPendingWithoutPermission) _buildMessageInput(theme, cs),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingInviteBanner(ColorScheme cs) {
+    if (_isPendingCreator) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Text(
+          'Waiting for accepted invitation...',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'You received a chat invitation',
+            style: TextStyle(
+              color: cs.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton(
+                onPressed: _rejectInvite,
+                child: const Text('Decline'),
+              ),
+              const SizedBox(width: 12),
+              FilledButton(
+                onPressed: _acceptInvite,
+                child: const Text('Accept'),
+              ),
+            ],
+          ),
         ],
       ),
     );

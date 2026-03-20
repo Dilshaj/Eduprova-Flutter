@@ -1,171 +1,221 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:eduprova/theme/theme_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:eduprova/core/services/deepgram_stt_service.dart';
-import 'package:eduprova/features/ai_grammar/repositories/grammar_repository.dart';
-import 'package:eduprova/features/ai_grammar/providers/grammar_audio_player_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:eduprova/core/network/api_client.dart';
+import 'package:eduprova/core/network/livekit_config.dart';
+import 'package:livekit_client/livekit_client.dart';
 
 class CoachSection extends ConsumerStatefulWidget {
   final AppDesignExtension themeExt;
   final VoidCallback onBack;
+  final String? mode;
+  final String? topic;
 
-  const CoachSection({super.key, required this.themeExt, required this.onBack});
+  const CoachSection({
+    super.key,
+    required this.themeExt,
+    required this.onBack,
+    this.mode,
+    this.topic,
+  });
 
   @override
   ConsumerState<CoachSection> createState() => _CoachSectionState();
 }
 
-class _CoachSectionState extends ConsumerState<CoachSection>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _voiceController;
+class _CoachSectionState extends ConsumerState<CoachSection> {
   final ScrollController _chatScrollController = ScrollController();
 
-  bool _isMuted = false;
-  bool _isLoading = true;
-  bool _isAnalysing = false;
+  Room? _room;
+  EventsListener<RoomEvent>? _listener;
+  String? _token;
 
-  final DeepgramSttService _sttService = DeepgramSttService();
+  bool _isConnecting = true;
+  bool _isMuted = false;
   bool _isListening = false;
+  String _agentState = 'loading';
   String _lastWords = '';
 
-  GrammarPracticeQuestion? _currentQuestion;
-  GrammarAnalysisResult? _lastAnalysis;
+  int _fluencyScore = 0;
+  int _grammarScore = 0;
 
-  final List<Map<String, dynamic>> _messages = [];
+  final Map<String, Map<String, dynamic>> _messagesById = {};
+
+  List<Map<String, dynamic>> get _messages {
+    final list = _messagesById.values.toList();
+    list.sort((a, b) => (a['rawTime'] as int).compareTo(b['rawTime'] as int));
+    return list;
+  }
 
   @override
   void initState() {
     super.initState();
-    _voiceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat();
-    _loadInitialQuestion();
+    _connect();
   }
 
-  Future<void> _loadInitialQuestion() async {
+  Future<void> _connect() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _lastAnalysis = null;
-      _messages.clear();
-    });
+    setState(() => _isConnecting = true);
+
     try {
-      final repo = ref.read(grammarRepositoryProvider);
-      final question = await repo.fetchPracticeQuestion('fluency');
-      if (mounted) {
-        setState(() {
-          _currentQuestion = question;
-          _messages.add({
-            'isUser': false,
-            'text': question.question,
-            'time': 'Just now',
-            'type': 'coach',
+      final String participantName =
+          'User-${DateTime.now().millisecondsSinceEpoch}';
+      final String roomName = 'coach-${DateTime.now().millisecondsSinceEpoch}';
+      final String metadata = jsonEncode({
+        'mode': widget.mode ?? 'free_talk',
+        'topic': widget.topic ?? '',
+      });
+
+      final response = await ApiClient.instance.post(
+        '/interview/livekit-token-coach',
+        data: {
+          'participantName': participantName,
+          'roomName': roomName,
+          'metadata': metadata,
+        },
+      );
+
+      if (response.data['token'] != null) {
+        _token = response.data['token'];
+        _room = Room();
+        _listener = _room!.createListener();
+        _setupListeners();
+
+        final String livekitUrl = LiveKitConfig.serverUrl;
+        await _room!.connect(livekitUrl, _token!);
+
+        // Auto-enable mic on connect
+        await _room!.localParticipant?.setMicrophoneEnabled(true);
+
+        if (mounted) {
+          setState(() {
+            _isConnecting = false;
+            _isListening = true;
+            _agentState = 'active';
           });
-          _isLoading = false;
-        });
-        if (question.audio != null) {
-          ref
-              .read(grammarAudioPlayerProvider.notifier)
-              .playBase64(question.audio!);
         }
       }
     } catch (e) {
-      debugPrint('Question load error: $e');
+      debugPrint('[LiveKit Coach] Connection error: $e');
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _messages.add({
+          _isConnecting = false;
+          _agentState = 'error';
+          final errorMsgId = 'err_${DateTime.now().millisecondsSinceEpoch}';
+          _messagesById[errorMsgId] = {
+            'id': errorMsgId,
             'isUser': false,
-            'text': "Failed to load question: ${e.toString()}",
+            'text': "Failed to connect: $e",
             'time': 'Just now',
             'type': 'coach',
-          });
+            'rawTime': DateTime.now().millisecondsSinceEpoch,
+          };
         });
       }
     }
   }
 
-  Future<void> _toggleListening() async {
-    if (_isMuted || _isAnalysing) return;
-
-    if (_isListening) {
-      await _sttService.stop();
-      setState(() => _isListening = false);
-      if (_lastWords.isNotEmpty) {
-        _sendMessage(_lastWords);
-      }
-    } else {
-      setState(() {
-        _lastWords = '';
-        _isListening = true;
-      });
-      await _sttService.start(
-        onTranscript: (text) {
+  void _setupListeners() {
+    if (_listener == null) return;
+    _listener!
+      ..on<RoomDisconnectedEvent>((event) {
+        if (mounted) {
           setState(() {
-            _lastWords = text;
+            _agentState = 'disconnected';
+            _isListening = false;
           });
-        },
-        onError: (err) {
-          setState(() => _isListening = false);
-        },
-        onDone: () {
-          setState(() => _isListening = false);
-        },
-      );
-    }
+        }
+      })
+      ..on<TranscriptionEvent>((event) {
+        _handleTranscription(event);
+      })
+      ..on<ParticipantMetadataUpdatedEvent>((event) {
+        if (event.participant is RemoteParticipant) {
+          _parseAgentMetadata(event.participant.metadata);
+        }
+      })
+      ..on<DataReceivedEvent>((event) {
+        _handleDataReceived(event);
+      })
+      ..on<ParticipantConnectedEvent>((event) {
+        debugPrint(
+          '[LiveKit] Participant connected: ${event.participant.identity}',
+        );
+      });
   }
 
-  Future<void> _sendMessage(String text) async {
-    if (text.trim().isEmpty || _isAnalysing) return;
-
-    setState(() {
-      _messages.add({'isUser': true, 'text': text, 'time': 'Just now'});
-      _lastWords = '';
-      _isAnalysing = true;
-    });
-
-    _scrollToBottom();
-
+  void _parseAgentMetadata(String? metadata) {
+    if (metadata == null) return;
     try {
-      final repo = ref.read(grammarRepositoryProvider);
-      final result = await repo.analyzePracticeResponse(
-        _currentQuestion?.question ?? '',
-        text,
-        audio: null,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _lastAnalysis = result;
-        _messages.add({
-          'isUser': false,
-          'text': result.improvedResponse,
-          'time': 'Just now',
-          'type': 'coach',
-          'alternatives': [result.improvedResponse],
-          'alerts': result.suggestions['alerts']?.cast<String>() ?? [],
+      final data = jsonDecode(metadata);
+      if (mounted) {
+        setState(() {
+          if (data['agent_state'] != null) _agentState = data['agent_state'];
+          if (data['fluency'] != null) _fluencyScore = data['fluency'];
+          if (data['grammar'] != null) _grammarScore = data['grammar'];
         });
-        _isAnalysing = false;
+      }
+    } catch (_) {}
+  }
+
+  void _handleDataReceived(DataReceivedEvent event) {
+    try {
+      final raw = utf8.decode(event.data);
+      final decoded = jsonDecode(raw);
+      if (decoded['type'] == 'analysis' && decoded['id'] != null) {
+        final id = decoded['id'];
+        if (_messagesById.containsKey(id)) {
+          setState(() {
+            _messagesById[id]!['alternatives'] = decoded['alternatives'];
+            _messagesById[id]!['alerts'] = decoded['alerts'];
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _handleTranscription(TranscriptionEvent event) {
+    if (event.segments.isEmpty) return;
+    final isUser = event.participant is LocalParticipant;
+
+    if (mounted) {
+      setState(() {
+        for (final segment in event.segments) {
+          if (segment.text.trim().isEmpty && !segment.isFinal) {
+            continue;
+          }
+          if (isUser && !segment.isFinal) {
+            _lastWords = segment.text;
+          } else if (isUser && segment.isFinal) {
+            _lastWords = ''; // clear on final
+          }
+
+          _messagesById[segment.id] = {
+            'id': segment.id,
+            'isUser': isUser,
+            'text': segment.text,
+            'type': isUser ? 'user' : 'coach',
+            'time': 'Just now',
+            'rawTime': segment.firstReceivedTime.millisecondsSinceEpoch,
+            'alternatives': _messagesById[segment.id]?['alternatives'],
+            'alerts': _messagesById[segment.id]?['alerts'],
+          };
+        }
       });
       _scrollToBottom();
-    } catch (e) {
-      debugPrint('Analysis error: $e');
-      if (mounted) {
-        setState(() {
-          _isAnalysing = false;
-          _messages.add({
-            'isUser': false,
-            'text': "Analysis failed: ${e.toString()}",
-            'time': 'Just now',
-            'type': 'coach',
-          });
-        });
-      }
     }
+  }
+
+  Future<void> _disconnect() async {
+    try {
+      await _room?.disconnect();
+    } catch (_) {}
+    _listener?.dispose();
+    _room = null;
   }
 
   void _scrollToBottom() {
@@ -180,9 +230,56 @@ class _CoachSectionState extends ConsumerState<CoachSection>
     });
   }
 
+  void _toggleListening() async {
+    if (_room?.localParticipant == null) return;
+    setState(() {
+      _isMuted = !_isMuted;
+      _isListening = !_isMuted;
+    });
+    try {
+      await _room!.localParticipant!.setMicrophoneEnabled(!_isMuted);
+    } catch (e) {
+      debugPrint('[LiveKit Coach] Microphone toggle error: $e');
+    }
+  }
+
+  void _sendMessage(String text) {
+    if (text.trim().isEmpty) return;
+    if (_room?.localParticipant == null) return;
+
+    final payload = {
+      'type': 'chat',
+      'id': 'msg_${DateTime.now().millisecondsSinceEpoch}',
+      'text': text,
+    };
+
+    try {
+      _room!.localParticipant!.publishData(
+        utf8.encode(jsonEncode(payload)),
+        reliable: true,
+        topic: 'chat',
+      );
+    } catch (_) {}
+
+    setState(() {
+      _lastWords = '';
+      _messagesById[payload['id']!] = {
+        'id': payload['id'],
+        'isUser': true,
+        'text': text,
+        'type': 'user',
+        'time': 'Just now',
+        'rawTime': DateTime.now().millisecondsSinceEpoch,
+        'alternatives': null,
+        'alerts': null,
+      };
+    });
+    _scrollToBottom();
+  }
+
   @override
   void dispose() {
-    _voiceController.dispose();
+    _disconnect();
     _chatScrollController.dispose();
     super.dispose();
   }
@@ -192,13 +289,10 @@ class _CoachSectionState extends ConsumerState<CoachSection>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Skeletonizer(
-      enabled: _isLoading,
+      enabled: _isConnecting,
       child: Column(
         children: [
-          // Top compact metrics & AI Status
           _buildTopCompactHeader(colorScheme),
-
-          // Chat Viewport
           Expanded(
             child: ListView.builder(
               controller: _chatScrollController,
@@ -210,8 +304,6 @@ class _CoachSectionState extends ConsumerState<CoachSection>
               },
             ),
           ),
-
-          // Chat Input
           _buildChatInput(colorScheme),
           const SizedBox(height: 10),
         ],
@@ -286,9 +378,11 @@ class _CoachSectionState extends ConsumerState<CoachSection>
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Text(
-                            'Live Intelligence Active',
-                            style: TextStyle(
+                          Text(
+                            _isConnecting
+                                ? 'Connecting...'
+                                : 'Live Intelligence Active',
+                            style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFF166534),
                               fontWeight: FontWeight.w500,
@@ -304,13 +398,7 @@ class _CoachSectionState extends ConsumerState<CoachSection>
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _isMuted = !_isMuted;
-                      if (_isMuted && _isListening) {
-                        // _speechToText.stop();
-                        _isListening = false;
-                      }
-                    });
+                    _toggleListening();
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
@@ -362,14 +450,14 @@ class _CoachSectionState extends ConsumerState<CoachSection>
             children: [
               _buildMetricBadge(
                 'FLUENCY',
-                '${_lastAnalysis?.fluencyScore ?? 0}%',
+                '$_fluencyScore%',
                 const Color(0xFF0066FF),
                 Icons.insights,
               ),
               const SizedBox(width: 12),
               _buildMetricBadge(
                 'GRAMMAR',
-                '${_lastAnalysis?.grammarScore ?? 0}/100',
+                '$_grammarScore/100',
                 const Color(0xFF059669),
                 Icons.spellcheck,
               ),
@@ -681,9 +769,6 @@ class _CoachSectionState extends ConsumerState<CoachSection>
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: () {
-                if (_isMuted) {
-                  setState(() => _isMuted = false);
-                }
                 _toggleListening();
               },
               child: AnimatedContainer(

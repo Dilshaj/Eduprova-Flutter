@@ -68,6 +68,8 @@ typedef MessageReactionCallback =
       List<dynamic> reactions,
     );
 typedef MeetingEventCallback = void Function(String event, Map<String, dynamic> data);
+typedef ConversationEventCallback =
+    void Function(Map<String, dynamic> conversation);
 
 // ─── Notifier ─────────────────────────────────────────────────────────────
 
@@ -83,6 +85,7 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
   final List<NewMessageCallback> _globalMessageListeners = [];
   final Map<String, MessageReactionCallback> _reactionListeners = {};
   final List<MeetingEventCallback> _meetingListeners = [];
+  final List<ConversationEventCallback> _conversationListeners = [];
 
   @override
   ChatSocketState build() {
@@ -333,6 +336,18 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
         }
       });
     }
+
+    for (final event in const ['conversation:updated', 'conversation:joined']) {
+      _socket!.on(event, (data) {
+        if (data is! Map) return;
+        final parsed = Map<String, dynamic>.from(data);
+        for (final cb in List<ConversationEventCallback>.from(
+          _conversationListeners,
+        )) {
+          cb(parsed);
+        }
+      });
+    }
   }
 
   void _updateTyping(String convId, String uid, {required bool add}) {
@@ -515,6 +530,11 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
   VoidCallback onMeetingEvent(MeetingEventCallback cb) {
     _meetingListeners.add(cb);
     return () => _meetingListeners.remove(cb);
+  }
+
+  VoidCallback onConversationEvent(ConversationEventCallback cb) {
+    _conversationListeners.add(cb);
+    return () => _conversationListeners.remove(cb);
   }
 
   // ── Query helpers ─────────────────────────────────────────────────────────

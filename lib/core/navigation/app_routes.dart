@@ -44,4 +44,6 @@ class AppRoutes {
 
   static const String grammar = '/grammar';
   static const String grammarConversation = '/grammar/conversation';
+  static const String grammarRoleplaySession = '/grammar/roleplay/session';
+  static const String grammarCoachSession = '/grammar/coach/session';
 }

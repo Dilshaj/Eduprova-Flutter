@@ -69,11 +69,7 @@ class ApiClient {
       return override;
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      debugPrint(
-        'Using Android emulator URL: http://10.0.2.2:4000 '
-        '(set Dev API URL override for a physical device)',
-      );
-      return 'http://10.0.2.2:4000';
+      return 'http://192.168.1.8:4000';
     }
     debugPrint('Using iOS/Web URL: http://localhost:4000');
     return 'http://localhost:4000';

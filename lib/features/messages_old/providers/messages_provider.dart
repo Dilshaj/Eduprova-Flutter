@@ -13,29 +13,56 @@ final messagesRepositoryProvider = Provider<MessagesRepository>((ref) {
 // ─── Conversations ────────────────────────────────────────────────────────
 
 class ConversationsNotifier extends AsyncNotifier<List<ConversationModel>> {
+  final MessagesRepository _repository = MessagesRepository();
+
   @override
   FutureOr<List<ConversationModel>> build() {
-    ref.onDispose(() => _socketDispose?.call());
+    ref.onDispose(() {
+      _socketDispose?.call();
+      _conversationSocketDispose?.call();
+    });
 
     // Listen for real-time message updates to update last message in list
     Future.microtask(() {
       _socketDispose = ref.read(chatSocketProvider.notifier).onGlobalMessage((
         msg,
       ) {
-        updateLastMessage(msg.conversationId, msg);
+        final current = state.value ?? const [];
+        final exists = current.any((conv) => conv.id == msg.conversationId);
+        if (exists) {
+          updateLastMessage(msg.conversationId, msg);
+        } else {
+          unawaited(_insertConversationIfNeeded(msg.conversationId));
+        }
       });
+
+      _conversationSocketDispose = ref
+          .read(chatSocketProvider.notifier)
+          .onConversationEvent((conversation) {
+            addOrUpdateConversation(ConversationModel.fromJson(conversation));
+          });
     });
 
-    return ref.read(messagesRepositoryProvider).getConversations();
+    return _repository.getConversations();
   }
 
   VoidCallback? _socketDispose;
+  VoidCallback? _conversationSocketDispose;
 
   Future<void> loadConversations() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => ref.read(messagesRepositoryProvider).getConversations(),
+      () => _repository.getConversations(),
     );
+  }
+
+  Future<void> _insertConversationIfNeeded(String conversationId) async {
+    final current = state.value ?? const [];
+    if (current.any((conv) => conv.id == conversationId)) return;
+
+    final conversation = await _repository.getConversationById(conversationId);
+    if (conversation == null) return;
+    addOrUpdateConversation(conversation);
   }
 
   void updateLastMessage(String conversationId, MessageModel message) {
@@ -48,6 +75,7 @@ class ConversationsNotifier extends AsyncNotifier<List<ConversationModel>> {
           ConversationModel(
             id: conv.id,
             type: conv.type,
+            status: conv.status,
             name: conv.name,
             avatar: conv.avatar,
             description: conv.description,
@@ -73,6 +101,19 @@ class ConversationsNotifier extends AsyncNotifier<List<ConversationModel>> {
       updated.insert(0, moved);
     }
     state = AsyncValue.data(updated);
+  }
+
+  void addOrUpdateConversation(ConversationModel conversation) {
+    final current = [...(state.value ?? const <ConversationModel>[])];
+    final index = current.indexWhere((item) => item.id == conversation.id);
+    if (index >= 0) {
+      current[index] = conversation;
+      final moved = current.removeAt(index);
+      current.insert(0, moved);
+    } else {
+      current.insert(0, conversation);
+    }
+    state = AsyncValue.data(current);
   }
 }
 

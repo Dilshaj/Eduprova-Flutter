@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:eduprova/features/ai_grammar/grammar_conversation_screen.dart';
 import 'package:eduprova/features/ai_grammar/widgets/roleplay_section.dart';
-import 'package:eduprova/features/ai_grammar/widgets/active_roleplay_session.dart';
-import 'package:eduprova/features/ai_grammar/widgets/coach_section.dart';
 import 'package:eduprova/features/ai_grammar/widgets/refiner_section.dart';
 import 'package:eduprova/features/ai_grammar/widgets/live_coach_config.dart';
 import 'package:eduprova/features/ai_grammar/providers/grammar_socket_provider.dart';
@@ -23,18 +21,15 @@ class _GrammarMainScreenState extends ConsumerState<GrammarMainScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   int _activeTabIndex = 0;
-  bool _isCoachActive = false;
 
   // Roleplay Session State
-  RoleplayScenario? _selectedScenario;
-  Map<String, dynamic>? _selectedConfig;
-  bool _isSessionActive = false;
+  // Removed local session state as we use GoRouter now
 
   final List<(String, IconData)> _features = const [
-    ('Conversation', Icons.mic_none_outlined),
-    ('Coach', Icons.lightbulb_outline),
-    ('Refiner', Icons.edit_outlined),
     ('Roleplay', Icons.groups_outlined),
+    ('Coach', Icons.lightbulb_outline),
+    ('Conversation', Icons.mic_none_outlined),
+    ('Refiner', Icons.edit_outlined),
   ];
 
   @override
@@ -67,15 +62,13 @@ class _GrammarMainScreenState extends ConsumerState<GrammarMainScreen>
       if (_tabController.index != index) {
         _tabController.index = index;
       }
-      _isCoachActive = false;
-      _isSessionActive = false;
     });
 
     final mode = switch (index) {
-      0 => 'conversation',
+      0 => 'roleplay',
       1 => 'live_coach',
-      2 => 'grammar_refiner',
-      3 => 'roleplay',
+      2 => 'conversation',
+      3 => 'grammar_refiner',
       _ => 'conversation',
     };
 
@@ -91,104 +84,94 @@ class _GrammarMainScreenState extends ConsumerState<GrammarMainScreen>
     return Scaffold(
       backgroundColor: themeExt.scaffoldBackgroundColor,
       body: SafeArea(
-        child: _isSessionActive && _selectedScenario != null
-            ? ActiveRoleplaySession(
-                title: _selectedScenario!.title,
-                difficulty: _selectedScenario!.difficulty,
-                roleType: _selectedScenario!.roleType,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                pinned: true,
+                floating: true,
+                backgroundColor: themeExt.scaffoldBackgroundColor,
+                scrolledUnderElevation: 0,
+                leading: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => context.pop(),
+                    child: Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 20,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                // title: _buildTabBar(themeExt),
+                expandedHeight: 100,
+                // title spacing:
+                titleSpacing: 42,
+                flexibleSpace: LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    // kToolbarHeight + safe area approx 90-100 down to ~56.
+                    // A threshold of ~70-80 detects when it's shrunk.
+                    final isCollapsed = constraints.maxHeight <= 80;
+                    return FlexibleSpaceBar(
+                      expandedTitleScale: 1.0,
+                      titlePadding: EdgeInsets.only(
+                        left: isCollapsed ? 42 : 12,
+                      ),
+                      background: Container(
+                        color: themeExt.scaffoldBackgroundColor,
+                      ),
+                      title: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: _buildTabBar(themeExt),
+                      ),
+                    );
+                  },
+                ),
+                // toolbarHeight: kToolbarHeight + 10,
+              ),
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              // 0: Roleplay
+              RoleplaySection(
                 themeExt: themeExt,
-                config: _selectedConfig,
-                onBack: () => setState(() => _isSessionActive = false),
-              )
-            : NestedScrollView(
-                headerSliverBuilder: (context, innerBoxIsScrolled) {
-                  return [
-                    SliverAppBar(
-                      pinned: true,
-                      floating: true,
-                      backgroundColor: themeExt.scaffoldBackgroundColor,
-                      scrolledUnderElevation: 0,
-                      leading: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => context.pop(),
-                          child: Icon(
-                            Icons.arrow_back_ios_new,
-                            size: 20,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      // title: _buildTabBar(themeExt),
-                      expandedHeight: 100,
-                      // title spacing:
-                      titleSpacing: 42,
-                      flexibleSpace: LayoutBuilder(
-                        builder:
-                            (BuildContext context, BoxConstraints constraints) {
-                              // kToolbarHeight + safe area approx 90-100 down to ~56.
-                              // A threshold of ~70-80 detects when it's shrunk.
-                              final isCollapsed = constraints.maxHeight <= 80;
-                              return FlexibleSpaceBar(
-                                expandedTitleScale: 1.0,
-                                titlePadding: EdgeInsets.only(
-                                  left: isCollapsed ? 42 : 12,
-                                ),
-                                background: Container(
-                                  color: themeExt.scaffoldBackgroundColor,
-                                ),
-                                title: Align(
-                                  alignment: Alignment.bottomCenter,
-                                  child: _buildTabBar(themeExt),
-                                ),
-                              );
-                            },
-                      ),
-                      // toolbarHeight: kToolbarHeight + 10,
-                    ),
-                  ];
+                onStartPractice: (scenario, config) {
+                  context.pushNamed(
+                    'grammar_roleplay_session',
+                    extra: {
+                      'title': scenario.title,
+                      'difficulty': scenario.difficulty,
+                      'roleType': scenario.roleType,
+                      'config': config,
+                    },
+                  );
                 },
-                body: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // 0: Conversation
-                    const GrammarConversationScreen(),
+              ),
 
-                    // 1: Coach
-                    _isCoachActive
-                        ? CoachSection(
-                            themeExt: themeExt,
-                            onBack: () =>
-                                setState(() => _isCoachActive = false),
-                          )
-                        : LiveCoachConfigSection(
-                            themeExt: themeExt,
-                            onStart: () =>
-                                setState(() => _isCoachActive = true),
-                          ),
-
-                    // 2: Refiner
-                    RefinerSection(
-                      themeExt: themeExt,
-                      onBack: () => setState(() {
-                        _tabController.index = 0;
-                      }),
-                    ),
-
-                    // 3: Roleplay
-                    RoleplaySection(
-                      themeExt: themeExt,
-                      onStartPractice: (scenario, config) {
-                        setState(() {
-                          _selectedScenario = scenario;
-                          _selectedConfig = config;
-                          _isSessionActive = true;
-                        });
-                      },
-                    ),
-                  ],
+              // 1: Coach
+              LiveCoachConfigSection(
+                themeExt: themeExt,
+                onStart: (mode, topic) => context.pushNamed(
+                  'grammar_coach_session',
+                  extra: {'mode': mode, 'topic': topic},
                 ),
               ),
+
+              // 2: Conversation
+              const GrammarConversationScreen(),
+
+              // 3: Refiner
+              RefinerSection(
+                themeExt: themeExt,
+                onBack: () => setState(() {
+                  _tabController.index = 0;
+                }),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -210,7 +193,7 @@ class _GrammarMainScreenState extends ConsumerState<GrammarMainScreen>
         child: TabBar(
           controller: _tabController,
           onTap: (index) {
-            _joinPracticeMode(index);
+            // _joinPracticeMode(index);
           },
           indicator: BoxDecoration(
             // color: const Color(0xFF0066FF),
