@@ -50,6 +50,7 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       // final token = await _storage.read(key: 'access_token');
       // final email = await _storage.read(key: 'user_email');
+      log('Checking session status');
       final token = prefs.getString('access_token');
       final email = prefs.getString('user_email');
 

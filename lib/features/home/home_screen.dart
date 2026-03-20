@@ -193,6 +193,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/ui/animated_title_header.dart';
 import 'package:eduprova/features/home/main_layout.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'posts/post_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -280,8 +283,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           actions: [
-            IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
+            IconButton(
+              icon: const Icon(LucideIcons.search, size: 22),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(LucideIcons.bell, size: 22),
+              onPressed: () {},
+            ),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0),
               child: CircleAvatar(
@@ -299,31 +308,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: AnimatedTitleHeader(
-            titles: ["Trending", "All", "Title 2", "Title 3"],
+            titles: const ["Trending", "All", "Latest", "Followers"],
             initialTitle: "Trending",
+            onTitleChanged: (title) {
+              // TODO: implement filtering
+            },
           ),
         ),
 
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => Post(
-              post: PostModel(
-                id: index.toString(),
-                name: "Riya Wilson",
-                designation: "Product Designer",
-                timeAgo: "3h ago",
-                content:
-                    "I just built a new design system for my side project using AI and it helped me generate 80% of the design elements!\nWhat do you think about it:",
-                imageUrl: "https://picsum.photos/seed/${index}abc/600/300",
-                authorAvatar: "assets/avatars/${index % 12 + 1}.png",
-                createdAt: DateTime.now(),
+        ref.watch(postsProvider).when(
+              data: (posts) {
+                if (posts.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: Text('No posts found')),
+                    ),
+                  );
+                }
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => Post(post: posts[index]),
+                    childCount: posts.length,
+                  ),
+                );
+              },
+              loading: () => SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => Skeletonizer(
+                    enabled: true,
+                    child: Post(
+                      post: PostModel(
+                        id: 'dummy',
+                        name: 'User Name',
+                        authorAvatar: 'assets/avatars/1.png',
+                        content: 'Loading content that should be long enough to look like a real post...',
+                        imageUrl: null,
+                        createdAt: DateTime.now(),
+                      ),
+                    ),
+                  ),
+                  childCount: 5,
+                ),
+              ),
+              error: (err, st) => SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const .all(32.0),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Error: $err'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.read(postsProvider.notifier).refresh(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-            childCount: 100,
-          ),
-        ),
       ],
     );
   }

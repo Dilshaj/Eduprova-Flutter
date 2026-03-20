@@ -1,5 +1,6 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/ai_interview/widgets/ai_theme.dart';
+import 'package:eduprova/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -36,24 +37,23 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
                       : constraints.maxWidth,
                 ),
                 SafeArea(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 32),
-                        _buildSIMChip(),
-                        const SizedBox(height: 24),
-                        _buildTitles(),
-                        const SizedBox(height: 16),
-                        _buildSubtitles(),
-                        const SizedBox(height: 32),
-                        _buildTags(),
-                        const SizedBox(height: 40),
-                        _buildButtons(),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildSIMChip(),
+                      const SizedBox(height: 24),
+                      _buildTitles(),
+                      const SizedBox(height: 16),
+                      _buildSubtitles(),
+                      const SizedBox(height: 32),
+                      _buildTags(),
+                      // const SizedBox(height: 40),
+                      Spacer(),
+                      _buildButtons(),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ],
@@ -390,54 +390,26 @@ class _AiInterviewHomeScreenState extends State<AiInterviewHomeScreen> {
         children: [
           const SizedBox(height: 16),
           // Start Session Gradient Button
-          Container(
-            width: double.infinity,
+          GradientBtn(
+            onTap: () {
+              context.push(AppRoutes.aiInterviewSetup);
+            },
+            borderRadius: 20,
             height: 60,
-            decoration: BoxDecoration(
-              color: null,
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF0066FF),
-                  Color(0xFFE056FD),
-                ], // Blue to Pink gradient
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFD946EF).withValues(alpha: 0.25),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: () {
-                context.push(AppRoutes.aiInterviewSetup);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Start Session',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Start Session',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                ],
-              ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+              ],
             ),
           ),
           const SizedBox(height: 16),

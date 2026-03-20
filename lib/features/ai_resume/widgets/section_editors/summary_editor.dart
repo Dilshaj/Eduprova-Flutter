@@ -2,7 +2,6 @@ import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:eduprova/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 import '../../models/resume_data.dart';
 
@@ -49,7 +48,6 @@ class _SummaryEditorState extends ConsumerState<SummaryEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeExt = theme.extension<AppDesignExtension>()!;
 
     void generateSummary() async {
       setState(() => _contentController.text = "Loading...");

@@ -168,7 +168,10 @@ class MainLayout extends StatelessWidget {
                   children: [
                     ListTile(
                       title: const Text('Grammar Correction'),
-                      onTap: () {},
+                      onTap: () {
+                        context.pop();
+                        context.push(AppRoutes.grammar);
+                      },
                     ),
                     Divider(height: 1, color: Theme.of(context).dividerColor),
                     ListTile(

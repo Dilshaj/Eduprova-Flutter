@@ -1,3 +1,5 @@
+import 'package:eduprova/features/ai_grammar/grammar_home_screen.dart';
+import 'package:eduprova/features/ai_grammar/grammar_conversation_screen.dart';
 import 'package:eduprova/features/ai_interview/analytics/interview_analysis.dart';
 import 'package:eduprova/features/ai_interview/history/history_analytics_screen.dart';
 import 'package:eduprova/features/ai_interview/interview_home/interview_home_screen.dart';
@@ -7,6 +9,7 @@ import 'package:eduprova/features/ai_resume/ai_resume_screen.dart';
 import 'package:eduprova/features/ai_resume/screens/import_resume_page.dart';
 import 'package:eduprova/features/ai_resume/screens/resume_builder_landing_page.dart';
 import 'package:eduprova/features/ai_resume/screens/resume_list_page.dart';
+import 'package:eduprova/features/auth/providers/auth_provider.dart';
 import 'package:eduprova/features/auth/screens/login_screen.dart';
 import 'package:eduprova/features/auth/screens/signup_screen.dart';
 import 'package:eduprova/features/courses/screens/billings_payments/billings_payments_screen.dart';
@@ -22,6 +25,7 @@ import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dar
 import 'package:eduprova/features/jobs/jobs_screen.dart';
 import 'package:eduprova/features/jobs/screens/job_details_screen.dart';
 import 'package:eduprova/features/jobs/screens/search_jobs_screen.dart';
+import 'package:eduprova/features/messages/messages_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,12 +34,12 @@ import 'package:eduprova/features/home/home_screen.dart';
 import 'package:eduprova/features/courses/course_learn/course_learning_screen.dart';
 import 'package:eduprova/features/courses/courses_home/courses_screen.dart';
 import 'package:eduprova/features/courses/course_detail/course_detail_screen.dart';
-import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
-import 'package:eduprova/features/messages/communities/create_community_screen.dart';
-import 'package:eduprova/features/messages/messages/chat_screen.dart';
-import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
-import 'package:eduprova/features/messages/messages/messages_screen.dart';
-import 'features/auth/providers/auth_provider.dart';
+// import 'package:eduprova/features/messages/communities/create_channel_screen.dart';
+// import 'package:eduprova/features/messages/communities/create_community_screen.dart';
+// import 'package:eduprova/features/messages/messages/chat_screen.dart';
+// import 'package:eduprova/features/messages/messages/chat_profile_screen.dart';
+// import 'package:eduprova/features/messages/messages/messages_screen.dart';
+// import 'features/auth/providers/auth_provider.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -50,7 +54,6 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
-
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.home,
@@ -74,8 +77,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       return null;
-
     },
+
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
@@ -112,7 +115,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.messages,
-                builder: (_, _) => const MessagesListScreen(),
+                builder: (_, _) => MessagesShell(),
               ),
             ],
           ),
@@ -216,29 +219,29 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       /*********************************************
       ***************** Messages  *****************
-      *********************************************/
-      GoRoute(
-        path: AppRoutes.createCommunity,
-        builder: (_, _) => const CreateCommunityScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.createChannel,
-        builder: (_, _) => const CreateChannelScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.chat(':id'),
-        builder: (_, state) {
-          final chatId = state.pathParameters['id']!;
-          return ChatScreen(id: chatId);
-        },
-      ),
-      GoRoute(
-        path: '/contact/:id',
-        builder: (_, state) {
-          final contactId = state.pathParameters['id']!;
-          return ChatProfileScreen(id: contactId);
-        },
-      ),
+      // *********************************************/
+      // GoRoute(
+      //   path: AppRoutes.createCommunity,
+      //   builder: (_, _) => const CreateCommunityScreen(),
+      // ),
+      // GoRoute(
+      //   path: AppRoutes.createChannel,
+      //   builder: (_, _) => const CreateChannelScreen(),
+      // ),
+      // GoRoute(
+      //   path: AppRoutes.chat(':id'),
+      //   builder: (_, state) {
+      //     final chatId = state.pathParameters['id']!;
+      //     return ChatScreen(id: chatId);
+      //   },
+      // ),
+      // GoRoute(
+      //   path: '/contact/:id',
+      //   builder: (_, state) {
+      //     final contactId = state.pathParameters['id']!;
+      //     return ChatProfileScreen(id: contactId);
+      //   },
+      // ),
 
       /*********************************************
       ***************  Ai Interview  ***************
@@ -301,6 +304,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return AiResumeScreen(resumeId: id);
         },
+      ),
+
+      /*********************************************
+      *************  Ai Grammar  ************
+      *********************************************/
+      GoRoute(
+        name: 'grammar',
+        path: AppRoutes.grammar,
+        builder: (_, _) => const GrammarHomeScreen(),
+        routes: [
+          GoRoute(
+            name: 'grammar_conversation',
+            path: 'conversation', // Nested path
+            builder: (_, _) => const GrammarConversationScreen(),
+          ),
+        ],
       ),
     ],
   );

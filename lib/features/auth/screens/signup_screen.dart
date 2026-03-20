@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:eduprova/features/auth/widgets/background_orbits.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -63,7 +64,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     final size = MediaQuery.sizeOf(context);
@@ -389,11 +389,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ),
                                   child: OutlinedButton.icon(
                                     onPressed: () {},
-                                    icon: const Icon(
-                                      LucideIcons.chrome,
-                                      size: 20,
-                                      color: Color(0xFFD94839),
-                                    ),
+                                    icon: Brand(Brands.google, size: 20),
                                     label: Text(
                                       'Sign in with Google',
                                       style: GoogleFonts.inter(
@@ -467,7 +463,7 @@ class _SignupScreenState extends State<SignupScreen> {
     TextInputType? keyboardType,
     int? maxLength,
   }) {
-    final dividerClr = Theme.of(context).dividerColor;
+    final dividerClr = Theme.of(context).dividerColor.withValues(alpha: 0.8);
     return TextField(
       controller: controller,
       obscureText: obscureText,

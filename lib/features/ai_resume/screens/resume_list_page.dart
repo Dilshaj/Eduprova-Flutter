@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../theme/theme.dart';
 import '../providers/resume_list_provider.dart';
@@ -238,7 +238,7 @@ class _ResumeListPageState extends ConsumerState<ResumeListPage> {
                 ),
                 const SizedBox(height: 24),
                 ListTile(
-                  leading: const Icon(LucideIcons.filePlus2),
+                  leading: const Icon(LucideIcons.filePlus),
                   title: const Text('Start from Scratch'),
                   subtitle: const Text('Create a new blank resume'),
                   onTap: () async {

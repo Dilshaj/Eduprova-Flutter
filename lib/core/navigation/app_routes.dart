@@ -48,4 +48,7 @@ class AppRoutes {
   static const String searchJobs = '/jobs/search';
   static const String savedJobs = '/jobs/saved';
   static const String myApplications = '/jobs/applications';
+
+  // AI Grammar
+  static const String grammar = '/grammar';
 }

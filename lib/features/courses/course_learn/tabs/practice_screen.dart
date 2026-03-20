@@ -8,6 +8,7 @@ class LanguageConfig {
   final String id;
   final String name;
   final String pistonName;
+  final int judge0Id;
   final String filename;
   final IconData icon;
   final Color color;
@@ -17,6 +18,7 @@ class LanguageConfig {
     required this.id,
     required this.name,
     required this.pistonName,
+    required this.judge0Id,
     required this.filename,
     required this.icon,
     required this.color,
@@ -32,6 +34,7 @@ final List<LanguageConfig> _languages = [
     id: 'javascript',
     name: 'JavaScript',
     pistonName: 'javascript',
+    judge0Id: 63,
     filename: 'index.js',
     icon: Icons.javascript,
     color: const Color(0xFFF7DF1E),
@@ -42,6 +45,7 @@ final List<LanguageConfig> _languages = [
     id: 'typescript',
     name: 'TypeScript',
     pistonName: 'typescript',
+    judge0Id: 74,
     filename: 'index.ts',
     icon: Icons.text_snippet,
     color: const Color(0xFF3178C6),
@@ -52,6 +56,7 @@ final List<LanguageConfig> _languages = [
     id: 'python',
     name: 'Python 3',
     pistonName: 'python',
+    judge0Id: 71,
     filename: 'main.py',
     icon: Icons.code,
     color: const Color(0xFF3776AB),
@@ -62,6 +67,7 @@ final List<LanguageConfig> _languages = [
     id: 'java',
     name: 'Java',
     pistonName: 'java',
+    judge0Id: 62,
     filename: 'Main.java',
     icon: Icons.local_cafe,
     color: const Color(0xFFE76F00),
@@ -72,6 +78,7 @@ final List<LanguageConfig> _languages = [
     id: 'c',
     name: 'C (GCC)',
     pistonName: 'c',
+    judge0Id: 50,
     filename: 'main.c',
     icon: Icons.code,
     color: const Color(0xFFA8B9CC),
@@ -82,6 +89,7 @@ final List<LanguageConfig> _languages = [
     id: 'cpp',
     name: 'C++ (G++)',
     pistonName: 'c++',
+    judge0Id: 54,
     filename: 'main.cpp',
     icon: Icons.code,
     color: const Color(0xFF00599C),
@@ -200,6 +208,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         .read(practiceProvider.notifier)
         .runCode(
           pistonName: _selectedLang.pistonName,
+          judge0Id: _selectedLang.judge0Id,
           filename: _selectedLang.filename,
           code: _codeController.text,
           mockResult: mockResult,
@@ -285,10 +294,14 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     );
   }
 
-  Widget _buildEditor(bool isFull) {
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
-    final colorScheme = Theme.of(context).colorScheme;
-    final practiceState = ref.watch(practiceProvider);
+  Widget _buildEditor(
+    BuildContext buildContext,
+    bool isFull,
+    WidgetRef buildRef,
+  ) {
+    final themeExt = Theme.of(buildContext).extension<AppDesignExtension>()!;
+    final colorScheme = Theme.of(buildContext).colorScheme;
+    final practiceState = buildRef.watch(practiceProvider);
     final isRunning = practiceState.isRunning;
     final output = practiceState.output;
 
@@ -304,7 +317,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           Container(
             padding: EdgeInsets.fromLTRB(
               16,
-              isFull ? MediaQuery.of(context).padding.top + 8 : 8,
+              isFull ? MediaQuery.of(buildContext).padding.top + 8 : 8,
               16,
               8,
             ),
@@ -415,9 +428,9 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                         } else {
                           // Push the actual full screen dialog route instead of using a stack inside the View
                           await Navigator.push(
-                            context,
+                            buildContext,
                             MaterialPageRoute(
-                              builder: (context) => Scaffold(
+                              builder: (ctx) => Scaffold(
                                 backgroundColor:
                                     themeExt.scaffoldBackgroundColor,
                                 body: SafeArea(
@@ -427,7 +440,15 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                                       // Trigger a rebuild when coming back so state syncs
                                       if (didPop) setState(() {});
                                     },
-                                    child: _buildEditor(true),
+                                    child: Consumer(
+                                      builder: (consumerCtx, consumerRef, _) {
+                                        return _buildEditor(
+                                          consumerCtx,
+                                          true,
+                                          consumerRef,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
@@ -711,6 +732,13 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Hot reload safety: reassign to the newly constructed object reference
+    // so it picks up the newly added judge0Id field.
+    _selectedLang = _languages.firstWhere(
+      (lang) => lang.id == _selectedLang.id,
+      orElse: () => _languages[0],
+    );
+
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     return Scaffold(
       backgroundColor: themeExt.scaffoldBackgroundColor,
@@ -725,7 +753,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 24),
-                  child: _buildEditor(false),
+                  child: _buildEditor(context, false, ref),
                 ),
               ),
             ],

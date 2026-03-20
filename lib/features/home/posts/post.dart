@@ -2,6 +2,10 @@ import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:eduprova/core/utils/image_cache_manager.dart';
+import 'package:shimmer/shimmer.dart';
+import 'post_provider.dart';
 
 class PostModel {
   final String id;
@@ -12,17 +16,62 @@ class PostModel {
   final String? imageUrl;
   final String authorAvatar;
   final DateTime createdAt;
+  final int likeCount;
+  final int commentCount;
+  final bool isLiked;
+  final bool isSaved;
+  final String? mediaType;
 
   PostModel({
     required this.id,
     required this.name,
     this.designation,
     this.timeAgo,
-    required this.content,
-    required this.imageUrl,
+    this.content,
+    this.imageUrl,
     required this.authorAvatar,
     required this.createdAt,
+    this.likeCount = 0,
+    this.commentCount = 0,
+    this.isLiked = false,
+    this.isSaved = false,
+    this.mediaType,
   });
+
+  factory PostModel.fromMap(Map<String, dynamic> map) {
+    final author = map['authorId'] as Map<String, dynamic>?;
+    final media = (map['media'] as List?)?.firstOrNull as Map<String, dynamic>?;
+
+    return .new(
+      id: map['_id'] ?? '',
+      name: author != null
+          ? '${author['firstName'] ?? ''} ${author['lastName'] ?? ''}'.trim()
+          : 'Anonymous',
+      designation: author?['designation'] ?? 'Student',
+      timeAgo: _formatTimeAgo(map['createdAt']),
+      content: map['caption'],
+      imageUrl: media?['url'],
+      authorAvatar: author?['avatar'] ?? 'assets/avatars/1.png',
+      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
+      likeCount: map['likeCount'] ?? 0,
+      commentCount: map['commentCount'] ?? 0,
+      isLiked: map['isLiked'] ?? false,
+      isSaved: map['isSaved'] ?? false,
+      mediaType: media?['type'],
+    );
+  }
+
+  static String _formatTimeAgo(String? dateStr) {
+    if (dateStr == null) return 'now';
+    final date = DateTime.tryParse(dateStr);
+    if (date == null) return 'now';
+
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'now';
+  }
 }
 
 class Post extends ConsumerStatefulWidget {
@@ -53,23 +102,28 @@ class _PostState extends ConsumerState<Post> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(padding),
+                padding: const .all(padding),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     CircleAvatar(
                       radius: 22,
-                      backgroundImage: AssetImage(widget.post.authorAvatar),
+                      backgroundImage: widget.post.authorAvatar.startsWith('http')
+                          ? CachedNetworkImageProvider(
+                              widget.post.authorAvatar,
+                              cacheManager: CacheManagers.avatarCacheManager,
+                            )
+                          : AssetImage(widget.post.authorAvatar) as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: .start,
                         children: [
                           Text(
                             widget.post.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
+                            style: const .new(
+                              fontWeight: .w600,
                               fontSize: 17,
                             ),
                           ),
@@ -89,35 +143,50 @@ class _PostState extends ConsumerState<Post> {
               if (widget.post.content != null) ...[
                 const SizedBox(height: 12),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: padding),
+                  padding: const .symmetric(horizontal: padding),
                   child: Text(
                     widget.post.content!,
-                    style: const TextStyle(fontSize: 14, height: 1.4),
+                    style: const .new(fontSize: 14, height: 1.4),
                   ),
                 ),
               ],
-              if (widget.post.imageUrl != null) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 200,
-                  child: ClipRRect(
-                    // borderRadius: BorderRadius.vertical(
-                    //   top: Radius.circular(padding),
-                    // ),
-                    child: Image.network(
-                      widget.post.imageUrl!,
-                      fit: BoxFit.cover,
+                if (widget.post.imageUrl != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: .infinity,
+                    height: 200,
+                    child: ClipRRect(
+                      child: CachedNetworkImage(
+                        imageUrl: widget.post.imageUrl!,
+                        cacheManager: CacheManagers.postCacheManager,
+                        fit: .cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(
+                            color: Colors.white,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(Icons.error),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
               const SizedBox(height: 16),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: padding),
+                padding: const .symmetric(horizontal: padding),
                 child: Row(
                   children: [
-                    _buildActionItem(HugeIcons.strokeRoundedFavourite, 'Likes'),
+                    GestureDetector(
+                      onTap: () => ref.read(postsProvider.notifier).toggleLike(widget.post.id),
+                      child: _buildActionItem(
+                        widget.post.isLiked
+                            ? HugeIcons.strokeRoundedFavourite
+                            : HugeIcons.strokeRoundedFavourite,
+                        'Likes',
+                        color: widget.post.isLiked ? Colors.red : null,
+                      ),
+                    ),
                     const SizedBox(width: 24),
                     _buildActionItem(
                       HugeIcons.strokeRoundedComment02,
@@ -132,7 +201,7 @@ class _PostState extends ConsumerState<Post> {
                     ),
                     const Spacer(),
                     Text(
-                      '12k Likes',
+                      '${widget.post.likeCount} Likes',
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                   ],
@@ -146,13 +215,13 @@ class _PostState extends ConsumerState<Post> {
     );
   }
 
-  Widget _buildActionItem(List<List<dynamic>> icon, String label) {
+  Widget _buildActionItem(List<List<dynamic>> icon, String label, {Color? color}) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: .min,
       children: [
-        HugeIcon(icon: icon, size: 22),
+        HugeIcon(icon: icon, size: 22, color: color),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10)),
+        Text(label, style: .new(fontSize: 10, color: color)),
       ],
     );
   }

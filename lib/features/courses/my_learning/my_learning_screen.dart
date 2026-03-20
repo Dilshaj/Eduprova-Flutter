@@ -189,40 +189,41 @@ class _MyLearningScreenState extends ConsumerState<MyLearningScreen>
             // Tabs Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: themeExt.cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: themeExt.cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                    border: Border.all(color: themeExt.borderColor),
+              child: Material(
+                color: colorScheme.surfaceContainerHighest,
+                clipBehavior: .antiAlias,
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  height: 48,
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: themeExt.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(color: themeExt.borderColor),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicatorPadding: const EdgeInsets.all(6),
+                    labelColor: colorScheme.onSurface,
+                    unselectedLabelColor: themeExt.secondaryText,
+                    labelStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    dividerColor: Colors.transparent,
+                    tabs: _tabs.map((t) => Tab(text: t)).toList(),
                   ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicatorPadding: const EdgeInsets.all(6),
-                  labelColor: colorScheme.onSurface,
-                  unselectedLabelColor: themeExt.secondaryText,
-                  labelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  dividerColor: Colors.transparent,
-                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
                 ),
               ),
             ),

@@ -1,10 +1,29 @@
-import 'dart:ui';
 
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:flutter/material.dart';
 
 const _gradientStart = Color(0xFF0066FF);
 const _gradientEnd = Color(0xFFE056FD);
+
+const _colorSchema = ColorScheme.dark(
+  primary: Color(0xFF155DFC),
+  onPrimary: Colors.white,
+  secondary: Color(0xFF818CF8),
+  onSecondary: Colors.white,
+
+  surface: Color(0xFF1F2937),
+  onSurface: Colors.white,
+
+  surfaceContainerLowest: Color(0xFF414B5E),
+  surfaceContainerLow: Color(0xFF374151),
+  surfaceContainer: Color(0xFF2D3748),
+  surfaceContainerHigh: Color(0xFF293241),
+  // surfaceContainerHighest: Color(0xFF212B39), // uses for inputs bg
+  surfaceContainerHighest: Color(0xFF0D0D16),
+
+  error: Colors.redAccent,
+  onError: Colors.white,
+);
 
 final _darkColors = AppDesignExtension(
   // cardColor: const Color(0xFF1F2937),
@@ -50,16 +69,7 @@ final _darkColors = AppDesignExtension(
 final darkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
-  colorScheme: const ColorScheme.dark(
-    primary: Color(0xFF3B82F6),
-    onPrimary: Colors.white,
-    secondary: Color(0xFF818CF8),
-    onSecondary: Colors.white,
-    surface: Color(0xFF1F2937),
-    onSurface: Colors.white,
-    error: Colors.redAccent,
-    onError: Colors.white,
-  ),
+  colorScheme: _colorSchema,
   scaffoldBackgroundColor: const Color(0xFF121212),
   dividerColor: const Color(0xFF374151),
   appBarTheme: const AppBarTheme(

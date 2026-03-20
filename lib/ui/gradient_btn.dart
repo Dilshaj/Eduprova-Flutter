@@ -1,9 +1,10 @@
-import 'package:eduprova/constants.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:eduprova/core/widgets/app_loaders.dart';
 
 class GradientBtn extends StatelessWidget {
-  final String title;
+  final String? title;
+  final Widget? child;
   final VoidCallback onTap;
   final double? width;
   final double? height;
@@ -12,9 +13,11 @@ class GradientBtn extends StatelessWidget {
   final EdgeInsets? padding;
   final double elevation;
   final bool isLoading;
+  final Alignment? alignment;
 
   const GradientBtn({
-    required this.title,
+    this.title,
+    this.child,
     required this.onTap,
     this.width,
     this.height,
@@ -23,11 +26,13 @@ class GradientBtn extends StatelessWidget {
     this.padding,
     this.elevation = 6,
     this.isLoading = false,
+    this.alignment,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final themeExt = context.design;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(borderRadius),
@@ -43,29 +48,31 @@ class GradientBtn extends StatelessWidget {
           //   end: Alignment.bottomRight,
           //   colors: [Color(0xFF0066FF), Color(0xFFF15EC9)],
           // ),
-          gradient: kGradient,
+          gradient: themeExt.buyNowGradient,
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(borderRadius),
           onTap: isLoading ? null : onTap,
-          splashColor: Colors.white24,
+          splashColor: const Color.fromARGB(59, 0, 64, 255),
           highlightColor: Colors.white10,
           child: Padding(
             padding:
                 padding ??
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            child: Center(
+            child: Align(
+              alignment: alignment ?? Alignment.center,
               child: isLoading
                   ? const TripleDotLoader()
-                  : Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                  : child ??
+                        Text(
+                          title!,
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
             ),
           ),
         ),

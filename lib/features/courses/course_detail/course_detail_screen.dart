@@ -6,12 +6,14 @@ import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/core/widgets/app_loaders.dart';
 import 'package:eduprova/core/widgets/app_video_player.dart';
 import 'package:eduprova/core/widgets/shimmer_loading.dart';
+import 'package:eduprova/ui/gradient_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../core/providers/course_detail_provider.dart';
 import '../cart/cart_provider.dart';
@@ -211,7 +213,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
         IconButton(
           onPressed: () {},
           icon: const Icon(
-            Icons.share_outlined,
+            // Icons.share_outlined,
+            LucideIcons.share2,
             // color: Colors.white,
             size: 22,
           ),
@@ -311,33 +314,38 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: InkWell(
+                  // child: InkWell(
+                  //   onTap: () {},
+                  //   borderRadius: BorderRadius.circular(8),
+                  //   child: Container(
+                  //     height: 48,
+                  //     decoration: BoxDecoration(
+                  //       gradient: themeExt.buyNowGradient,
+                  //       borderRadius: BorderRadius.circular(8),
+                  //       boxShadow: [
+                  //         BoxShadow(
+                  //           color: themeExt.buyNowGradient.colors.first
+                  //               .withValues(alpha: 0.3),
+                  //           blurRadius: 8,
+                  //           offset: const Offset(0, 4),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //     alignment: Alignment.center,
+                  //     child: const Text(
+                  //       'Buy Now',
+                  //       style: TextStyle(
+                  //         fontSize: 15,
+                  //         fontWeight: FontWeight.bold,
+                  //         color: Colors.white,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  child: GradientBtn(
                     onTap: () {},
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: themeExt.buyNowGradient,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: themeExt.buyNowGradient.colors.first
-                                .withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Buy Now',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    height: 48,
+                    title: 'Buy Now',
                   ),
                 ),
               ],
@@ -346,6 +354,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   }
 
   Widget _buildBody(CourseDetailModel course) {
+    final themeExt = context.design;
     return NestedScrollView(
       controller: _scrollController,
       headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -518,39 +527,14 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                     ),
                   ],
                   const SizedBox(height: 16),
-
-                  InkWell(
+                  GradientBtn(
                     onTap: () {
                       if (course.isOwner) {
                         context.push(AppRoutes.courseLearning(course.id));
                       }
                     },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      key: _buyNowInlineKey,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: themeExt.buyNowGradient,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: themeExt.buyNowGradient.colors.last
-                                .withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        course.isOwner ? 'Continue Learning' : 'Buy Now',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    height: 48,
+                    title: course.isOwner ? 'Continue Learning' : 'Buy Now',
                   ),
                   if (!course.isOwner) const SizedBox(height: 12),
                   if (!course.isOwner)

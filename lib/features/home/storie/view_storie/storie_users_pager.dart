@@ -59,33 +59,38 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
 
   @override
   Widget build(BuildContext context) {
-    final profiles = ref.watch(statusProfilesProvider);
+    final profilesAsync = ref.watch(statusProfilesProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: profiles.length,
-        itemBuilder: (context, index) {
-          final double value = _currentPageValue - index;
+      body: profilesAsync.when(
+        data: (profiles) => PageView.builder(
+          controller: _pageController,
+          itemCount: profiles.length,
+          itemBuilder: (context, index) {
+            final double value = _currentPageValue - index;
 
-          if (value <= -1.0 || value >= 1.0) {
-            return const SizedBox.shrink();
-          }
+            if (value <= -1.0 || value >= 1.0) {
+              return const SizedBox.shrink();
+            }
 
-          return Transform(
-            alignment: value > 0 ? Alignment.centerRight : Alignment.centerLeft,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.002) // perspective
-              ..rotateY(value * (pi / 2)),
-            child: StatusViewScreen(
-              profile: profiles[index],
-              pageOffset: value,
-              onComplete: () => _onComplete(index, profiles.length),
-              onPrevious: () => _onPrevious(index),
-            ),
-          );
-        },
+            return Transform(
+              alignment:
+                  value > 0 ? Alignment.centerRight : Alignment.centerLeft,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.002) // perspective
+                ..rotateY(value * (pi / 2)),
+              child: StatusViewScreen(
+                profile: profiles[index],
+                pageOffset: value,
+                onComplete: () => _onComplete(index, profiles.length),
+                onPrevious: () => _onPrevious(index),
+              ),
+            );
+          },
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, st) => const Center(child: Icon(Icons.error_outline)),
       ),
     );
   }

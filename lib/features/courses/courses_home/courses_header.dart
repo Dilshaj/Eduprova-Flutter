@@ -1,7 +1,7 @@
 import 'package:hugeicons/hugeicons.dart';
 import 'package:eduprova/features/home/main_layout.dart';
-import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'courses_menu_modal.dart';
 import '../../../core/navigation/app_routes.dart';
 import 'package:go_router/go_router.dart';
@@ -11,12 +11,9 @@ class CoursesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      // color: themeExt.scaffoldBackgroundColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -50,8 +47,8 @@ class CoursesHeader extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: Icon(
-                    Icons.search,
-                    size: 24,
+                    LucideIcons.search,
+                    size: 22,
                     color: colorScheme.onSurface,
                   ),
                 ),
@@ -63,8 +60,9 @@ class CoursesHeader extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 24,
+                    // Icons.shopping_cart_outlined,
+                    LucideIcons.shoppingCart,
+                    size: 22,
                     color: colorScheme.onSurface,
                   ),
                 ),
@@ -99,8 +97,10 @@ class CoursesHeader extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: Icon(
-                    Icons.more_vert,
-                    size: 24,
+                    // Icons.more_vert,
+                    LucideIcons.ellipsisVertical,
+                    // size: 24,
+                    size: 22,
                     color: colorScheme.onSurface,
                   ),
                 ),

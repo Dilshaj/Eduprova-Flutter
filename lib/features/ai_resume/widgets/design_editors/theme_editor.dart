@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../theme/theme.dart';
 import '../../providers/resume_provider.dart';
 
@@ -186,7 +186,7 @@ class ThemeEditor extends ConsumerWidget {
   ) {
     final styles = [
       ('Bar', 'bar', LucideIcons.minus),
-      ('Dots', 'dots', LucideIcons.moreHorizontal),
+      ('Dots', 'dots', LucideIcons.ellipsis),
       ('Text', 'text', LucideIcons.type),
       ('Circle', 'circle', LucideIcons.circle),
       ('Square', 'square', LucideIcons.square),

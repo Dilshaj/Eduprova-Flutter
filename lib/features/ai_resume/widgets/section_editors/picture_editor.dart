@@ -1,7 +1,7 @@
 import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../../theme/theme.dart';
@@ -208,35 +208,6 @@ class _PictureEditorState extends ConsumerState<PictureEditor> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required ValueChanged<String> onChanged,
-    required AppDesignExtension themeExt,
-  }) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: .bold, fontSize: 14)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          onChanged: onChanged,
-          decoration: .new(
-            hintText: hint,
-            filled: true,
-            fillColor: themeExt.cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: themeExt.borderColor),
-            ),
-            contentPadding: const EdgeInsets.all(16),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildSlider(
     String label,

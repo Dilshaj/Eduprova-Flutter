@@ -6,4 +6,6 @@ export 'theme_model.dart';
 extension AppThemeX on BuildContext {
   AppDesignExtension get design =>
       Theme.of(this).extension<AppDesignExtension>()!;
+
+  ColorScheme get colorScheme => Theme.of(this).colorScheme;
 }

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class SignupForm extends StatefulWidget {
   final VoidCallback onLoginTap;
@@ -311,10 +312,9 @@ class _SignupFormState extends State<SignupForm> {
           ),
           child: OutlinedButton.icon(
             onPressed: () {},
-            icon: const Icon(
-              LucideIcons.chrome,
+            icon: Brand(
+              Brands.google,
               size: 20,
-              color: Color(0xFFD94839),
             ),
             label: Text(
               'Sign in with Google',
