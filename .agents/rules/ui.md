@@ -58,3 +58,8 @@ routes: [
 - for images use CachedNetworkImage with Shimmer (not Skeletonizer)
 - for loading items/widgets/posts this kind, use Skeletonizer instead of CircularProgressIndicator, Shimmer
 - for buttons use thripple dots animation + disable button, by using this package:  flutter_spinkit: ^5.2.2
+
+
+## Icons
+- for icons use lucid_icons_flutter . or may be huge icons.
+- don't use default Icons they look bad and outdated.

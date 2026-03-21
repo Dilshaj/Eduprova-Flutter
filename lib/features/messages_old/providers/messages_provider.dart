@@ -12,10 +12,10 @@ final messagesRepositoryProvider = Provider<MessagesRepository>((ref) {
   return MessagesRepository();
 });
 
-final activeConversationProvider = NotifierProvider<
-  ActiveConversationNotifier,
-  Set<String>
->(ActiveConversationNotifier.new);
+final activeConversationProvider =
+    NotifierProvider<ActiveConversationNotifier, Set<String>>(
+      ActiveConversationNotifier.new,
+    );
 
 class ActiveConversationNotifier extends Notifier<Set<String>> {
   @override
@@ -32,10 +32,10 @@ class ActiveConversationNotifier extends Notifier<Set<String>> {
   }
 }
 
-final favoriteConversationIdsProvider = NotifierProvider<
-  FavoriteConversationIdsNotifier,
-  Set<String>
->(FavoriteConversationIdsNotifier.new);
+final favoriteConversationIdsProvider =
+    NotifierProvider<FavoriteConversationIdsNotifier, Set<String>>(
+      FavoriteConversationIdsNotifier.new,
+    );
 
 class FavoriteConversationIdsNotifier extends Notifier<Set<String>> {
   static const _prefsKey = 'favorite_conversation_ids';
@@ -76,9 +76,9 @@ class ConversationsNotifier extends AsyncNotifier<List<ConversationModel>> {
         msg,
       ) {
         final currentUserId = ref.read(authProvider).user?.id ?? '';
-        final isActive = ref.read(activeConversationProvider).contains(
-          msg.conversationId,
-        );
+        final isActive = ref
+            .read(activeConversationProvider)
+            .contains(msg.conversationId);
         final current = state.value ?? const [];
         final exists = current.any((conv) => conv.id == msg.conversationId);
         if (exists) {
@@ -317,10 +317,18 @@ class LocalMessagesNotifier extends Notifier<Map<String, List<MessageModel>>> {
     };
   }
 
-  Future<void> sendMessage(String conversationId, String content) async {
+  Future<void> sendMessage(
+    String conversationId,
+    String content, {
+    String? replyTo,
+  }) async {
     final message = await ref
         .read(messagesRepositoryProvider)
-        .sendMessage(conversationId: conversationId, content: content);
+        .sendMessage(
+          conversationId: conversationId,
+          content: content,
+          replyTo: replyTo,
+        );
     if (message != null) {
       addMessage(conversationId, message);
     }
