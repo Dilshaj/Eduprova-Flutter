@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' show Helper;
 import 'package:livekit_client/livekit_client.dart';
 
 import '../models/call_room_model.dart';
@@ -44,6 +46,7 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
   bool _isCameraEnabled = true;
   bool _speakerOn = true;
   bool _showChatPanel = false;
+  bool _isScreenShareEnabled = false;
   String? _error;
   String? _focusedParticipantIdentity;
   List<Participant> _participants = const [];
@@ -134,7 +137,8 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
 
     if (type == 'chat') {
       _appendRemoteChatMessage(
-        id: payload['id']?.toString() ??
+        id:
+            payload['id']?.toString() ??
             '${senderIdentity}_${DateTime.now().microsecondsSinceEpoch}',
         senderIdentity: senderIdentity,
         senderName: senderName,
@@ -154,10 +158,7 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
     if (event.topic == 'interactions' && type == 'hand_raise') {
       final isRaised = payload['isRaised'] == true;
       setState(() {
-        _raisedHands = {
-          ..._raisedHands,
-          senderIdentity: isRaised,
-        };
+        _raisedHands = {..._raisedHands, senderIdentity: isRaised};
       });
     }
   }
@@ -176,7 +177,9 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
     );
 
     _appendRemoteChatMessage(
-      id: info?.id ?? '${participantIdentity}_${DateTime.now().microsecondsSinceEpoch}',
+      id:
+          info?.id ??
+          '${participantIdentity}_${DateTime.now().microsecondsSinceEpoch}',
       senderIdentity: participantIdentity,
       senderName: sender?.name.isNotEmpty == true
           ? sender!.name
@@ -184,10 +187,7 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
       text: text,
       timestamp: info == null
           ? DateTime.now().toUtc()
-          : DateTime.fromMillisecondsSinceEpoch(
-              info.timestamp,
-              isUtc: true,
-            ),
+          : DateTime.fromMillisecondsSinceEpoch(info.timestamp, isUtc: true),
     );
   }
 
@@ -240,10 +240,15 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
     final identities = items.map((item) => item.identity).toSet();
     if (_focusedParticipantIdentity == null ||
         !identities.contains(_focusedParticipantIdentity)) {
-      _focusedParticipantIdentity = items.isNotEmpty ? items.first.identity : null;
+      _focusedParticipantIdentity = items.isNotEmpty
+          ? items.first.identity
+          : null;
     }
 
-    final activeSpeaker = items.where((item) => item.isSpeaking).cast<Participant?>().firstOrNull;
+    final activeSpeaker = items
+        .where((item) => item.isSpeaking)
+        .cast<Participant?>()
+        .firstOrNull;
     if (activeSpeaker != null &&
         _focusedParticipantIdentity != activeSpeaker.identity &&
         !_showChatPanel) {
@@ -270,6 +275,58 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
     await Hardware.instance.setSpeakerphoneOn(next);
     if (!mounted) return;
     setState(() => _speakerOn = next);
+  }
+
+  Future<void> _toggleScreenShare() async {
+    final next = !_isScreenShareEnabled;
+    try {
+      if (next && lkPlatformIs(PlatformType.android)) {
+        final hasCapturePermission = await Helper.requestCapturePermission();
+        if (!hasCapturePermission) {
+          return;
+        }
+        await _enableAndroidBackgroundScreenShare();
+      }
+
+      await _room?.localParticipant?.setScreenShareEnabled(next);
+      if (!mounted) return;
+      setState(() => _isScreenShareEnabled = next);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to share screen: $e')));
+      }
+    }
+  }
+
+  Future<void> _enableAndroidBackgroundScreenShare([bool isRetry = false]) async {
+    try {
+      bool hasPermissions = await FlutterBackground.hasPermissions;
+      if (!isRetry) {
+        const androidConfig = FlutterBackgroundAndroidConfig(
+          notificationTitle: 'Screen Sharing',
+          notificationText: 'Eduprova is sharing your screen.',
+          notificationImportance: AndroidNotificationImportance.normal,
+          notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
+        );
+        hasPermissions = await FlutterBackground.initialize(
+          androidConfig: androidConfig,
+        );
+      }
+      if (hasPermissions && !FlutterBackground.isBackgroundExecutionEnabled) {
+        await FlutterBackground.enableBackgroundExecution();
+      }
+    } catch (e) {
+      if (!isRetry) {
+        await Future<void>.delayed(
+          const Duration(seconds: 1),
+          () => _enableAndroidBackgroundScreenShare(true),
+        );
+        return;
+      }
+      rethrow;
+    }
   }
 
   Future<void> _disconnect() async {
@@ -350,10 +407,7 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
     if (local == null) return;
     final next = !(_raisedHands[local.identity] ?? false);
     setState(() {
-      _raisedHands = {
-        ..._raisedHands,
-        local.identity: next,
-      };
+      _raisedHands = {..._raisedHands, local.identity: next};
     });
     final payload = {
       'type': 'hand_raise',
@@ -384,13 +438,15 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
 
     if (!mounted || selected == null || selected.isEmpty) return;
 
-    ref.read(chatSocketProvider.notifier).emitCallInvite(
-      recipientIds: selected.map((item) => item.id).toList(),
-      roomName: roomName,
-      conversationType: roomName.startsWith('grp:') ? 'group' : 'meet',
-      callerName: local.name,
-      callerAvatar: _avatarFromMetadata(local.metadata),
-    );
+    ref
+        .read(chatSocketProvider.notifier)
+        .emitCallInvite(
+          recipientIds: selected.map((item) => item.id).toList(),
+          roomName: roomName,
+          conversationType: roomName.startsWith('grp:') ? 'group' : 'meet',
+          callerName: local.name,
+          callerAvatar: _avatarFromMetadata(local.metadata),
+        );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Invited ${selected.length} participant(s)')),
@@ -431,7 +487,9 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
 
   Participant? get _focusedParticipant {
     final identity = _focusedParticipantIdentity;
-    if (identity == null) return _participants.isNotEmpty ? _participants.first : null;
+    if (identity == null) {
+      return _participants.isNotEmpty ? _participants.first : null;
+    }
     for (final participant in _participants) {
       if (participant.identity == identity) return participant;
     }
@@ -471,7 +529,10 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
       body: _isConnecting
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorState(message: _error!, onBack: () => Navigator.of(context).pop())
+          ? _ErrorState(
+              message: _error!,
+              onBack: () => Navigator.of(context).pop(),
+            )
           : SafeArea(
               child: Stack(
                 children: [
@@ -532,7 +593,9 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
                                     ? Icons.videocam
                                     : Icons.videocam_off,
                                 active: _isCameraEnabled,
-                                label: _isCameraEnabled ? 'Camera' : 'Camera Off',
+                                label: _isCameraEnabled
+                                    ? 'Camera'
+                                    : 'Camera Off',
                                 onTap: _toggleCamera,
                               ),
                               _CallActionButton(
@@ -543,7 +606,19 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
                                 label: _speakerOn ? 'Speaker' : 'Earpiece',
                                 onTap: _toggleSpeaker,
                               ),
-                              _ReactionMenuButton(onEmojiSelected: _sendReaction),
+                              _CallActionButton(
+                                icon: _isScreenShareEnabled
+                                    ? Icons.stop_screen_share
+                                    : Icons.screen_share,
+                                active: _isScreenShareEnabled,
+                                label: _isScreenShareEnabled
+                                    ? 'Stop Share'
+                                    : 'Share Screen',
+                                onTap: _toggleScreenShare,
+                              ),
+                              _ReactionMenuButton(
+                                onEmojiSelected: _sendReaction,
+                              ),
                               _CallActionButton(
                                 icon: Icons.pan_tool_alt,
                                 active: localHandRaised,
@@ -737,7 +812,10 @@ class _ParticipantCard extends StatelessWidget {
               top: 12,
               right: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDE68A),
                   borderRadius: BorderRadius.circular(999),
@@ -792,6 +870,25 @@ class _ParticipantCard extends StatelessWidget {
   }
 
   static VideoTrack? _firstVideoTrack(Participant participant) {
+    // Prioritize screen share tracks
+    for (final publication in participant.videoTrackPublications) {
+      if (publication.track != null &&
+          !publication.muted &&
+          publication.source == TrackSource.screenShareVideo) {
+        return publication.track as VideoTrack?;
+      }
+    }
+
+    // Fallback to camera tracks
+    for (final publication in participant.videoTrackPublications) {
+      if (publication.track != null &&
+          !publication.muted &&
+          publication.source == TrackSource.camera) {
+        return publication.track as VideoTrack?;
+      }
+    }
+
+    // Default to the first available non-muted video track
     for (final publication in participant.videoTrackPublications) {
       if (publication.track != null && !publication.muted) {
         return publication.track as VideoTrack?;
@@ -968,10 +1065,7 @@ class _CallActionButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
-                color: foreground,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: foreground, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -1186,7 +1280,8 @@ class _ReactionBubbleState extends State<_ReactionBubble>
         final drift = math.sin(progress * math.pi * 2) * 18;
 
         return Positioned(
-          left: MediaQuery.sizeOf(context).width * widget.reaction.startX + drift,
+          left:
+              MediaQuery.sizeOf(context).width * widget.reaction.startX + drift,
           bottom: bottom,
           child: Opacity(
             opacity: opacity.clamp(0, 1),

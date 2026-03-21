@@ -91,6 +91,7 @@ class ConversationModel {
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
+    final communityData = json['communityId'];
     return .new(
       id: json['id'] ?? json['_id'] ?? '',
       type: ConversationType.fromString(json['type'] ?? 'direct'),
@@ -106,13 +107,76 @@ class ConversationModel {
       createdBy: json['createdBy'] is Map
           ? (json['createdBy']['id'] ?? json['createdBy']['_id'])
           : json['createdBy'],
-      communityId: json['communityId'],
+      communityId: communityData is Map
+          ? (communityData['id'] ?? communityData['_id'])?.toString()
+          : communityData?.toString(),
       createdAt: DateTime.parse(
         json['createdAt'] ?? DateTime.now().toIso8601String(),
       ),
       updatedAt: DateTime.parse(
         json['updatedAt'] ?? DateTime.now().toIso8601String(),
       ),
+    );
+  }
+
+  ConversationModel copyWith({
+    String? id,
+    ConversationType? type,
+    String? status,
+    String? name,
+    String? avatar,
+    String? description,
+    List<ConversationMember>? participants,
+    dynamic lastMessage,
+    String? createdBy,
+    String? communityId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return ConversationModel(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      name: name ?? this.name,
+      avatar: avatar ?? this.avatar,
+      description: description ?? this.description,
+      participants: participants ?? this.participants,
+      lastMessage: lastMessage ?? this.lastMessage,
+      createdBy: createdBy ?? this.createdBy,
+      communityId: communityId ?? this.communityId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  ConversationMember? memberForUser(String userId) {
+    for (final participant in participants) {
+      if (participant.userId == userId) return participant;
+    }
+    return null;
+  }
+
+  int unreadCountFor(String userId) => memberForUser(userId)?.unreadCount ?? 0;
+
+  bool isPinnedFor(String userId) => memberForUser(userId)?.isPinned ?? false;
+
+  ConversationModel withUnreadCount(String userId, int unreadCount) {
+    return copyWith(
+      participants: [
+        for (final participant in participants)
+          if (participant.userId == userId)
+            ConversationMember(
+              userId: participant.userId,
+              role: participant.role,
+              joinedAt: participant.joinedAt,
+              unreadCount: unreadCount,
+              mutedUntil: participant.mutedUntil,
+              isPinned: participant.isPinned,
+              user: participant.user,
+            )
+          else
+            participant,
+      ],
     );
   }
 

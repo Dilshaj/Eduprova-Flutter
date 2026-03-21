@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../models/community_model.dart';
+import '../repository/community_repository.dart';
 import 'widgets/communities_groups.dart';
-import 'utils/community_utils.dart';
 
 class CommunitiesPage extends StatefulWidget {
   final VoidCallback? onBack;
+
   const CommunitiesPage({super.key, this.onBack});
 
   @override
@@ -11,36 +15,102 @@ class CommunitiesPage extends StatefulWidget {
 }
 
 class _CommunitiesPageState extends State<CommunitiesPage> {
-  late List<Map<String, dynamic>> _communities;
+  final CommunityRepository _communityRepository = CommunityRepository();
+
+  List<CommunityModel> _communities = const [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _communities = List.from(initialCommunities);
+    _loadCommunities();
   }
 
-  void _addNewCommunity(Map<String, dynamic> data) {
+  Future<void> _loadCommunities() async {
     setState(() {
-      _communities.insert(0, data);
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final communities = await _communityRepository.fetchCommunities();
+      if (!mounted) return;
+      setState(() {
+        _communities = communities;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load communities';
+        _isLoading = false;
+      });
+    }
   }
 
-  void _updateGroups(String communityId, List<Map<String, dynamic>> channels) {
-    setState(() {
-      final index = _communities.indexWhere((c) => c['id'] == communityId);
-      if (index != -1) {
-        _communities[index]['channels'] = channels;
-      }
-    });
+  Future<CommunityModel?> _createCommunity(
+    String name,
+    String description,
+  ) async {
+    try {
+      final community = await _communityRepository.createCommunity(
+        name: name,
+        description: description,
+      );
+      if (!mounted) return null;
+      setState(() {
+        _communities = [community, ..._communities];
+      });
+      return community;
+    } catch (_) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to create community')),
+      );
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _error!,
+                  style: GoogleFonts.inter(fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _loadCommunities,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return CommunitiesGroupsScreen(
       onBack: widget.onBack,
       communities: _communities,
-      onAddNewCommunity: _addNewCommunity,
-      onUpdateGroups: _updateGroups,
+      onCreateCommunity: _createCommunity,
+      onRefresh: _loadCommunities,
     );
   }
 }

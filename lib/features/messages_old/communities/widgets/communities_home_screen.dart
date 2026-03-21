@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/community_model.dart';
 import '../../widgets/messages_background.dart';
 import '../../widgets/messages_button.dart';
 
@@ -7,7 +8,6 @@ import 'create_community.dart';
 import 'community_categories.dart';
 import 'community_group.dart';
 import 'communities_groups.dart';
-import '../utils/community_utils.dart';
 
 class CommunitiesHomeScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -245,8 +245,6 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                               MaterialPageRoute(
                                 builder: (_) => CommunitiesGroupsScreen(
                                   communities: _myCommunities,
-                                  onAddNewCommunity: _addNewCommunity,
-                                  onUpdateGroups: _updateGroups,
                                 ),
                               ),
                             ),
@@ -654,22 +652,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
     );
   }
 
-  final List<Map<String, dynamic>> _myCommunities = List.from(initialCommunities);
-
-  void _addNewCommunity(Map<String, dynamic> data) {
-    setState(() {
-      _myCommunities.insert(0, data);
-    });
-  }
-
-  void _updateGroups(String communityId, List<Map<String, dynamic>> channels) {
-    setState(() {
-      final index = _myCommunities.indexWhere((c) => c['id'] == communityId);
-      if (index != -1) {
-        _myCommunities[index]['channels'] = channels;
-      }
-    });
-  }
+  final List<CommunityModel> _myCommunities = const [];
 
   Widget _buildTemplateButton(
     BuildContext context,
@@ -730,9 +713,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => CommunitiesGroupsScreen(
-            communities: initialCommunities,
-            onAddNewCommunity: (data) {},
-            onUpdateGroups: _updateGroups,
+            communities: _myCommunities,
           ),
         ),
       ),

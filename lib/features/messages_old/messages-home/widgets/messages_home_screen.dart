@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import 'meet.dart';
@@ -17,12 +19,9 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../widgets/messages_background.dart';
 import '../../widgets/messages_button.dart';
 import '../../widgets/participant_picker_screen.dart';
-import '../../communities/widgets/communities_groups.dart';
-import '../../communities/widgets/new_community_dialog.dart';
+import '../../communities/page.dart';
 import '../../calendar/widgets/calendar_home_screen.dart';
 import '../../activity/widgets/activity_screen.dart';
-import '../../communities/widgets/community_overview.dart';
-import '../../communities/utils/community_utils.dart';
 
 class ChatItemWidget extends ConsumerWidget {
   final ConversationModel item;
@@ -35,8 +34,12 @@ class ChatItemWidget extends ConsumerWidget {
     final isDarkMode = Theme.of(context).brightness == .dark;
     final currentUserId = ref.watch(authProvider).user?.id ?? '';
     final title = item.getDisplayTitle(currentUserId);
+    final unreadCount = item.unreadCountFor(currentUserId);
+    final isFavorite = ref.watch(
+      favoriteConversationIdsProvider.select((ids) => ids.contains(item.id)),
+    );
     final lastMessage = switch (item.lastMessage) {
-      Map m => m['content'] ?? '',
+      Map m => _buildLastMessageLabel(m),
       String s => s,
       _ => '',
     };
@@ -75,6 +78,7 @@ class ChatItemWidget extends ConsumerWidget {
                   children: [
                     Row(
                       mainAxisAlignment: .spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
@@ -90,28 +94,82 @@ class ChatItemWidget extends ConsumerWidget {
                             overflow: .ellipsis,
                           ),
                         ),
-                        Text(
-                          _formatTime(lastMessageTime),
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: isDarkMode
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF6B7280),
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              _formatTime(lastMessageTime),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: unreadCount > 0
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                color: isDarkMode
+                                    ? (unreadCount > 0
+                                          ? const Color(0xFFE8EAED)
+                                          : const Color(0xFF9CA3AF))
+                                    : (unreadCount > 0
+                                          ? const Color(0xFF111111)
+                                          : const Color(0xFF6B7280)),
+                              ),
+                            ),
+                            if (unreadCount > 0) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0066FF),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  unreadCount > 99 ? '99+' : '$unreadCount',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      lastMessage,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: isDarkMode
-                            ? const Color(0xFF9AA0A6)
-                            : const Color(0xFFA0A3A8),
-                      ),
-                      maxLines: 1,
-                      overflow: .ellipsis,
+                    Row(
+                      children: [
+                        if (isFavorite) ...[
+                          Icon(
+                            Icons.star_rounded,
+                            size: 16,
+                            color: Colors.amber.shade600,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            lastMessage,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: unreadCount > 0
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isDarkMode
+                                  ? (unreadCount > 0
+                                        ? const Color(0xFFE8EAED)
+                                        : const Color(0xFF9AA0A6))
+                                  : (unreadCount > 0
+                                        ? const Color(0xFF111111)
+                                        : const Color(0xFFA0A3A8)),
+                            ),
+                            maxLines: 1,
+                            overflow: .ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -121,6 +179,26 @@ class ChatItemWidget extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static String _buildLastMessageLabel(Map<dynamic, dynamic> message) {
+    final content = message['content']?.toString().trim() ?? '';
+    if (content.isNotEmpty) return content;
+
+    final attachments = message['attachments'];
+    if (attachments is List && attachments.isNotEmpty) {
+      final first = attachments.first;
+      if (first is Map && first['type'] == 'image') {
+        return 'Photo';
+      }
+      return 'Attachment';
+    }
+
+    return switch (message['type']?.toString()) {
+      'image' => 'Photo',
+      'file' => 'Attachment',
+      _ => 'New message',
+    };
   }
 
   String _formatTime(DateTime time) {
@@ -148,6 +226,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   final MessagesRepository _messagesRepository = MessagesRepository();
   final ParticipantSearchRepository _participantSearchRepository =
       ParticipantSearchRepository();
+  final ImagePicker _imagePicker = ImagePicker();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -164,8 +243,6 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
     super.initState();
     // Socket auto-connects in ChatSocketNotifier.build() via Future.microtask
   }
-
-  List<Map<String, dynamic>> communities = List.from(initialCommunities);
 
   @override
   void dispose() {
@@ -196,12 +273,29 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
     if (!mounted || selected == null || selected.isEmpty) return;
 
     final messenger = ScaffoldMessenger.of(context);
-    final conversation = await _messagesRepository.createConversation(
-      selected.map((user) => user.id).toList(),
-      name: selected.length > 1
-          ? selected.map((user) => user.displayName).take(3).join(', ')
-          : null,
-    );
+    ConversationModel? conversation;
+
+    if (selected.length > 1) {
+      final details = await _showGroupDetailsDialog(selected);
+      if (!mounted || details == null) return;
+
+      conversation = await _messagesRepository.createConversation(
+        selected.map((user) => user.id).toList(),
+        name: details.name,
+      );
+
+      if (conversation != null && details.avatarDataUri != null) {
+        conversation = await _messagesRepository.updateConversation(
+              conversation.id,
+              avatar: details.avatarDataUri,
+            ) ??
+            conversation;
+      }
+    } else {
+      conversation = await _messagesRepository.createConversation(
+        selected.map((user) => user.id).toList(),
+      );
+    }
 
     if (!mounted) return;
 
@@ -214,6 +308,132 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
 
     ref.read(conversationsProvider.notifier).loadConversations();
     context.push('/chat/${conversation.id}');
+  }
+
+  Future<({String name, String? avatarDataUri})?> _showGroupDetailsDialog(
+    List<SearchUserModel> selected,
+  ) async {
+    final nameController = TextEditingController(
+      text: selected.map((user) => user.displayName).take(3).join(', '),
+    );
+    XFile? selectedImage;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          title: const Text('New Group'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Group name',
+                    hintText: 'Enter group name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Group icon',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: () async {
+                    final image = await _imagePicker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 80,
+                    );
+                    if (image == null) return;
+                    setModalState(() => selectedImage = image);
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.image_outlined,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            selectedImage == null
+                                ? 'Choose an image for the group icon'
+                                : selectedImage!.name,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: const Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty) return;
+                Navigator.pop(ctx, true);
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true || nameController.text.trim().isEmpty) {
+      return null;
+    }
+
+    String? avatarDataUri;
+    if (selectedImage != null) {
+      final bytes = await selectedImage!.readAsBytes();
+      final lower = selectedImage!.name.toLowerCase();
+      final mimeType = lower.endsWith('.png')
+          ? 'image/png'
+          : lower.endsWith('.webp')
+          ? 'image/webp'
+          : 'image/jpeg';
+      avatarDataUri = 'data:$mimeType;base64,${base64Encode(bytes)}';
+    }
+
+    return (name: nameController.text.trim(), avatarDataUri: avatarDataUri);
   }
 
   Future<void> _createDirectChat(SearchUserModel user) async {
@@ -273,102 +493,10 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
     });
   }
 
-  void _addNewCommunity(Map<String, dynamic> data) {
-    if (data.containsKey('name')) {
-      final name = data['name'] as String;
-      final description = data['description'] as String?;
-
-      setState(() {
-        communities.insert(0, {
-          'id': DateTime.now().millisecondsSinceEpoch.toString(),
-          'name': name,
-          'description': description,
-          'members': '1 member',
-          'type': 'new',
-          'icon': Icons.groups_outlined,
-          'channels': [
-            {
-              'id': 'c_ann_${DateTime.now().millisecondsSinceEpoch}',
-              'name': 'Announcements',
-            },
-            {
-              'id': 'c_gen_${DateTime.now().millisecondsSinceEpoch}',
-              'name': 'General',
-            },
-          ],
-        });
-      });
-    }
-  }
-
-  void _updateCommunityChannels(
-    String communityId,
-    List<Map<String, dynamic>> newChannels,
-  ) {
-    setState(() {
-      final index = communities.indexWhere((c) => c['id'] == communityId);
-      if (index != -1) {
-        communities[index]['channels'] = newChannels;
-      }
-    });
-  }
-
-  Future<void> _openCreateCommunity() async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (ctx) => const NewCommunityDialog(),
-    );
-    if (result != null) {
-      final newCommunity = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'name': result['name'],
-        'description': result['description'],
-        'members': '1 member',
-        'type': 'new',
-        'icon': Icons.groups_outlined,
-        'channels': [
-          {
-            'id': 'c_ann_${DateTime.now().millisecondsSinceEpoch}',
-            'name': 'Announcements',
-          },
-          {
-            'id': 'c_gen_${DateTime.now().millisecondsSinceEpoch}',
-            'name': 'General',
-          },
-        ],
-      };
-
-      setState(() {
-        communities.insert(0, newCommunity);
-      });
-
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CommunityOverviewScreen(
-              community: newCommunity,
-              onGroupsUpdated: (updatedChannels) {
-                _updateCommunityChannels(
-                  newCommunity['id'] as String,
-                  updatedChannels,
-                );
-              },
-            ),
-          ),
-        );
-      }
-    }
-  }
-
   Widget _buildTabContent() {
     switch (_selectedTabIndex) {
       case 1:
-        return CommunitiesGroupsScreen(
-          isEmbedded: true,
-          communities: communities,
-          onAddNewCommunity: _addNewCommunity,
-          onUpdateGroups: _updateCommunityChannels,
+        return CommunitiesPage(
           onBack: () => setState(() => _selectedTabIndex = 0),
         );
       case 2:
@@ -389,11 +517,12 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   Widget _buildChatList() {
     final conversationsAsync = ref.watch(conversationsProvider);
     final isDarkMode = Theme.of(context).brightness == .dark;
+    final currentUserId = ref.watch(authProvider).user?.id ?? '';
+    final favorites = ref.watch(favoriteConversationIdsProvider);
 
     return conversationsAsync.when(
       data: (conversations) {
         final filteredChats = conversations.where((chat) {
-          final currentUserId = ref.watch(authProvider).user?.id ?? '';
           final title = chat.getDisplayTitle(currentUserId);
           final matchesSearch = title.toLowerCase().contains(
             _searchQuery.toLowerCase(),
@@ -402,15 +531,16 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
           if (_searchQuery.isNotEmpty && !matchesSearch) return false;
 
           if (_activeFilter == 'unread') {
-            // Check unread count logic if available
-            return false;
+            return chat.unreadCountFor(currentUserId) > 0;
+          }
+          if (_activeFilter == 'favs') {
+            return favorites.contains(chat.id);
           }
           if (_activeFilter == 'groups') {
             return chat.type != ConversationType.direct;
           }
           return true;
         }).toList();
-
         if (filteredChats.isEmpty &&
             _searchedUsers.isEmpty &&
             _searchQuery.isNotEmpty &&
@@ -518,6 +648,19 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
 
   Widget _buildSearchAndFilters() {
     final isDarkMode = Theme.of(context).brightness == .dark;
+    final conversations = ref.watch(conversationsProvider).value ?? const [];
+    final currentUserId = ref.watch(authProvider).user?.id ?? '';
+    final favorites = ref.watch(favoriteConversationIdsProvider);
+    final unreadChatsCount = conversations
+        .where((chat) => chat.unreadCountFor(currentUserId) > 0)
+        .length;
+    final favoriteChatsCount = conversations
+        .where((chat) => favorites.contains(chat.id))
+        .length;
+    final groupChatsCount = conversations
+        .where((chat) => chat.type != ConversationType.direct)
+        .length;
+
     return Container(
       padding: const .only(bottom: 12),
       child: Column(
@@ -611,18 +754,21 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                       ),
                       _buildChip(
                         'Unread',
-                        count: '142',
+                        count: unreadChatsCount > 0 ? '$unreadChatsCount' : null,
                         isActive: _activeFilter == 'unread',
                         onTap: () => setState(() => _activeFilter = 'unread'),
                       ),
                       _buildChip(
                         'Favourites',
+                        count: favoriteChatsCount > 0
+                            ? '$favoriteChatsCount'
+                            : null,
                         isActive: _activeFilter == 'favs',
                         onTap: () => setState(() => _activeFilter = 'favs'),
                       ),
                       _buildChip(
                         'Groups',
-                        count: '34',
+                        count: groupChatsCount > 0 ? '$groupChatsCount' : null,
                         isActive: _activeFilter == 'groups',
                         onTap: () => setState(() => _activeFilter = 'groups'),
                       ),
@@ -724,19 +870,6 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                           onPressed: _goToMeet,
                         ),
                         const SizedBox(width: 12),
-                        if (_selectedTabIndex == 1) ...[
-                          GestureDetector(
-                            onTap: _openCreateCommunity,
-                            child: Icon(
-                              Icons.add_circle_outline,
-                              size: 28,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF1F2937),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
                         if (_selectedTabIndex == 0)
                           GestureDetector(
                             onTap: _openParticipantSearch,

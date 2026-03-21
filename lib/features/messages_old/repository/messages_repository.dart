@@ -39,11 +39,12 @@ class MessagesRepository {
     String conversationId, {
     String? cursor,
     int limit = 30,
+    String? order,
   }) async {
     try {
       final response = await _client.get(
         '/messages/$conversationId',
-        queryParameters: {'cursor': ?cursor, 'limit': limit},
+        queryParameters: {'cursor': ?cursor, 'limit': limit, 'order': ?order},
       );
 
       if (response.statusCode == 200) {
@@ -154,6 +155,52 @@ class MessagesRepository {
       }
     } catch (e) {
       debugPrint('Error fetching conversation: $e');
+    }
+    return null;
+  }
+
+  Future<ConversationModel?> addParticipants(
+    String conversationId,
+    List<String> userIds,
+  ) async {
+    try {
+      final response = await _client.patch(
+        '/conversations/$conversationId/participants',
+        data: {'userIds': userIds},
+      );
+      if (response.statusCode == 200) {
+        return ConversationModel.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error adding participants: $e');
+    }
+    return null;
+  }
+
+  Future<ConversationModel?> updateConversation(
+    String conversationId, {
+    String? name,
+    String? avatar,
+    String? description,
+  }) async {
+    try {
+      final response = await _client.patch(
+        '/conversations/$conversationId',
+        data: {
+          'name': ?name,
+          'avatar': ?avatar,
+          'description': ?description,
+        },
+      );
+      if (response.statusCode == 200) {
+        return ConversationModel.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error updating conversation: $e');
     }
     return null;
   }
