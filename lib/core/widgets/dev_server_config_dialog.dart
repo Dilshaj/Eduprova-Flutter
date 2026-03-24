@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../network/api_client.dart';
 
 Future<void> showDevServerConfigDialog(BuildContext context) async {
-  final controller = TextEditingController(text: ApiClient.baseUrlOverride ?? '');
+  final controller = TextEditingController(
+    text: ApiClient.baseUrlOverride ?? '',
+  );
   final messenger = ScaffoldMessenger.of(context);
 
   await showDialog<void>(
@@ -26,8 +28,8 @@ Future<void> showDevServerConfigDialog(BuildContext context) async {
                 TextField(
                   controller: controller,
                   decoration: InputDecoration(
-                    hintText: 'http://192.168.1.4:4000',
-                    labelText: 'Override URL',
+                    hintText: '192.168.1.4',
+                    labelText: 'Override IP',
                     errorText: errorText,
                   ),
                 ),
@@ -39,7 +41,9 @@ Future<void> showDevServerConfigDialog(BuildContext context) async {
                   await ApiClient.clearBaseUrlOverride();
                   if (context.mounted) Navigator.of(context).pop();
                   messenger.showSnackBar(
-                    SnackBar(content: Text('API URL reset to ${ApiClient.baseUrl}')),
+                    SnackBar(
+                      content: Text('API URL reset to ${ApiClient.baseUrl}'),
+                    ),
                   );
                 },
                 child: const Text('Reset'),
@@ -57,13 +61,18 @@ Future<void> showDevServerConfigDialog(BuildContext context) async {
                   }
                   final uri = Uri.tryParse(value);
                   if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
-                    setState(() => errorText = 'Enter valid URL, e.g. http://192.168.1.4:4000');
+                    setState(
+                      () => errorText =
+                          'Enter valid URL, e.g. http://192.168.1.4:4000',
+                    );
                     return;
                   }
                   await ApiClient.setBaseUrlOverride(value);
                   if (context.mounted) Navigator.of(context).pop();
                   messenger.showSnackBar(
-                    SnackBar(content: Text('API URL updated to ${ApiClient.baseUrl}')),
+                    SnackBar(
+                      content: Text('API URL updated to ${ApiClient.baseUrl}'),
+                    ),
                   );
                 },
                 child: const Text('Save'),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:eduprova/globals.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 
 import '../models/search_user_model.dart';
@@ -21,7 +22,8 @@ class ParticipantPickerScreen extends StatefulWidget {
   });
 
   @override
-  State<ParticipantPickerScreen> createState() => _ParticipantPickerScreenState();
+  State<ParticipantPickerScreen> createState() =>
+      _ParticipantPickerScreenState();
 }
 
 class _ParticipantPickerScreenState extends State<ParticipantPickerScreen> {
@@ -97,6 +99,8 @@ class _ParticipantPickerScreenState extends State<ParticipantPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeExt = context.design;
+    final cs = context.colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -186,14 +190,18 @@ class _ParticipantPickerScreenState extends State<ParticipantPickerScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                             side: BorderSide(
+                              // color: selected
+                              //     ? const Color(0xFF2563EB)
+                              //     : const Color(0xFFE2E8F0),
                               color: selected
-                                  ? const Color(0xFF2563EB)
-                                  : const Color(0xFFE2E8F0),
+                                  ? cs.primary
+                                  : themeExt.borderColor,
                             ),
                           ),
                           tileColor: selected
-                              ? const Color(0xFFEFF6FF)
-                              : Colors.white,
+                              ? cs.primary
+                              // : Colors.white,
+                              : themeExt.cardColor,
                           leading: _UserAvatar(user: user),
                           title: Text(user.displayName),
                           subtitle: Text(
@@ -206,7 +214,7 @@ class _ParticipantPickerScreenState extends State<ParticipantPickerScreen> {
                                 ? Icons.check_circle
                                 : Icons.radio_button_unchecked,
                             color: selected
-                                ? const Color(0xFF2563EB)
+                                ? cs.inversePrimary
                                 : const Color(0xFF94A3B8),
                           ),
                           onTap: () {

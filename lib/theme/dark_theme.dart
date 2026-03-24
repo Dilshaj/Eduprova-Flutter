@@ -1,10 +1,10 @@
-
 import 'package:eduprova/theme/theme_model.dart';
+import 'package:eduprova/theme/messages_theme_extension.dart';
 import 'package:flutter/material.dart';
 
 const _gradientStart = Color(0xFF0066FF);
 const _gradientEnd = Color(0xFFE056FD);
-
+const _dividerColor = Color(0xFF374151);
 const _colorSchema = ColorScheme.dark(
   primary: Color(0xFF155DFC),
   onPrimary: Colors.white,
@@ -66,12 +66,30 @@ final _darkColors = AppDesignExtension(
   scaffoldBackgroundColor: const Color(0xFF121212),
 );
 
+final _messagesDarkColors = MessagesThemeExtension(
+  scaffoldBackground: const Color(0xFF121212),
+  titleColor: Colors.white,
+  searchBarFillColor: const Color(0xFF1F2937),
+  searchBarIconColor: const Color(0xFF9CA3AF),
+  searchBarTextColor: const Color(0xFF9CA3AF),
+  tabSelectedBackground: const Color(0xFF0066FF),
+  tabSelectedTextColor: Colors.white,
+  tabUnselectedBackground: const Color(0xFF1F2937),
+  tabUnselectedTextColor: const Color(0xFF9CA3AF),
+  sectionHeaderColor: const Color(0xFF9CA3AF),
+  chatTitleColor: Colors.white,
+  chatSubtitleColor: const Color(0xFF9CA3AF),
+  chatTimeColor: const Color(0xFFE8EAED),
+  unreadBadgeBackground: const Color(0xFF0066FF),
+  unreadBadgeTextColor: Colors.white,
+);
+
 final darkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
   colorScheme: _colorSchema,
   scaffoldBackgroundColor: const Color(0xFF121212),
-  dividerColor: const Color(0xFF374151),
+  dividerColor: _dividerColor,
   appBarTheme: const AppBarTheme(
     backgroundColor: Color(0xFF121212),
     foregroundColor: Colors.white,
@@ -80,23 +98,21 @@ final darkTheme = ThemeData(
     scrolledUnderElevation: 0,
     titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
   ),
-  // use styles like basic Input:
-  // inputDecorationTheme: InputDecorationTheme(
-  //   filled: true,
-  //   fillColor: Colors.white,
-  //   border: OutlineInputBorder(
-  //     borderRadius: BorderRadius.circular(10),
-  //     borderSide: BorderSide(color: Colors.grey.shade300),
-  //   ),
-  //   enabledBorder: OutlineInputBorder(
-  //     borderRadius: BorderRadius.circular(10),
-  //     borderSide: BorderSide(color: Colors.grey.shade300),
-  //   ),
-  //   focusedBorder: OutlineInputBorder(
-  //     borderRadius: BorderRadius.circular(10),
-  //     borderSide: BorderSide(color: Colors.blue.shade400),
-  //   ),
-  //   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  // ),
-  extensions: [_darkColors],
+  inputDecorationTheme: InputDecorationTheme(
+    fillColor: _colorSchema.surfaceContainerHighest,
+  ),
+  dividerTheme: const DividerThemeData(color: _dividerColor),
+  chipTheme: ChipThemeData(
+    backgroundColor: _colorSchema.surfaceContainerLowest,
+    selectedColor: Color(0xFF0066FF),
+    disabledColor: Color(0xFF374151),
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(20)),
+      side: BorderSide(color: _dividerColor),
+    ),
+    labelStyle: TextStyle(color: Colors.white),
+  ),
+  tabBarTheme: TabBarThemeData(dividerColor: _dividerColor),
+  extensions: [_darkColors, _messagesDarkColors],
 );

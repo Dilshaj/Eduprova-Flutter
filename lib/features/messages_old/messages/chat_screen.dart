@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -774,7 +775,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: cs.surface,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: _buildAppBar(theme, cs, otherUserId),
         body: GestureDetector(
           onTap: () {
@@ -806,7 +807,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               controller: _scrollController,
                               reverse: true,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
+                                horizontal: 4,
                                 vertical: 12,
                               ),
                               itemCount: messages.length,
@@ -1180,8 +1181,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Column(
       children: [
-        if (showDateSeparator) _buildDateSeparator(msg.createdAt),
         _buildMessageBubble(msg, isMe, context, olderMsg, newerMsg),
+        if (showDateSeparator) _buildDateSeparator(msg.createdAt),
       ],
     );
   }
@@ -1195,30 +1196,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         : isYesterday
         ? 'Yesterday'
         : DateFormat('MMM d, y').format(date);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: [
-          const Expanded(child: Divider()),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.5),
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const Expanded(child: Divider()),
-        ],
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          width: 0.5,
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+          letterSpacing: 0.5,
+        ),
       ),
     );
+
+    // return Padding(
+    //   padding: const EdgeInsets.symmetric(vertical: 16),
+    //   child: Row(
+    //     children: [
+
+    //       // const Expanded(child: Divider()),
+    //       // Padding(
+    //       //   padding: const EdgeInsets.symmetric(horizontal: 12),
+    //       //   child:
+    //       // ),
+    //       // const Expanded(child: Divider()),
+    //     ],
+    //   ),
+    // );
   }
 
   Widget _buildMessageBubble(
@@ -1601,6 +1614,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildReactions(MessageModel msg, ColorScheme cs) {
+    final themeExt = context.design;
+    final theme = Theme.of(context);
     // Group reactions by emoji
     final grouped = <String, int>{};
     for (final r in msg.reactions) {
@@ -1619,7 +1634,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cs.outlineVariant),
+                border: Border.all(
+                  width: 0.5,
+                  color: theme.dividerColor.withValues(alpha: 0.7),
+                ),
               ),
               child: Text(
                 '${entry.key} ${entry.value}',
@@ -1723,14 +1741,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       decoration: BoxDecoration(
-        color: cs.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            offset: const Offset(0, -2),
-            blurRadius: 10,
-          ),
-        ],
+        color: theme.scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
             color: cs.outlineVariant.withValues(alpha: 0.3),

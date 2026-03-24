@@ -18,27 +18,13 @@ class CommunitiesHomeScreen extends StatefulWidget {
 }
 
 class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const MessagesBackground(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return MessagesBackground(
@@ -65,7 +51,9 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                               icon: Icon(
                                 Icons.arrow_back,
                                 size: 24,
-                                color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF1E293B),
                               ),
                               onPressed: widget.onBack,
                             ),
@@ -104,7 +92,11 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFEDD5), // orange-100
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Theme.of(context).colorScheme.surface
+                              : Colors.white,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: const Icon(
@@ -315,32 +307,42 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(24),
                                     decoration: BoxDecoration(
-                                      color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+                                      color: isDarkMode
+                                          ? const Color(0xFF1C1C1E)
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(24),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFF64748B).withOpacity(0.15),
+                                          color: const Color(
+                                            0xFF64748B,
+                                          ).withOpacity(0.15),
                                           blurRadius: 30,
                                           offset: const Offset(0, 20),
                                         ),
                                       ],
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   'COMMUNITY ENGAGEMENT',
                                                   style: GoogleFonts.inter(
                                                     fontSize: 9,
                                                     fontWeight: FontWeight.bold,
-                                                    color: const Color(0xFF94A3B8),
+                                                    color: const Color(
+                                                      0xFF94A3B8,
+                                                    ),
                                                     letterSpacing: 1.0,
                                                   ),
                                                 ),
@@ -350,7 +352,11 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                   style: GoogleFonts.inter(
                                                     fontSize: 19,
                                                     fontWeight: FontWeight.bold,
-                                                    color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                                                    color: isDarkMode
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF1E293B,
+                                                          ),
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
@@ -366,8 +372,11 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                       'GROWTH +14%',
                                                       style: GoogleFonts.inter(
                                                         fontSize: 10,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: Color(0xFF10B981),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Color(
+                                                          0xFF10B981,
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
@@ -382,6 +391,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                   Positioned(
                                                     right: 0,
                                                     child: _buildAvatar(
+                                                      context,
                                                       'JD',
                                                       const Color(0xFF334155),
                                                       Colors.white,
@@ -390,6 +400,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                   Positioned(
                                                     right: 14,
                                                     child: _buildAvatar(
+                                                      context,
                                                       'AS',
                                                       const Color(0xFF3B82F6),
                                                       Colors.white,
@@ -398,6 +409,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                   Positioned(
                                                     right: 28,
                                                     child: _buildAvatar(
+                                                      context,
                                                       '+12',
                                                       const Color(0xFFF1F5F9),
                                                       const Color(0xFF475569),
@@ -423,26 +435,35 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
 
                                         // Bottom Grid
                                         Container(
-                                          padding: const EdgeInsets.only(top: 20),
+                                          padding: const EdgeInsets.only(
+                                            top: 20,
+                                          ),
                                           decoration: BoxDecoration(
                                             border: Border(
                                               top: BorderSide(
-                                                color: isDarkMode ? Colors.white10 : const Color(0xFFF1F5F9),
+                                                color: isDarkMode
+                                                    ? Colors.white10
+                                                    : const Color(0xFFF1F5F9),
                                               ),
                                             ),
                                           ),
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     'ACTIVE CONNECTIONS',
                                                     style: GoogleFonts.inter(
                                                       fontSize: 9,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: const Color(0xFF94A3B8),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: const Color(
+                                                        0xFF94A3B8,
+                                                      ),
                                                       letterSpacing: 1.0,
                                                     ),
                                                   ),
@@ -451,21 +472,30 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                     '2.4k',
                                                     style: GoogleFonts.inter(
                                                       fontSize: 24,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isDarkMode
+                                                          ? Colors.white
+                                                          : const Color(
+                                                              0xFF1E293B,
+                                                            ),
                                                     ),
                                                   ),
                                                 ],
                                               ),
                                               Column(
-                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
                                                 children: [
                                                   Text(
                                                     'SUCCESS RATE',
                                                     style: GoogleFonts.inter(
                                                       fontSize: 9,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: const Color(0xFF94A3B8),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: const Color(
+                                                        0xFF94A3B8,
+                                                      ),
                                                       letterSpacing: 1.0,
                                                     ),
                                                   ),
@@ -474,8 +504,13 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                     '98.2%',
                                                     style: GoogleFonts.inter(
                                                       fontSize: 24,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isDarkMode
+                                                          ? Colors.white
+                                                          : const Color(
+                                                              0xFF1E293B,
+                                                            ),
                                                     ),
                                                   ),
                                                 ],
@@ -496,9 +531,15 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                     width: 190,
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: isDarkMode ? const Color(0xFF2C2C2E) : Colors.white,
+                                      color: isDarkMode
+                                          ? const Color(0xFF2C2C2E)
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFF8FAFC)),
+                                      border: Border.all(
+                                        color: isDarkMode
+                                            ? Colors.white10
+                                            : const Color(0xFFF8FAFC),
+                                      ),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.08),
@@ -514,7 +555,9 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                           height: 36,
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFEFF6FF),
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                           ),
                                           alignment: Alignment.center,
                                           child: const Icon(
@@ -526,14 +569,17 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 'UPCOMING WORKSHOP',
                                                 style: GoogleFonts.inter(
                                                   fontSize: 8,
                                                   fontWeight: FontWeight.bold,
-                                                  color: const Color(0xFF0066FF),
+                                                  color: const Color(
+                                                    0xFF0066FF,
+                                                  ),
                                                   letterSpacing: 0.5,
                                                 ),
                                               ),
@@ -543,7 +589,9 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                 style: GoogleFonts.inter(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold,
-                                                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                                  color: isDarkMode
+                                                      ? Colors.white
+                                                      : const Color(0xFF0F172A),
                                                   height: 1.2,
                                                 ),
                                               ),
@@ -552,7 +600,9 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                 'Starts in 45 min',
                                                 style: GoogleFonts.inter(
                                                   fontSize: 9,
-                                                  color: const Color(0xFF94A3B8),
+                                                  color: const Color(
+                                                    0xFF94A3B8,
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -571,9 +621,15 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                     width: 210,
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: isDarkMode ? const Color(0xFF2C2C2E) : Colors.white,
+                                      color: isDarkMode
+                                          ? const Color(0xFF2C2C2E)
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFF8FAFC)),
+                                      border: Border.all(
+                                        color: isDarkMode
+                                            ? Colors.white10
+                                            : const Color(0xFFF8FAFC),
+                                      ),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.08),
@@ -583,7 +639,8 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                       ],
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
@@ -593,20 +650,27 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                               decoration: const BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 image: DecorationImage(
-                                                  image: NetworkImage('https://i.pravatar.cc/150?img=5'),
+                                                  image: NetworkImage(
+                                                    'https://i.pravatar.cc/150?img=5',
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                             const SizedBox(width: 10),
                                             Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   'Sarah Jenkins',
                                                   style: GoogleFonts.inter(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.bold,
-                                                    color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                                    color: isDarkMode
+                                                        ? Colors.white
+                                                        : const Color(
+                                                            0xFF0F172A,
+                                                          ),
                                                   ),
                                                 ),
                                                 Text(
@@ -614,7 +678,9 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                                   style: GoogleFonts.inter(
                                                     fontSize: 8,
                                                     fontWeight: FontWeight.bold,
-                                                    color: const Color(0xFF94A3B8),
+                                                    color: const Color(
+                                                      0xFF94A3B8,
+                                                    ),
                                                     letterSpacing: 1.0,
                                                   ),
                                                 ),
@@ -628,7 +694,9 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
                                           style: GoogleFonts.inter(
                                             fontSize: 10,
                                             fontStyle: FontStyle.italic,
-                                            color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                                            color: isDarkMode
+                                                ? Colors.white70
+                                                : const Color(0xFF64748B),
                                             height: 1.4,
                                           ),
                                         ),
@@ -669,11 +737,18 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
       borderRadius: BorderRadius.circular(24),
       child: Container(
         margin: const EdgeInsets.only(right: 12, bottom: 8),
-        padding: const EdgeInsets.only(left: 16, right: 24, top: 12, bottom: 12),
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 24,
+          top: 12,
+          bottom: 12,
+        ),
         decoration: BoxDecoration(
           color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFF8FAFC)),
+          border: Border.all(
+            color: isDarkMode ? Colors.white10 : const Color(0xFFF8FAFC),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -712,9 +787,7 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => CommunitiesGroupsScreen(
-            communities: _myCommunities,
-          ),
+          builder: (_) => CommunitiesGroupsScreen(communities: _myCommunities),
         ),
       ),
       child: Container(
@@ -772,14 +845,23 @@ class _CommunitiesHomeScreenState extends State<CommunitiesHomeScreen> {
     );
   }
 
-  Widget _buildAvatar(String text, Color bgColor, Color textColor) {
+  Widget _buildAvatar(
+    BuildContext context,
+    String text,
+    Color bgColor,
+    Color textColor,
+  ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
         color: bgColor,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+          width: 2,
+        ),
       ),
       alignment: Alignment.center,
       child: Text(

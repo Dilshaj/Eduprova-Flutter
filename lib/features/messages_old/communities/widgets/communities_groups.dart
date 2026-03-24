@@ -115,8 +115,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
                 _buildNewCommunityRow(),
                 const Divider(
                   height: 16,
-                  thickness: 1,
-                  color: Color(0xFFF3F4F6),
+                  thickness: 0.7,
                   indent: 16,
                   endIndent: 16,
                 ),
@@ -141,6 +140,9 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
   }
 
   Widget _buildNewCommunityRow() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF111827);
+
     return InkWell(
       onTap: _handleOpenCreateCommunity,
       child: Padding(
@@ -162,7 +164,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF111827),
+                color: textColor,
               ),
             ),
           ],
@@ -172,6 +174,11 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
   }
 
   Widget _buildCommunitySection(CommunityModel community) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF111827);
+    final iconBgColor = isDarkMode ? Colors.grey[800] : const Color(0xFFF3F4F6);
+    final iconColor = isDarkMode ? Colors.white70 : const Color(0xFF6B7280);
+
     final channels = List.of(community.groups);
     final communityId = community.id;
     final isExpanded = _expandedCommunities.contains(communityId);
@@ -208,25 +215,22 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: iconBgColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: community.avatar != null && community.avatar!.isNotEmpty
+                  child:
+                      community.avatar != null && community.avatar!.isNotEmpty
                       ? Image.network(
                           community.avatar!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const Icon(
+                          errorBuilder: (_, _, _) => Icon(
                             Icons.groups_outlined,
-                            color: Color(0xFF6B7280),
+                            color: iconColor,
                             size: 24,
                           ),
                         )
-                      : const Icon(
-                          Icons.groups_outlined,
-                          color: Color(0xFF6B7280),
-                          size: 24,
-                        ),
+                      : Icon(Icons.groups_outlined, color: iconColor, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -238,7 +242,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF111827),
+                          color: textColor,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -302,6 +306,10 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
   Widget _buildChannelRow(dynamic channel) {
     final name = channel.name ?? 'Unnamed group';
     final isAnnouncements = name.toLowerCase().contains('announcement');
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF111827);
+    final iconBgColor = isDarkMode ? Colors.grey[800] : const Color(0xFFEFF6FF);
+    final iconColor = isDarkMode ? Colors.white70 : const Color(0xFF3B82F6);
 
     return InkWell(
       onTap: () => context.push('/chat/${channel.id}'),
@@ -314,7 +322,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: iconBgColor,
                 borderRadius: BorderRadius.circular(8),
               ),
               clipBehavior: Clip.antiAlias,
@@ -326,7 +334,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
                         isAnnouncements
                             ? Icons.campaign_outlined
                             : Icons.groups_outlined,
-                        color: const Color(0xFF3B82F6),
+                        color: iconColor,
                         size: 20,
                       ),
                     )
@@ -334,7 +342,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
                       isAnnouncements
                           ? Icons.campaign_outlined
                           : Icons.groups_outlined,
-                      color: const Color(0xFF3B82F6),
+                      color: iconColor,
                       size: 20,
                     ),
             ),
@@ -348,7 +356,7 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF111827),
+                      color: textColor,
                     ),
                   ),
                   Text(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../theme/theme.dart';
 import '../../models/community_model.dart';
 import '../../models/conversation_model.dart';
 import '../../repository/community_repository.dart';
@@ -20,7 +21,8 @@ class CommunityOverviewScreen extends StatefulWidget {
   });
 
   @override
-  State<CommunityOverviewScreen> createState() => _CommunityOverviewScreenState();
+  State<CommunityOverviewScreen> createState() =>
+      _CommunityOverviewScreenState();
 }
 
 class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
@@ -41,7 +43,9 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
   Future<void> _loadCommunity() async {
     setState(() => _isLoading = true);
     try {
-      final community = await _communityRepository.fetchCommunity(widget.communityId);
+      final community = await _communityRepository.fetchCommunity(
+        widget.communityId,
+      );
       if (!mounted) return;
       setState(() {
         _community = community;
@@ -50,9 +54,9 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to load community')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to load community')));
     }
   }
 
@@ -63,16 +67,21 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        final isDarkMode = Theme.of(ctx).brightness == Brightness.dark;
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        final themeExt = context.design;
+
         return StatefulBuilder(
           builder: (context, setModalState) => AlertDialog(
-            backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            backgroundColor: themeExt.cardColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Text(
               'Create New Group',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                color: colorScheme.onSurface,
               ),
             ),
             content: SizedBox(
@@ -98,7 +107,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                      color: themeExt.secondaryText,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -117,9 +126,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDarkMode ? Colors.white24 : const Color(0xFFE2E8F0),
-                        ),
+                        border: Border.all(color: themeExt.borderColor),
                       ),
                       child: Row(
                         children: [
@@ -127,12 +134,12 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
+                              color: themeExt.avatarBackgroundColor,
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.image_outlined,
-                              color: Color(0xFF2563EB),
+                              color: colorScheme.primary,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -143,7 +150,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                                   : selectedImage!.name,
                               style: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                                color: themeExt.secondaryText,
                               ),
                             ),
                           ),
@@ -157,7 +164,10 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.inter(color: themeExt.secondaryText),
+                ),
               ),
               FilledButton(
                 onPressed: () {
@@ -185,7 +195,10 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
         final bytes = await selectedImage!.readAsBytes();
         final avatarDataUri =
             'data:${_mimeTypeForName(selectedImage!.name)};base64,${base64Encode(bytes)}';
-        await _communityRepository.updateConversation(group.id, avatar: avatarDataUri);
+        await _communityRepository.updateConversation(
+          group.id,
+          avatar: avatarDataUri,
+        );
       }
 
       await _loadCommunity();
@@ -193,9 +206,9 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
       Navigator.pop(context, true);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to create group')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to create group')));
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -211,8 +224,13 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
   }
 
   Widget _buildGroupRow(ConversationModel group) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final themeExt = context.design;
+
     final name = group.name ?? 'Unnamed group';
-    final isAnnouncements = group.type == ConversationType.announcement ||
+    final isAnnouncements =
+        group.type == ConversationType.announcement ||
         name.toLowerCase().contains('announcement');
 
     return Padding(
@@ -223,12 +241,12 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: themeExt.cardColor,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
+            border: Border.all(color: themeExt.borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: themeExt.shadowColor,
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -240,7 +258,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: themeExt.avatarBackgroundColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -252,7 +270,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                           isAnnouncements
                               ? Icons.campaign_outlined
                               : Icons.groups_outlined,
-                          color: const Color(0xFF3B82F6),
+                          color: colorScheme.primary,
                           size: 22,
                         ),
                       )
@@ -260,7 +278,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                         isAnnouncements
                             ? Icons.campaign_outlined
                             : Icons.groups_outlined,
-                        color: const Color(0xFF3B82F6),
+                        color: colorScheme.primary,
                         size: 22,
                       ),
               ),
@@ -277,7 +295,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF111827),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -289,8 +307,8 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: isAnnouncements
-                                ? const Color(0xFFFFF7ED)
-                                : const Color(0xFFF8FAFC),
+                                ? themeExt.warningColor.withValues(alpha: 0.1)
+                                : colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
@@ -299,8 +317,8 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               color: isAnnouncements
-                                  ? const Color(0xFFF97316)
-                                  : const Color(0xFF475569),
+                                  ? themeExt.warningColor
+                                  : themeExt.secondaryText,
                             ),
                           ),
                         ),
@@ -313,7 +331,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                           : 'Community discussion group',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: const Color(0xFF64748B),
+                        color: themeExt.secondaryText,
                       ),
                     ),
                   ],
@@ -328,12 +346,16 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final themeExt = context.design;
+
     final community = _community;
 
     if (_isLoading && community == null) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -345,13 +367,13 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context, false),
-          icon: const Icon(Icons.close, color: Color(0xFF1F2937)),
+          icon: Icon(Icons.close, color: colorScheme.onSurface),
         ),
         actions: [
           Padding(
@@ -359,8 +381,8 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _showCreateGroupDialog,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0066FF),
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -384,7 +406,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
           ),
           IconButton(
             onPressed: _loadCommunity,
-            icon: const Icon(Icons.refresh, color: Color(0xFF6B7280)),
+            icon: Icon(Icons.refresh, color: themeExt.secondaryText),
           ),
           const SizedBox(width: 8),
         ],
@@ -405,23 +427,25 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6),
+                        color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: community.avatar != null && community.avatar!.isNotEmpty
+                      child:
+                          community.avatar != null &&
+                              community.avatar!.isNotEmpty
                           ? Image.network(
                               community.avatar!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Icon(
+                              errorBuilder: (_, _, _) => Icon(
                                 Icons.groups_outlined,
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                                 size: 32,
                               ),
                             )
-                          : const Icon(
+                          : Icon(
                               Icons.groups_outlined,
-                              color: Colors.white,
+                              color: colorScheme.onPrimary,
                               size: 32,
                             ),
                     ),
@@ -438,7 +462,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF111827),
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                               ),
@@ -449,7 +473,9 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -457,7 +483,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF3B82F6),
+                                    color: colorScheme.primary,
                                   ),
                                 ),
                               ),
@@ -466,7 +492,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                                 '• ${community.groups.length} groups',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  color: const Color(0xFF6B7280),
+                                  color: themeExt.secondaryText,
                                 ),
                               ),
                             ],
@@ -476,7 +502,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                             '"${community.description ?? 'No description'}"',
                             style: GoogleFonts.inter(
                               fontSize: 14,
-                              color: const Color(0xFF374151),
+                              color: themeExt.secondaryText,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -485,7 +511,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                             '${community.memberCount} members',
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: const Color(0xFF64748B),
+                              color: themeExt.secondaryText,
                             ),
                           ),
                         ],
@@ -501,14 +527,14 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.tag, size: 20, color: Color(0xFF3B82F6)),
+                        Icon(Icons.tag, size: 20, color: colorScheme.primary),
                         const SizedBox(width: 8),
                         Text(
                           'Community Channels',
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF111827),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -518,7 +544,7 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF3B82F6),
+                        color: colorScheme.primary,
                       ),
                     ),
                   ],

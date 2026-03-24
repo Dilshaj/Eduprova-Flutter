@@ -61,6 +61,8 @@ class MembersWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -71,7 +73,7 @@ class MembersWidget extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF0F172A),
+              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
           Text(
@@ -86,9 +88,11 @@ class MembersWidget extends StatelessWidget {
           // Search Bar
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: isDarkMode ? Colors.black12 : const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              border: Border.all(
+                color: isDarkMode ? Colors.white10 : const Color(0xFFF1F5F9),
+              ),
             ),
             child: Row(
               children: [
@@ -98,6 +102,9 @@ class MembersWidget extends StatelessWidget {
                 ),
                 Expanded(
                   child: TextField(
+                    style: GoogleFonts.inter(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Search by name, role, or skills...',
                       hintStyle: GoogleFonts.inter(
@@ -119,9 +126,11 @@ class MembersWidget extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(
+                  color: isDarkMode ? Colors.white10 : const Color(0xFFF1F5F9),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.04),
@@ -139,6 +148,11 @@ class MembersWidget extends StatelessWidget {
                               height: 56,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDarkMode
+                                      ? Colors.white10
+                                      : Colors.transparent,
+                                ),
                                 image: DecorationImage(
                                   image: NetworkImage(
                                     member['avatar'] as String,
@@ -175,7 +189,12 @@ class MembersWidget extends StatelessWidget {
                             color: member['status'] == 'online'
                                 ? const Color(0xFF22C55E)
                                 : const Color(0xFFD1D5DB),
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? const Color(0xFF1C1C1E)
+                                  : Colors.white,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -195,7 +214,9 @@ class MembersWidget extends StatelessWidget {
                                 style: GoogleFonts.inter(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
-                                  color: const Color(0xFF111827),
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF111827),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -262,16 +283,18 @@ class MembersWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(
+                color: isDarkMode ? Colors.white10 : const Color(0xFFE5E7EB),
+              ),
             ),
             alignment: Alignment.center,
             child: Text(
               'Show More Members',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF334155),
+                color: isDarkMode ? Colors.white : const Color(0xFF334155),
               ),
             ),
           ),

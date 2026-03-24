@@ -5,8 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'package:eduprova/theme/theme_model.dart';
+import 'package:eduprova/theme/messages_theme_extension.dart';
 
 import 'meet.dart';
 import 'chat_avatar.dart';
@@ -17,7 +22,6 @@ import '../../repository/messages_repository.dart';
 import '../../repository/participant_search_repository.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../widgets/messages_background.dart';
-import '../../widgets/messages_button.dart';
 import '../../widgets/participant_picker_screen.dart';
 import '../../communities/page.dart';
 import '../../calendar/widgets/calendar_home_screen.dart';
@@ -31,7 +35,7 @@ class ChatItemWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDarkMode = Theme.of(context).brightness == .dark;
+    final msgTheme = Theme.of(context).extension<MessagesThemeExtension>()!;
     final currentUserId = ref.watch(authProvider).user?.id ?? '';
     final title = item.getDisplayTitle(currentUserId);
     final unreadCount = item.unreadCountFor(currentUserId);
@@ -49,11 +53,11 @@ class ChatItemWidget extends ConsumerWidget {
       onTap: onPress,
       child: Container(
         height: 80,
-        padding: const .symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
             Padding(
-              padding: const .only(right: 16),
+              padding: const EdgeInsets.only(right: 16),
               child: ChatAvatar(
                 conversation: item,
                 currentUserId: currentUserId,
@@ -62,22 +66,13 @@ class ChatItemWidget extends ConsumerWidget {
             ),
             Expanded(
               child: Container(
-                padding: const .only(bottom: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isDarkMode
-                          ? const Color(0xFF202020)
-                          : const Color(0xFFF0F0F0),
-                    ),
-                  ),
-                ),
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Column(
-                  mainAxisAlignment: .center,
-                  crossAxisAlignment: .start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: .spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
@@ -85,13 +80,11 @@ class ChatItemWidget extends ConsumerWidget {
                             title,
                             style: GoogleFonts.inter(
                               fontSize: 17,
-                              fontWeight: .normal,
-                              color: isDarkMode
-                                  ? const Color(0xFFE8EAED)
-                                  : const Color(0xFF111111),
+                              fontWeight: FontWeight.w700,
+                              color: msgTheme.chatTitleColor,
                             ),
                             maxLines: 1,
-                            overflow: .ellipsis,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Column(
@@ -103,14 +96,8 @@ class ChatItemWidget extends ConsumerWidget {
                                 fontSize: 12,
                                 fontWeight: unreadCount > 0
                                     ? FontWeight.w700
-                                    : FontWeight.w400,
-                                color: isDarkMode
-                                    ? (unreadCount > 0
-                                          ? const Color(0xFFE8EAED)
-                                          : const Color(0xFF9CA3AF))
-                                    : (unreadCount > 0
-                                          ? const Color(0xFF111111)
-                                          : const Color(0xFF6B7280)),
+                                    : FontWeight.w500,
+                                color: msgTheme.chatTimeColor,
                               ),
                             ),
                             if (unreadCount > 0) ...[
@@ -121,7 +108,7 @@ class ChatItemWidget extends ConsumerWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0066FF),
+                                  color: msgTheme.unreadBadgeBackground,
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
@@ -129,7 +116,7 @@ class ChatItemWidget extends ConsumerWidget {
                                   style: GoogleFonts.inter(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    color: msgTheme.unreadBadgeTextColor,
                                   ),
                                 ),
                               ),
@@ -143,7 +130,7 @@ class ChatItemWidget extends ConsumerWidget {
                       children: [
                         if (isFavorite) ...[
                           Icon(
-                            Icons.star_rounded,
+                            LucideIcons.star,
                             size: 16,
                             color: Colors.amber.shade600,
                           ),
@@ -157,16 +144,10 @@ class ChatItemWidget extends ConsumerWidget {
                               fontWeight: unreadCount > 0
                                   ? FontWeight.w600
                                   : FontWeight.w400,
-                              color: isDarkMode
-                                  ? (unreadCount > 0
-                                        ? const Color(0xFFE8EAED)
-                                        : const Color(0xFF9AA0A6))
-                                  : (unreadCount > 0
-                                        ? const Color(0xFF111111)
-                                        : const Color(0xFFA0A3A8)),
+                              color: msgTheme.chatSubtitleColor,
                             ),
                             maxLines: 1,
-                            overflow: .ellipsis,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -205,7 +186,11 @@ class ChatItemWidget extends ConsumerWidget {
     final now = DateTime.now();
     final diff = now.difference(time);
     if (diff.inDays == 0) {
-      return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+      final period = time.hour < 12 ? 'am' : 'pm';
+      final hour = time.hour == 0
+          ? 12
+          : (time.hour > 12 ? time.hour - 12 : time.hour);
+      return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
     } else if (diff.inDays == 1) {
       return 'Yesterday';
     } else {
@@ -222,7 +207,8 @@ class MessagesHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<MessagesHomeScreen> createState() => _MessagesHomeScreenState();
 }
 
-class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
+class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
+    with TickerProviderStateMixin {
   final MessagesRepository _messagesRepository = MessagesRepository();
   final ParticipantSearchRepository _participantSearchRepository =
       ParticipantSearchRepository();
@@ -230,18 +216,31 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _searchFocusNode = FocusNode();
+
+  late TabController _defaultTabController;
+  late TabController _filterTabController;
+  late TabController _activeController;
+
   Timer? _searchDebounce;
   String _searchQuery = '';
   int _selectedTabIndex = 0;
   bool _showAdvancedFilters = false;
-  String _activeFilter = 'all';
   bool _isSearchingUsers = false;
   List<SearchUserModel> _searchedUsers = const [];
 
   @override
   void initState() {
     super.initState();
-    // Socket auto-connects in ChatSocketNotifier.build() via Future.microtask
+    _defaultTabController = TabController(length: 4, vsync: this);
+    _filterTabController = TabController(length: 4, vsync: this);
+    _activeController = _defaultTabController;
+
+    _defaultTabController.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        _selectedTabIndex = _defaultTabController.index;
+      });
+    });
   }
 
   @override
@@ -250,6 +249,8 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
     _scrollController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _defaultTabController.dispose();
+    _filterTabController.dispose();
     super.dispose();
   }
 
@@ -279,22 +280,22 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
       final details = await _showGroupDetailsDialog(selected);
       if (!mounted || details == null) return;
 
-      conversation = await _messagesRepository.createConversation(
-        selected.map((user) => user.id).toList(),
-        name: details.name,
-      );
+      conversation = await _messagesRepository.createConversation([
+        for (var user in selected) user.id,
+      ], name: details.name);
 
       if (conversation != null && details.avatarDataUri != null) {
-        conversation = await _messagesRepository.updateConversation(
+        conversation =
+            await _messagesRepository.updateConversation(
               conversation.id,
               avatar: details.avatarDataUri,
             ) ??
             conversation;
       }
     } else {
-      conversation = await _messagesRepository.createConversation(
-        selected.map((user) => user.id).toList(),
-      );
+      conversation = await _messagesRepository.createConversation([
+        for (var user in selected) user.id,
+      ]);
     }
 
     if (!mounted) return;
@@ -377,7 +378,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
-                            Icons.image_outlined,
+                            LucideIcons.image,
                             color: Color(0xFF2563EB),
                           ),
                         ),
@@ -438,7 +439,9 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
 
   Future<void> _createDirectChat(SearchUserModel user) async {
     final messenger = ScaffoldMessenger.of(context);
-    final conversation = await _messagesRepository.createConversation([user.id]);
+    final conversation = await _messagesRepository.createConversation([
+      user.id,
+    ]);
     if (!mounted) return;
     if (conversation == null) {
       messenger.showSnackBar(
@@ -467,9 +470,10 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
         final users = await _participantSearchRepository.searchUsers(value);
         if (!mounted) return;
         setState(() {
-          _searchedUsers = users
-              .where((user) => user.id != currentUserId)
-              .toList();
+          _searchedUsers = [
+            for (var user in users)
+              if (user.id != currentUserId) user,
+          ];
           _isSearchingUsers = false;
         });
       } catch (_) {
@@ -489,145 +493,422 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
   void _toggleFilters() {
     setState(() {
       _showAdvancedFilters = !_showAdvancedFilters;
-      if (!_showAdvancedFilters) _activeFilter = 'all';
+      _activeController = _showAdvancedFilters
+          ? _filterTabController
+          : _defaultTabController;
+      if (!_showAdvancedFilters) {
+        _filterTabController.animateTo(0);
+      }
     });
   }
 
-  Widget _buildTabContent() {
-    switch (_selectedTabIndex) {
-      case 1:
-        return CommunitiesPage(
-          onBack: () => setState(() => _selectedTabIndex = 0),
-        );
-      case 2:
-        return CalendarHomeScreen(
-          isEmbedded: true,
-          onBack: () => setState(() => _selectedTabIndex = 0),
-        );
-      case 3:
-        return ActivityScreen(
-          isEmbedded: true,
-          onBack: () => setState(() => _selectedTabIndex = 0),
-        );
-      default:
-        return _buildChatList();
-    }
+  @override
+  Widget build(BuildContext context) {
+    final msgTheme = Theme.of(context).extension<MessagesThemeExtension>()!;
+    final appTheme = Theme.of(context).extension<AppDesignExtension>()!;
+
+    return MessagesBackground(
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: msgTheme.scaffoldBackground,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(msgTheme, appTheme),
+              _buildSearchBar(msgTheme),
+              _buildTabs(msgTheme),
+              Expanded(child: _buildTabBarView()),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _buildChatList() {
-    final conversationsAsync = ref.watch(conversationsProvider);
-    final isDarkMode = Theme.of(context).brightness == .dark;
-    final currentUserId = ref.watch(authProvider).user?.id ?? '';
-    final favorites = ref.watch(favoriteConversationIdsProvider);
-
-    return conversationsAsync.when(
-      data: (conversations) {
-        final filteredChats = conversations.where((chat) {
-          final title = chat.getDisplayTitle(currentUserId);
-          final matchesSearch = title.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          );
-
-          if (_searchQuery.isNotEmpty && !matchesSearch) return false;
-
-          if (_activeFilter == 'unread') {
-            return chat.unreadCountFor(currentUserId) > 0;
-          }
-          if (_activeFilter == 'favs') {
-            return favorites.contains(chat.id);
-          }
-          if (_activeFilter == 'groups') {
-            return chat.type != ConversationType.direct;
-          }
-          return true;
-        }).toList();
-        if (filteredChats.isEmpty &&
-            _searchedUsers.isEmpty &&
-            _searchQuery.isNotEmpty &&
-            !_isSearchingUsers) {
-          return Padding(
-            padding: const .only(top: 40),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.search_off,
-                  size: 64,
-                  color: isDarkMode ? Colors.white24 : Colors.black12,
+  Widget _buildHeader(
+    MessagesThemeExtension msgTheme,
+    AppDesignExtension appTheme,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Messages',
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: msgTheme.titleColor,
+            ),
+          ),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: _goToMeet,
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    gradient: appTheme.buyNowGradient,
+                    borderRadius: BorderRadius.circular(19),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.video,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Meet',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'No chats found for "$_searchQuery"',
-                  style: GoogleFonts.inter(
-                    color: isDarkMode ? Colors.white54 : Colors.black45,
-                    fontSize: 16,
+              ),
+              const SizedBox(width: 16),
+              if (_selectedTabIndex == 0) ...[
+                GestureDetector(
+                  onTap: _openParticipantSearch,
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedAddTeam02,
+                    size: 24,
+                    color: msgTheme.titleColor,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: _toggleFilters,
+                  child: Icon(
+                    Icons.filter_list,
+                    size: 24,
+                    color: msgTheme.titleColor,
                   ),
                 ),
               ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(MessagesThemeExtension msgTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: GestureDetector(
+        onTap: () => _searchFocusNode.requestFocus(),
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: msgTheme.searchBarFillColor,
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                LucideIcons.search,
+                size: 22,
+                color: msgTheme.searchBarIconColor,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: (val) {
+                    setState(() => _searchQuery = val);
+                    _scheduleUserSearch(val);
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search conversations',
+                    hintStyle: GoogleFonts.inter(
+                      color: msgTheme.searchBarTextColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: msgTheme.titleColor,
+                  ),
+                ),
+              ),
+              if (_searchQuery.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                  child: Icon(
+                    LucideIcons.x,
+                    size: 20,
+                    color: msgTheme.searchBarIconColor,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabs(MessagesThemeExtension msgTheme) {
+    final tabs = _showAdvancedFilters
+        ? ['All', 'Unread', 'Groups', 'Direct']
+        : ['Chat', 'Communities', 'Calendar', 'Activity'];
+    final controller = _showAdvancedFilters
+        ? _filterTabController
+        : _activeController;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) => TabBar(
+            controller: controller,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            dividerColor: Colors.transparent,
+            indicator: BoxDecoration(
+              color: msgTheme.tabSelectedBackground,
+              borderRadius: BorderRadius.circular(24),
             ),
-          );
-        }
+            labelColor: msgTheme.tabSelectedTextColor,
+            unselectedLabelColor: msgTheme.tabUnselectedTextColor,
+            labelStyle: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            unselectedLabelStyle: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorPadding: EdgeInsets.zero,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+            tabs: [
+              for (int i = 0; i < tabs.length; i++)
+                Tab(
+                  height: 38,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: controller.index == i
+                          ? Colors.transparent
+                          : msgTheme.searchBarFillColor,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: controller.index == i
+                            ? Colors.transparent
+                            : msgTheme.searchBarIconColor.withValues(
+                                alpha: 0.1,
+                              ),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(tabs[i]),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBarView() {
+    if (_showAdvancedFilters) {
+      return TabBarView(
+        controller: _filterTabController,
+        children: [
+          _buildChatList(filter: 'all'),
+          _buildChatList(filter: 'unread'),
+          _buildChatList(filter: 'groups'),
+          _buildChatList(filter: 'direct'),
+        ],
+      );
+    }
+    return TabBarView(
+      controller: _defaultTabController,
+      children: [
+        _buildChatList(filter: 'all'),
+        CommunitiesPage(
+          onBack: () {
+            _defaultTabController.animateTo(0);
+          },
+        ),
+        CalendarHomeScreen(
+          isEmbedded: true,
+          onBack: () {
+            _defaultTabController.animateTo(0);
+          },
+        ),
+        ActivityScreen(
+          isEmbedded: true,
+          onBack: () {
+            _defaultTabController.animateTo(0);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChatList({required String filter}) {
+    final conversationsAsync = ref.watch(conversationsProvider);
+    final currentUserId = ref.watch(authProvider).user?.id ?? '';
+    final favorites = ref.watch(favoriteConversationIdsProvider);
+    final msgTheme = Theme.of(context).extension<MessagesThemeExtension>()!;
+
+    return conversationsAsync.when(
+      data: (conversations) {
+        final filteredChats = [
+          for (var chat in conversations)
+            if (chat
+                .getDisplayTitle(currentUserId)
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+              if (filter == 'all' ||
+                  (filter == 'unread' &&
+                      chat.unreadCountFor(currentUserId) > 0) ||
+                  (filter == 'groups' &&
+                      chat.type != ConversationType.direct) ||
+                  (filter == 'direct' && chat.type == ConversationType.direct))
+                chat,
+        ];
+
+        final pinnedChats = [
+          for (var chat in filteredChats)
+            if (favorites.contains(chat.id)) chat,
+        ];
+        final recentChats = [
+          for (var chat in filteredChats)
+            if (!favorites.contains(chat.id)) chat,
+        ];
 
         return RefreshIndicator(
           onRefresh: () =>
               ref.read(conversationsProvider.notifier).loadConversations(),
           child: ListView(
             controller: _scrollController,
-            padding: const .only(top: 0, bottom: 100),
+            padding: const EdgeInsets.only(top: 10, bottom: 100),
             children: [
-              if (_searchQuery.isNotEmpty) ...[
-                if (_isSearchingUsers)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_searchedUsers.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Text(
-                      'People',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: .w700,
-                        color: isDarkMode
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
-                      ),
+              if (_searchQuery.isNotEmpty && _isSearchingUsers)
+                const Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_searchQuery.isNotEmpty &&
+                  _searchedUsers.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Text(
+                    'PEOPLE',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: msgTheme.sectionHeaderColor,
                     ),
                   ),
-                  for (final user in _searchedUsers)
-                    ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage:
-                            user.avatar != null && user.avatar!.isNotEmpty
-                            ? NetworkImage(user.avatar!)
-                            : null,
-                        child: user.avatar == null || user.avatar!.isEmpty
-                            ? Text(user.displayName.substring(0, 1).toUpperCase())
-                            : null,
-                      ),
-                      title: Text(user.displayName),
-                      subtitle: Text(user.email),
-                      trailing: const Icon(Icons.chat_bubble_outline),
-                      onTap: () => _createDirectChat(user),
+                ),
+                for (final user in _searchedUsers)
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage:
+                          user.avatar != null && user.avatar!.isNotEmpty
+                          ? NetworkImage(user.avatar!)
+                          : null,
+                      child: user.avatar == null || user.avatar!.isEmpty
+                          ? Text(user.displayName.substring(0, 1).toUpperCase())
+                          : null,
                     ),
-                ],
-                if (filteredChats.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Text(
-                      'Chats',
+                    title: Text(
+                      user.displayName,
+                      style: GoogleFonts.inter(color: msgTheme.chatTitleColor),
+                    ),
+                    subtitle: Text(
+                      user.email,
                       style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: .w700,
-                        color: isDarkMode
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF6B7280),
+                        color: msgTheme.chatSubtitleColor,
                       ),
                     ),
+                    trailing: Icon(
+                      LucideIcons.messageSquare,
+                      color: msgTheme.searchBarIconColor,
+                    ),
+                    onTap: () => _createDirectChat(user),
                   ),
               ],
-              for (final item in filteredChats)
-                ChatItemWidget(item: item, onPress: () => _goToChat(item)),
+              if (pinnedChats.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Text(
+                    'PINNED',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: msgTheme.sectionHeaderColor,
+                    ),
+                  ),
+                ),
+                for (final item in pinnedChats)
+                  ChatItemWidget(item: item, onPress: () => _goToChat(item)),
+              ],
+              if (recentChats.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                  child: Text(
+                    'RECENT',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: msgTheme.sectionHeaderColor,
+                    ),
+                  ),
+                ),
+                for (final item in recentChats)
+                  ChatItemWidget(item: item, onPress: () => _goToChat(item)),
+              ],
+              if (filteredChats.isEmpty &&
+                  _searchQuery.isNotEmpty &&
+                  !_isSearchingUsers &&
+                  _searchedUsers.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Center(
+                    child: Text(
+                      'No chats found',
+                      style: GoogleFonts.inter(
+                        color: msgTheme.chatSubtitleColor,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         );
@@ -643,361 +924,6 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> {
         ),
       ),
       error: (err, stack) => Center(child: Text('Error: $err')),
-    );
-  }
-
-  Widget _buildSearchAndFilters() {
-    final isDarkMode = Theme.of(context).brightness == .dark;
-    final conversations = ref.watch(conversationsProvider).value ?? const [];
-    final currentUserId = ref.watch(authProvider).user?.id ?? '';
-    final favorites = ref.watch(favoriteConversationIdsProvider);
-    final unreadChatsCount = conversations
-        .where((chat) => chat.unreadCountFor(currentUserId) > 0)
-        .length;
-    final favoriteChatsCount = conversations
-        .where((chat) => favorites.contains(chat.id))
-        .length;
-    final groupChatsCount = conversations
-        .where((chat) => chat.type != ConversationType.direct)
-        .length;
-
-    return Container(
-      padding: const .only(bottom: 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Search Bar
-          Container(
-            padding: const .fromLTRB(16, 12, 16, 8),
-            child: GestureDetector(
-              onTap: () => _searchFocusNode.requestFocus(),
-              child: Container(
-                height: 46,
-                padding: const .symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.white10 : const Color(0xFFF3F4F6),
-                  borderRadius: .circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search,
-                      size: 20,
-                      color: Color(0xFF9AA0A6),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val;
-                          });
-                          _scheduleUserSearch(val);
-                        },
-                        decoration: InputDecoration(
-                          hintText: _selectedTabIndex == 1
-                              ? 'Search communities'
-                              : 'Search or start a new chat',
-                          hintStyle: GoogleFonts.inter(
-                            color: const Color(0xFF9AA0A6),
-                            fontSize: 15,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: .zero,
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? GestureDetector(
-                                  onTap: () {
-                                    _searchController.clear();
-                                    setState(() {
-                                      _searchQuery = '';
-                                    });
-                                  },
-                                  child: const Icon(
-                                    Icons.close,
-                                    size: 18,
-                                    color: Color(0xFF9AA0A6),
-                                  ),
-                                )
-                              : null,
-                          suffixIconConstraints: const BoxConstraints(
-                            minHeight: 18,
-                            minWidth: 18,
-                          ),
-                        ),
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF111111),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Filter Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const .symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: _showAdvancedFilters
-                  ? [
-                      _buildChip(
-                        'All',
-                        isActive: _activeFilter == 'all',
-                        onTap: () => setState(() => _activeFilter = 'all'),
-                      ),
-                      _buildChip(
-                        'Unread',
-                        count: unreadChatsCount > 0 ? '$unreadChatsCount' : null,
-                        isActive: _activeFilter == 'unread',
-                        onTap: () => setState(() => _activeFilter = 'unread'),
-                      ),
-                      _buildChip(
-                        'Favourites',
-                        count: favoriteChatsCount > 0
-                            ? '$favoriteChatsCount'
-                            : null,
-                        isActive: _activeFilter == 'favs',
-                        onTap: () => setState(() => _activeFilter = 'favs'),
-                      ),
-                      _buildChip(
-                        'Groups',
-                        count: groupChatsCount > 0 ? '$groupChatsCount' : null,
-                        isActive: _activeFilter == 'groups',
-                        onTap: () => setState(() => _activeFilter = 'groups'),
-                      ),
-                    ]
-                  : [
-                      _buildChip(
-                        'Chat',
-                        icon: Icons.chat_bubble,
-                        isActive: _selectedTabIndex == 0,
-                        onTap: () => setState(() => _selectedTabIndex = 0),
-                      ),
-                      _buildChip(
-                        'Communities',
-                        icon: Icons.hub_outlined,
-                        isActive: _selectedTabIndex == 1,
-                        onTap: () => setState(() => _selectedTabIndex = 1),
-                      ),
-                      _buildChip(
-                        'Calendar',
-                        icon: Icons.calendar_month_outlined,
-                        isActive: _selectedTabIndex == 2,
-                        onTap: () => setState(() => _selectedTabIndex = 2),
-                      ),
-                      _buildChip(
-                        'Activity',
-                        icon: Icons.notifications_none_outlined,
-                        isActive: _selectedTabIndex == 3,
-                        onTap: () => setState(() => _selectedTabIndex = 3),
-                      ),
-                    ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == .dark;
-
-    return MessagesBackground(
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const .symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: .spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          margin: const .only(right: 12),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE3E8C8),
-                            shape: .circle,
-                          ),
-                          alignment: .center,
-                          child: Text(
-                            'PV',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF3A5A30),
-                              fontWeight: .w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          _selectedTabIndex == 1
-                              ? 'Communities'
-                              : _selectedTabIndex == 2
-                              ? 'Calendar'
-                              : _selectedTabIndex == 3
-                              ? 'Activity'
-                              : 'Chat',
-                          style: GoogleFonts.inter(
-                            fontSize: 22,
-                            fontWeight: .bold,
-                            color: isDarkMode
-                                ? const Color(0xFFE8EAED)
-                                : const Color(0xFF111111),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        MessagesButton(
-                          text: 'Meet',
-                          height: 36,
-                          icon: Icons.videocam,
-                          onPressed: _goToMeet,
-                        ),
-                        const SizedBox(width: 12),
-                        if (_selectedTabIndex == 0)
-                          GestureDetector(
-                            onTap: _openParticipantSearch,
-                            child: Icon(
-                              Icons.edit_square,
-                              size: 26,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF1F2937),
-                            ),
-                          ),
-                        if (_selectedTabIndex == 0) const SizedBox(width: 12),
-                        if (_selectedTabIndex == 0)
-                          GestureDetector(
-                            onTap: _toggleFilters,
-                            child: Icon(
-                              _showAdvancedFilters
-                                  ? Icons.filter_list_off
-                                  : Icons.filter_list,
-                              size: 26,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF1F2937),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Search and Tabs
-              _buildSearchAndFilters(),
-
-              Expanded(child: _buildTabContent()),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChip(
-    String label, {
-    String? count,
-    bool isActive = false,
-    VoidCallback? onTap,
-    IconData? icon,
-  }) {
-    final isDarkMode = Theme.of(context).brightness == .dark;
-
-    return Padding(
-      padding: const .only(right: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: .circular(20),
-          child: Container(
-            padding: const .symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
-              gradient: isActive
-                  ? const LinearGradient(
-                      colors: [Color(0xFF0066FF), Color(0xFFE056FD)],
-                      begin: .centerLeft,
-                      end: .centerRight,
-                    )
-                  : null,
-              color: isActive
-                  ? null
-                  : (isDarkMode ? Colors.white10 : const Color(0xFFF3F4F6)),
-              borderRadius: .circular(20),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF0066FF).withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const .new(0, 4),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: .min,
-              children: [
-                if (icon != null) ...[
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: isActive
-                        ? Colors.white
-                        : (isDarkMode
-                              ? Colors.white70
-                              : const Color(0xFF64748B)),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: isActive ? .w600 : .w500,
-                    color: isActive
-                        ? Colors.white
-                        : (isDarkMode
-                              ? const Color(0xFFE8EAED)
-                              : const Color(0xFF64748B)),
-                  ),
-                ),
-                if (count != null) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    count,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: isActive
-                          ? (isDarkMode ? Colors.white70 : Colors.white60)
-                          : (isDarkMode
-                                ? Colors.white38
-                                : const Color(0xFF94A3B8)),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

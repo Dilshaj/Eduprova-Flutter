@@ -25,6 +25,7 @@ import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
 import 'package:eduprova/features/jobs/jobs_screen.dart';
+import 'package:eduprova/features/messages_old/communities/widgets/community_overview.dart';
 import 'package:eduprova/features/messages_old/messages_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -217,6 +218,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) {
           final chatId = state.pathParameters['id']!;
           return ChatScreen(conversationId: chatId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.community(':id'),
+        builder: (_, state) {
+          final chatId = state.pathParameters['id']!;
+          return CommunityOverviewScreen(communityId: chatId);
         },
       ),
       // GoRoute(

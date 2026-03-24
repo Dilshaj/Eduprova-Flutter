@@ -35,7 +35,9 @@ class _MessagesBackgroundState extends State<MessagesBackground>
     return Stack(
       children: [
         // Base background color
-        Positioned.fill(child: Container(color: const Color(0xFFFBFCFF))),
+        Positioned.fill(
+          child: Container(color: Theme.of(context).scaffoldBackgroundColor),
+        ),
 
         // Animated Blobs
         AnimatedBuilder(

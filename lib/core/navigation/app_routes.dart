@@ -19,6 +19,7 @@ class AppRoutes {
   // Messages & Communities
   static const String messages = '/messages';
   static String chat(String id) => '/chat/$id';
+  static String community(String id) => '/community/$id';
   static String contactDetail(String id) => '/contact/$id';
   static const String createCommunity = '/create-community';
   static const String createChannel = '/create-channel';

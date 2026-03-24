@@ -66,7 +66,7 @@ class ApiClient {
     final override = prefs.getString(_overrideUrlKey);
     if (override != null && override.isNotEmpty) {
       debugPrint('Using override URL: $override');
-      return override;
+      return 'http://$override:4000';
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       return 'http://192.168.1.102:4000';
