@@ -36,8 +36,8 @@ final storyRepositoryProvider = Provider<StoryRepository>((ref) => .new());
 
 final statusProfilesProvider =
     NotifierProvider<StoriesNotifier, AsyncValue<List<StatusProfile>>>(
-  StoriesNotifier.new,
-);
+      StoriesNotifier.new,
+    );
 
 class StoriesNotifier extends Notifier<AsyncValue<List<StatusProfile>>> {
   @override

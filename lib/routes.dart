@@ -24,10 +24,13 @@ import 'package:eduprova/features/home/main_layout.dart';
 import 'package:eduprova/features/home/search/search_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
+import 'package:eduprova/features/home/liked/liked_posts_screen.dart';
+import 'package:eduprova/features/home/saved/saved_posts_screen.dart';
 import 'package:eduprova/features/jobs/jobs_screen.dart';
 import 'package:eduprova/features/jobs/screens/job_details_screen.dart';
 import 'package:eduprova/features/jobs/screens/search_jobs_screen.dart';
-import 'package:eduprova/features/messages/messages_shell.dart';
+import 'package:eduprova/features/messages_old/messages_shell.dart';
+// import 'package:eduprova/features/messages/messages_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -146,6 +149,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(path: AppRoutes.search, builder: (_, _) => const SearchScreen()),
+      GoRoute(path: AppRoutes.likedPosts, builder: (_, _) => const LikedPostsScreen()),
+      GoRoute(path: AppRoutes.savedPosts, builder: (_, _) => const SavedPostsScreen()),
       GoRoute(
         path: AppRoutes.statusPager(':id'),
         builder: (_, state) {

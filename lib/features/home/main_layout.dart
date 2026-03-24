@@ -1,278 +1,465 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
-import 'package:eduprova/features/home/bottom_nav/bottom_nav4.dart';
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
-import 'package:eduprova/core/widgets/dev_server_config_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 final GlobalKey<ScaffoldState> mainScaffoldKey = GlobalKey<ScaffoldState>();
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends ConsumerWidget {
   const MainLayout({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       key: mainScaffoldKey,
       extendBody: true,
-      drawer: _buildDrawer(context, isDark),
+      drawer: _buildDrawer(context, isDark, ref),
       body: navigationShell,
-      bottomNavigationBar: BottomNav4(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) {
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
+      bottomNavigationBar: _buildBottomNav(context),
+      floatingActionButton: _buildFab(context),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context) {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        color: Colors.transparent,
+        elevation: 0,
+        notchMargin: 10,
+        shape: const CircularNotchedRectangle(),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(context, 0, LucideIcons.house, "Home"),
+            _buildNavItem(context, 1, LucideIcons.bookOpen, "Courses"),
+            const SizedBox(width: 48), // Space for FAB
+            _buildNavItem(context, 2, LucideIcons.messageCircle, "Messages"),
+            _buildNavItem(context, 3, LucideIcons.user, "Profile"),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDrawer(BuildContext context, bool isDark) {
+  Widget _buildNavItem(BuildContext context, int index, IconData icon, String label) {
+    final isSelected = navigationShell.currentIndex == index;
+    return InkWell(
+      onTap: () => navigationShell.goBranch(index),
+      mouseCursor: SystemMouseCursors.click,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF9E9E9E),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF9E9E9E),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFab(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: RawMaterialButton(
+        shape: const CircleBorder(),
+        onPressed: () {},
+        child: const Icon(LucideIcons.plus, color: Colors.white, size: 32),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, bool isDark, WidgetRef ref) {
+    final bgColor = isDark ? const Color(0xFF111827) : const Color(0xFFF3F7FF);
+    final cardColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF1F2937);
+    final subTextColor = isDark ? Colors.grey[400] : const Color(0xFF6B7280);
+
     return Drawer(
-      width: 340,
+      width: MediaQuery.of(context).size.width * 0.85,
+      backgroundColor: bgColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Streaks Section
-              const Text(
-                'Streaks',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
+              // Header: Profile Info
               Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text('🔥', style: TextStyle(fontSize: 18)),
-                          SizedBox(width: 8),
-                          Text(
-                            '11.2k',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Rahul Gamer',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
                           ),
-                        ],
-                      ),
+                        ),
+                        Text(
+                          'Student',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: subTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(LucideIcons.plus, color: textColor, size: 22),
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: Icon(LucideIcons.squarePen, color: textColor, size: 20),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Favorites and Bookmark Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickActionButton(
+                      context,
+                      LucideIcons.heart,
+                      cardColor,
+                      textColor,
+                      onTap: () {
+                        context.pop();
+                        context.push(AppRoutes.likedPosts);
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                        ),
-                      ),
+                    child: _buildQuickActionButton(
+                      context,
+                      LucideIcons.bookmark,
+                      cardColor,
+                      textColor,
+                      onTap: () {
+                        context.pop();
+                        context.push(AppRoutes.savedPosts);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Feed Section
+              _buildSectionCard(
+                context,
+                [
+                  _buildDrawerItem(context, LucideIcons.rss, 'For you', textColor, onTap: () {
+                    context.pop();
+                    navigationShell.goBranch(0);
+                  }),
+                  _buildDrawerItem(context, LucideIcons.users, 'Following', textColor, isLast: true, onTap: () {
+                    context.pop();
+                    // Optional: navigate to a following-filtered view if exists
+                  }),
+                ],
+                cardColor,
+              ),
+              const SizedBox(height: 24),
+
+              // EDUPROVA CORE Section
+              _buildSectionHeader('EDUPROVA CORE', subTextColor!),
+              _buildSectionCard(
+                context,
+                [
+                  _buildDrawerItem(
+                    context,
+                    LucideIcons.house,
+                    'Home',
+                    const Color(0xFF3B82F6),
+                    isActive: navigationShell.currentIndex == 0,
+                    onTap: () {
+                      context.pop();
+                      navigationShell.goBranch(0);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    LucideIcons.settings,
+                    'Settings',
+                    textColor,
+                    isLast: true,
+                    onTap: () {
+                      context.pop();
+                      context.push(AppRoutes.profileSettings);
+                    },
+                  ),
+                ],
+                cardColor,
+              ),
+              const SizedBox(height: 24),
+
+              // COMMUNITY Section
+              _buildSectionHeader('COMMUNITY', subTextColor),
+              _buildSectionCard(
+                context,
+                [
+                  _buildDrawerItem(context, LucideIcons.briefcase, 'Job Board', textColor, onTap: () {
+                    context.pop();
+                    context.push(AppRoutes.jobs);
+                  }),
+                  _buildDrawerItem(context, LucideIcons.handshake, 'Freelancing', textColor, isLast: true, onTap: () {
+                    context.pop();
+                    // context.push(AppRoutes.freelance); // Add route if exists
+                  }),
+                ],
+                cardColor,
+              ),
+              const SizedBox(height: 24),
+
+              // AI TOOLS Section
+              _buildSectionHeader('AI TOOLS', subTextColor),
+              _buildSectionCard(
+                context,
+                [
+                  _buildDrawerItem(context, LucideIcons.languages, 'Grammar Assistant', textColor, onTap: () {
+                    context.pop();
+                    context.push(AppRoutes.grammar);
+                  }),
+                  _buildDrawerItem(context, LucideIcons.fileText, 'Resume Builder', textColor, onTap: () {
+                    context.pop();
+                    context.push(AppRoutes.resumeBuilderHome);
+                  }),
+                  _buildDrawerItem(context, LucideIcons.video, 'Mock Interview', textColor, isLast: true, onTap: () {
+                    context.pop();
+                    context.push(AppRoutes.aiInterview);
+                  }),
+                ],
+                cardColor,
+              ),
+              const SizedBox(height: 24),
+
+              // Logout Footer
+              _buildSectionCard(
+                context,
+                [
+                  InkWell(
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await ref.read(authProvider.notifier).logout();
+                    },
+                    splashColor: Colors.transparent,
+                    highlightColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text('🏆', style: TextStyle(fontSize: 18)),
-                          SizedBox(width: 8),
-                          Text(
-                            '20.6hrs',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        children: [
+                          const Icon(LucideIcons.logOut, color: Color(0xFF6B7280), size: 22),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor,
+                                  ),
+                                ),
+                                Text(
+                                  'EDUPROVA V2.4.0',
+                                  style: TextStyle(fontSize: 10, color: subTextColor),
+                                ),
+                              ],
                             ),
                           ),
+                          const Icon(LucideIcons.chevronRight, size: 18, color: Color(0xFF9E9E9E)),
                         ],
                       ),
                     ),
                   ),
                 ],
+                cardColor,
               ),
-              const SizedBox(height: 24),
-
-              // Featured Posts Section
-              const Text(
-                'Featured Posts',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(title: const Text('Trending Posts'), onTap: () {}),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    ListTile(title: const Text('Following'), onTap: () {}),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    ListTile(title: const Text('Latest Posts'), onTap: () {}),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // AI Tools Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'AI Tools',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'See all',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      title: const Text('Grammar Correction'),
-                      onTap: () {
-                        context.pop();
-                        context.push(AppRoutes.grammar);
-                      },
-                    ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    ListTile(
-                      title: const Text('Resume Builder'),
-                      onTap: () {
-                        // close drawer
-                        context.pop();
-                        context.push(AppRoutes.resumeBuilderHome);
-                      },
-                    ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    ListTile(
-                      title: const Text('Interview Assistant'),
-                      onTap: () {
-                        // close drawer
-                        context.pop();
-                        context.push(AppRoutes.aiInterview);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Freelance Section
-              const Text(
-                'Freelance',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(title: const Text('Freelancing'), onTap: () {}),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    ExpansionTile(
-                      title: const Text('Startup Hub'),
-                      shape: const Border(),
-                      children: [
-                        ListTile(
-                          title: const Text('Find Investors'),
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'App Settings',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.dns_outlined),
-                      title: const Text('Dev API URL'),
-                      subtitle: const Text('Change backend IP for testing'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          final rootContext =
-                              mainScaffoldKey.currentContext ?? context;
-                          showDevServerConfigDialog(rootContext);
-                        });
-                      },
-                    ),
-                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                    Consumer(
-                      builder: (context, ref, child) {
-                        return ListTile(
-                          leading: const Icon(Icons.logout),
-                          title: const Text('Logout'),
-                          onTap: () async {
-                            Navigator.pop(context);
-                            await ref.read(authProvider.notifier).logout();
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickActionButton(BuildContext context, IconData icon, Color cardColor, Color textColor, {VoidCallback? onTap}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap ?? () {},
+      borderRadius: BorderRadius.circular(20),
+      splashColor: Colors.transparent,
+      highlightColor: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.black.withValues(alpha: 0.03),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.02)),
+        ),
+        child: Icon(icon, color: textColor, size: 24),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 12),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: color.withValues(alpha: 0.8),
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(BuildContext context, List<Widget> items, Color cardColor) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.015),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(children: items),
+    );
+  }
+
+  Widget _buildDrawerItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    Color color, {
+    bool isLast = false,
+    bool isActive = false,
+    VoidCallback? onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap ?? () {},
+          borderRadius: isLast
+              ? const BorderRadius.vertical(bottom: Radius.circular(20))
+              : (title == 'For you' || title == 'Home' || title == 'Job Board' || title == 'Grammar Assistant'
+                  ? const BorderRadius.vertical(top: Radius.circular(20))
+                  : null),
+          splashColor: Colors.transparent,
+          highlightColor: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.03),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: isActive ? const Color(0xFF8B5CF6) : Colors.transparent,
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Icon(icon, color: color, size: 22),
+                const SizedBox(width: 16),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            indent: 52,
+            endIndent: 20,
+            color: Colors.black.withValues(alpha: 0.05),
+          ),
+      ],
     );
   }
 }

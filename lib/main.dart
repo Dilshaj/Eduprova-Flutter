@@ -35,8 +35,8 @@ class MainApp extends ConsumerWidget {
           return Stack(
             children: [
               child ?? const SizedBox.shrink(),
-              const IncomingCallOverlay(),
-              const GlobalMiniPlayerOverlay(),
+              const IncomingCallOverlay(key: ValueKey('incoming_call_overlay')),
+              const GlobalMiniPlayerOverlay(key: ValueKey('global_mini_player_overlay')),
             ],
           );
         },

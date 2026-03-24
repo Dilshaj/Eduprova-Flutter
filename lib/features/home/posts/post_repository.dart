@@ -7,7 +7,7 @@ class PostRepository {
       final response = await ApiClient.instance.get(
         '/posts/feed',
         queryParameters: {
-          'filter': ?filter,
+          'filter': filter,
           'page': page,
           'limit': limit,
         },

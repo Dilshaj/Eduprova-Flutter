@@ -1,13 +1,10 @@
-import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
-import 'post_provider.dart';
-import 'widgets/pdf_preview_widget.dart';
-import 'widgets/video_preview_widget.dart';
+import 'package:eduprova/features/home/posts/widgets/post_action_bar.dart';
 
 class PostModel {
   final String id;
@@ -44,11 +41,47 @@ class PostModel {
     this.pdfUrl,
   });
 
+  PostModel copyWith({
+    String? id,
+    String? name,
+    String? designation,
+    String? timeAgo,
+    String? content,
+    String? imageUrl,
+    String? authorAvatar,
+    DateTime? createdAt,
+    int? likeCount,
+    int? commentCount,
+    bool? isLiked,
+    bool? isSaved,
+    String? mediaType,
+    String? videoUrl,
+    String? pdfUrl,
+  }) {
+    return PostModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      designation: designation ?? this.designation,
+      timeAgo: timeAgo ?? this.timeAgo,
+      content: content ?? this.content,
+      imageUrl: imageUrl ?? this.imageUrl,
+      authorAvatar: authorAvatar ?? this.authorAvatar,
+      createdAt: createdAt ?? this.createdAt,
+      likeCount: likeCount ?? this.likeCount,
+      commentCount: commentCount ?? this.commentCount,
+      isLiked: isLiked ?? this.isLiked,
+      isSaved: isSaved ?? this.isSaved,
+      mediaType: mediaType ?? this.mediaType,
+      videoUrl: videoUrl ?? this.videoUrl,
+      pdfUrl: pdfUrl ?? this.pdfUrl,
+    );
+  }
+
   factory PostModel.fromMap(Map<String, dynamic> map) {
     final author = map['authorId'] as Map<String, dynamic>?;
     final media = (map['media'] as List?)?.firstOrNull as Map<String, dynamic>?;
 
-    return .new(
+    return PostModel(
       id: map['_id'] ?? '',
       name: author != null
           ? '${author['firstName'] ?? ''} ${author['lastName'] ?? ''}'.trim()
@@ -95,159 +128,148 @@ class Post extends ConsumerStatefulWidget {
   const Post({super.key, required this.post});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _PostState();
+  ConsumerState<Post> createState() => _PostState();
 }
 
 class _PostState extends ConsumerState<Post> {
   @override
   Widget build(BuildContext context) {
-    const double padding = 12;
-    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const double borderRadius = 28.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
         decoration: BoxDecoration(
-          color: themeExt.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).dividerColor, width: 1),
+          color: isDark ? const Color(0xFF1F2937) : Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const .all(padding),
-                child: Row(
-                  crossAxisAlignment: .start,
-                  children: [
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundImage:
-                          widget.post.authorAvatar.startsWith('http')
-                          ? CachedNetworkImageProvider(
-                              widget.post.authorAvatar,
-                              cacheManager: CacheManagers.avatarCacheManager,
-                            )
-                          : AssetImage(widget.post.authorAvatar)
-                                as ImageProvider,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: .start,
-                        children: [
-                          Text(
-                            widget.post.name,
-                            style: const .new(fontWeight: .w600, fontSize: 17),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Profile Header ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                children: [
+                   CircleAvatar(
+                    radius: 24,
+                    backgroundImage:
+                        widget.post.authorAvatar.startsWith('http')
+                        ? CachedNetworkImageProvider(
+                            widget.post.authorAvatar,
+                            cacheManager: CacheManagers.avatarCacheManager,
+                          )
+                        : AssetImage(widget.post.authorAvatar)
+                            as ImageProvider,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.post.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            color: isDark ? Colors.white : const Color(0xFF1F2937),
+                            letterSpacing: -0.4,
                           ),
-                          if (widget.post.designation != null ||
-                              widget.post.timeAgo != null)
-                            Text(
-                              '${widget.post.designation ?? ''} • ${widget.post.timeAgo ?? ''}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${widget.post.designation ?? 'Product Designer'} • ${widget.post.timeAgo ?? '3h ago'}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark ? Colors.grey[400] : const Color(0xFF9CA3AF),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    const Icon(Icons.more_vert),
-                  ],
-                ),
+                  ),
+                  Icon(LucideIcons.layoutGrid, size: 24, color: isDark ? Colors.grey[500] : const Color(0xFF4B5563)),
+                ],
               ),
-              if (widget.post.content != null) ...[
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const .symmetric(horizontal: padding),
-                  child: Text(
-                    widget.post.content!,
-                    style: const .new(fontSize: 14, height: 1.4),
-                  ),
-                ),
-              ],
-              if (widget.post.pdfUrl != null) ...[
-                const SizedBox(height: 12),
-                PdfPreviewWidget(pdfUrl: widget.post.pdfUrl!),
-              ] else if (widget.post.videoUrl != null) ...[
-                const SizedBox(height: 12),
-                VideoPreviewWidget(videoUrl: widget.post.videoUrl!),
-              ] else if (widget.post.imageUrl != null) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: .infinity,
-                  height: 200,
-                  child: ClipRRect(
-                    child: CachedNetworkImage(
-                      imageUrl: widget.post.imageUrl!,
-                      cacheManager: CacheManagers.postCacheManager,
-                      fit: .cover,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: Colors.grey[300]!,
-                        highlightColor: Colors.grey[100]!,
-                        child: Container(color: Colors.white),
-                      ),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
+            ),
+
+            // ── Content Text ──────────────────────────────────────────────
+            if (widget.post.content != null) ...[
               Padding(
-                padding: const .symmetric(horizontal: padding),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => ref
-                          .read(postsProvider.notifier)
-                          .toggleLike(widget.post.id),
-                      child: _buildActionItem(
-                        widget.post.isLiked
-                            ? HugeIcons.strokeRoundedFavourite
-                            : HugeIcons.strokeRoundedFavourite,
-                        'Likes',
-                        color: widget.post.isLiked ? Colors.red : null,
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    _buildActionItem(
-                      HugeIcons.strokeRoundedComment02,
-                      'Comments',
-                    ),
-                    const SizedBox(width: 24),
-                    _buildActionItem(HugeIcons.strokeRoundedRepeat, 'Repost'),
-                    const SizedBox(width: 24),
-                    _buildActionItem(
-                      HugeIcons.strokeRoundedLinkForward,
-                      'Share',
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${widget.post.likeCount} Likes',
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ],
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  widget.post.content!,
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                    color: isDark ? Colors.grey[200] : const Color(0xFF374151),
+                    fontFamily: 'Inter',
+                    letterSpacing: -0.1,
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
             ],
-          ),
+
+            // ── Main Image ────────────────────────────────────────────────
+            if (widget.post.imageUrl != null) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.post.imageUrl!,
+                    cacheManager: CacheManagers.postCacheManager,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => _buildImageLoading(240, isDark),
+                    errorWidget: (context, url, error) => Container(
+                       height: 200,
+                       color: isDark ? Colors.grey[800] : Colors.grey[100],
+                       child: const Icon(LucideIcons.imageOff),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 20),
+
+            // ── Action Bar ───────────────────────────────────────────────
+            PostActionBar(
+              postId: widget.post.id,
+              content: widget.post.content ?? '',
+              likeCount: widget.post.likeCount,
+              commentCount: widget.post.commentCount,
+              isLiked: widget.post.isLiked,
+            ),
+
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildActionItem(
-    List<List<dynamic>> icon,
-    String label, {
-    Color? color,
-  }) {
-    return Column(
-      mainAxisSize: .min,
-      children: [
-        HugeIcon(icon: icon, size: 22, color: color),
-        const SizedBox(height: 4),
-        Text(label, style: .new(fontSize: 10, color: color)),
-      ],
+  Widget _buildImageLoading(double height, bool isDark) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+      highlightColor: isDark ? Colors.grey[700]! : Colors.grey[200]!,
+      child: Container(
+        height: height,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.black : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
     );
   }
 }

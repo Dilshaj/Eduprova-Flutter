@@ -49,6 +49,10 @@ class AppRoutes {
   static const String savedJobs = '/jobs/saved';
   static const String myApplications = '/jobs/applications';
 
+  // Liked & Saved Posts
+  static const String likedPosts = '/liked-posts';
+  static const String savedPosts = '/saved-posts';
+
   // AI Grammar
   static const String grammar = '/grammar';
   static const String grammarConversation = '/grammar/conversation';
