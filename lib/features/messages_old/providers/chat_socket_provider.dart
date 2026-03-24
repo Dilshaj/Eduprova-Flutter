@@ -54,7 +54,9 @@ class ChatSocketState {
     isConnected: isConnected ?? this.isConnected,
     presence: presence ?? this.presence,
     typing: typing ?? this.typing,
-    incomingCall: clearIncomingCall ? null : (incomingCall ?? this.incomingCall),
+    incomingCall: clearIncomingCall
+        ? null
+        : (incomingCall ?? this.incomingCall),
   );
 }
 
@@ -67,7 +69,8 @@ typedef MessageReactionCallback =
       String messageId,
       List<dynamic> reactions,
     );
-typedef MeetingEventCallback = void Function(String event, Map<String, dynamic> data);
+typedef MeetingEventCallback =
+    void Function(String event, Map<String, dynamic> data);
 typedef ConversationEventCallback =
     void Function(Map<String, dynamic> conversation);
 
@@ -369,7 +372,7 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
     _socket?.dispose();
     _socket = null;
     _listenersBound = false;
-    state = const ChatSocketState();
+    // Do not update state here as this is often called during disposal or inside build()
   }
 
   // ── Heartbeat ─────────────────────────────────────────────────────────────
@@ -503,6 +506,10 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
       'roomName': call.roomName,
     });
     clearIncomingCall();
+  }
+
+  void setIncomingCall(IncomingCallModel call) {
+    state = state.copyWith(incomingCall: call);
   }
 
   void clearIncomingCall() {

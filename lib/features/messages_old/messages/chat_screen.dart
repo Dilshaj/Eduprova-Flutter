@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:eduprova/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -979,7 +978,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       return AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: cs.surface,
+        backgroundColor: theme.scaffoldBackgroundColor,
         leading: IconButton(
           onPressed: _cancelSelection,
           icon: Icon(LucideIcons.x, color: cs.onSurface),
@@ -1033,7 +1032,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return AppBar(
       elevation: 0,
       scrolledUnderElevation: 0,
-      backgroundColor: cs.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       leading: IconButton(
         icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface),
         onPressed: () => context.pop(),
@@ -1181,8 +1180,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Column(
       children: [
-        _buildMessageBubble(msg, isMe, context, olderMsg, newerMsg),
         if (showDateSeparator) _buildDateSeparator(msg.createdAt),
+        _buildMessageBubble(msg, isMe, context, olderMsg, newerMsg),
       ],
     );
   }
@@ -1332,52 +1331,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ? CrossAxisAlignment.end
                         : CrossAxisAlignment.start,
                     children: [
-                      // Header for groups or first message in group
-                      if (!isAnnouncement && !isPartOfGroupAbove && !isMe)
+                      // Header for group chat names
+                      if (!isMe &&
+                          !isDirectChat &&
+                          !isPartOfGroupAbove &&
+                          !isAnnouncement)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 4, left: 4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (!isDirectChat)
-                                Text(
-                                  msg.sender != null
-                                      ? '${msg.sender!.firstName} ${msg.sender!.lastName}'
-                                      : 'Member',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: cs.onSurface.withValues(alpha: 0.6),
-                                  ),
-                                ),
-                              if (!isDirectChat) const SizedBox(width: 6),
-                              Text(
-                                DateFormat(
-                                  'h:mm a',
-                                ).format(msg.createdAt.toLocal()),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: cs.onSurface.withValues(alpha: 0.4),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      if (isMe && !isPartOfGroupAbove && !isAnnouncement)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4, right: 4),
                           child: Text(
-                            DateFormat(
-                              'h:mm a',
-                            ).format(msg.createdAt.toLocal()),
+                            msg.sender != null
+                                ? '${msg.sender!.firstName} ${msg.sender!.lastName}'
+                                : 'Member',
                             style: TextStyle(
-                              fontSize: 10,
-                              color: cs.onSurface.withValues(alpha: 0.4),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: cs.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
 
+                      // Footers for groups or last message in group
                       Container(
                         constraints: BoxConstraints(
                           maxWidth:
@@ -1520,6 +1493,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                       ),
                       if (msg.reactions.isNotEmpty) _buildReactions(msg, cs),
+
+                      if (!isAnnouncement && !isPartOfGroupBelow)
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: 4,
+                            left: isMe ? 0 : 4,
+                            right: isMe ? 4 : 0,
+                          ),
+                          child: Text(
+                            DateFormat(
+                              'h:mm a',
+                            ).format(msg.createdAt.toLocal()),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: cs.onSurface.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -1614,7 +1605,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildReactions(MessageModel msg, ColorScheme cs) {
-    final themeExt = context.design;
     final theme = Theme.of(context);
     // Group reactions by emoji
     final grouped = <String, int>{};

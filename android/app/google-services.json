@@ -1,34 +1,41 @@
 {
   "project_info": {
-    "project_number": "462093645547",
-    "project_id": "eduprova-154b9",
-    "storage_bucket": "eduprova-154b9.firebasestorage.app"
+    "project_number": "798282077661",
+    "project_id": "eduprova-app",
+    "storage_bucket": "eduprova-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:462093645547:android:99fbba797e05efa83630ae",
+        "mobilesdk_app_id": "1:798282077661:android:29c7315d387ef0fe341234",
         "android_client_info": {
           "package_name": "com.dilshaj.infotech.eduprova"
         }
       },
       "oauth_client": [
         {
-          "client_id": "462093645547-jhgrjc5nv2g7kp1fnk2g0o263n9kd9fj.apps.googleusercontent.com",
+          "client_id": "798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCDAlA3xTscMGs5_etXc4h3NWcm6oiLdY0"
+          "current_key": "AIzaSyAYvFcXeVPF60vjMju2U0DLLk0MQEIVoq4"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "462093645547-jhgrjc5nv2g7kp1fnk2g0o263n9kd9fj.apps.googleusercontent.com",
+              "client_id": "798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "798282077661-pti1ko108t58pnfhokcpd5j2o32uk574.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dilshaj.infotech.eduprova"
+              }
             }
           ]
         }

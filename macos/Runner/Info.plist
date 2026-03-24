@@ -36,5 +36,26 @@
 	<string>This app requires access to speech recognition for the AI interview feature.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app requires access to the microphone for the AI interview feature.</string>
+
+
+	<!-- Google Sign In -->
+	<key>GIDClientID</key>
+	<!-- Copied from GoogleService-Info.plist key CLIENT_ID -->
+	<string>798282077661-pti1ko108t58pnfhokcpd5j2o32uk574.apps.googleusercontent.com</string>
+
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Copied from GoogleService-Info.plist key REVERSED_CLIENT_ID -->
+				<string>com.googleusercontent.apps.798282077661-pti1ko108t58pnfhokcpd5j2o32uk574</string>
+			</array>
+		</dict>
+	</array>
+
+
 </dict>
 </plist>

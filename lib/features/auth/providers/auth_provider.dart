@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:eduprova/core/notifications/push_notification_service.dart';
 import 'package:eduprova/globals.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -121,7 +122,7 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       await _googleSignIn.initialize(
         serverClientId:
-            '462093645547-jhgrjc5nv2g7kp1fnk2g0o263n9kd9fj.apps.googleusercontent.com',
+            '798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com',
       );
 
       final googleUser = await _googleSignIn.authenticate();
@@ -158,6 +159,11 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    try {
+      await PushNotificationService.instance.unregisterCurrentToken();
+    } catch (e) {
+      log('Failed to unregister push token during logout: $e');
+    }
     await _googleSignIn.signOut();
     // await _storage.delete(key: 'access_token');
     // await _storage.delete(key: 'user_email');

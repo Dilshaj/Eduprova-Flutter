@@ -59,11 +59,13 @@ Future<void> showDevServerConfigDialog(BuildContext context) async {
                     setState(() => errorText = 'Please enter a URL');
                     return;
                   }
-                  final uri = Uri.tryParse(value);
-                  if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+                  // check it it is ip address or not
+                  final ipRegex = RegExp(
+                    r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$',
+                  );
+                  if (!ipRegex.hasMatch(value)) {
                     setState(
-                      () => errorText =
-                          'Enter valid URL, e.g. http://192.168.1.4:4000',
+                      () => errorText = 'Please enter a valid IP address',
                     );
                     return;
                   }

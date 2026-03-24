@@ -1,3 +1,5 @@
+// Plugins are now managed in settings.gradle.kts
+
 allprojects {
     repositories {
         google()
