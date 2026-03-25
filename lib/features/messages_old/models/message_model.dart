@@ -132,6 +132,7 @@ class MessageModel {
   final bool isForwarded;
   final List<MessageReaction> reactions;
   final List<dynamic> readBy;
+  final List<String> starredBy;
 
   MessageModel({
     required this.id,
@@ -147,6 +148,7 @@ class MessageModel {
     this.isForwarded = false,
     this.reactions = const [],
     this.readBy = const [],
+    this.starredBy = const [],
   });
 
   static String? _replySenderName(Map<String, dynamic> replyMessage) {
@@ -224,10 +226,16 @@ class MessageModel {
       isForwarded: json['isForwarded'] ?? false,
       reactions: reactions,
       readBy: json['readBy'] ?? [],
+      starredBy:
+          (json['starredBy'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
-  MessageModel copyWith({List<MessageReaction>? reactions}) => MessageModel(
+  MessageModel copyWith({
+    List<MessageReaction>? reactions,
+    List<String>? starredBy,
+    List<dynamic>? readBy,
+  }) => MessageModel(
     id: id,
     conversationId: conversationId,
     senderId: senderId,
@@ -240,6 +248,9 @@ class MessageModel {
     replyToMessage: replyToMessage,
     isForwarded: isForwarded,
     reactions: reactions ?? this.reactions,
-    readBy: readBy,
+    readBy: readBy ?? this.readBy,
+    starredBy: starredBy ?? this.starredBy,
   );
+
+  bool isFavorite(String userId) => starredBy.contains(userId);
 }

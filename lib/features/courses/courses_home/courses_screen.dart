@@ -293,8 +293,7 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                                       ),
                                     ),
                                   ),
-
-                                  const CategoryTabs(),
+                                  const SizedBox(height: 4),
                                   const BannerCarousel(),
                                   const SizedBox(height: 10),
 

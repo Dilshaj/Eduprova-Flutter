@@ -74,6 +74,8 @@ class ConversationModel {
   final String? communityId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<String> pinnedMessages;
+  final Map<String, dynamic>? disappearingMessageSettings;
 
   ConversationModel({
     required this.id,
@@ -88,6 +90,8 @@ class ConversationModel {
     this.communityId,
     required this.createdAt,
     required this.updatedAt,
+    this.pinnedMessages = const [],
+    this.disappearingMessageSettings,
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
@@ -116,6 +120,10 @@ class ConversationModel {
       updatedAt: DateTime.parse(
         json['updatedAt'] ?? DateTime.now().toIso8601String(),
       ),
+      pinnedMessages: [
+        for (final id in json['pinnedMessages'] ?? []) id.toString(),
+      ],
+      disappearingMessageSettings: json['disappearingMessageSettings'],
     );
   }
 
@@ -132,6 +140,8 @@ class ConversationModel {
     String? communityId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? pinnedMessages,
+    Map<String, dynamic>? disappearingMessageSettings,
   }) {
     return ConversationModel(
       id: id ?? this.id,
@@ -146,6 +156,9 @@ class ConversationModel {
       communityId: communityId ?? this.communityId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      pinnedMessages: pinnedMessages ?? this.pinnedMessages,
+      disappearingMessageSettings:
+          disappearingMessageSettings ?? this.disappearingMessageSettings,
     );
   }
 

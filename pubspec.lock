@@ -430,6 +430,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.1"
+  flutter_linkify:
+    dependency: "direct main"
+    description:
+      name: flutter_linkify
+      sha256: "74669e06a8f358fee4512b4320c0b80e51cffc496607931de68d28f099254073"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -864,6 +872,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  linkify:
+    dependency: transitive
+    description:
+      name: linkify
+      sha256: "4139ea77f4651ab9c315b577da2dd108d9aa0bd84b5d03d33323f1970c645832"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.0"
   lints:
     dependency: transitive
     description:
@@ -1328,6 +1344,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  scrollable_positioned_list:
+    dependency: "direct main"
+    description:
+      name: scrollable_positioned_list
+      sha256: "1b54d5f1329a1e263269abc9e2543d90806131aa14fe7c6062a8054d57249287"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.8"
   sdp_transform:
     dependency: transitive
     description:

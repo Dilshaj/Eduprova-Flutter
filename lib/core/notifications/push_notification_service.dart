@@ -5,7 +5,7 @@ import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/core/network/api_client.dart';
 import 'package:eduprova/features/messages_old/activity/widgets/activity_screen.dart';
 import 'package:eduprova/features/messages_old/messages/live_call_screen.dart';
-import 'package:eduprova/features/messages_old/messages-home/widgets/meet.dart';
+import 'package:eduprova/features/messages_old/meet/meet.dart';
 import 'package:eduprova/features/messages_old/models/call_room_model.dart';
 import 'package:eduprova/features/messages_old/providers/chat_socket_provider.dart';
 import 'package:eduprova/globals.dart';

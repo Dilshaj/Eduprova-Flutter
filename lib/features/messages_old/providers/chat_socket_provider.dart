@@ -407,17 +407,17 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
     _socket?.emit('leave-conversation', {'conversationId': conversationId});
   }
 
-  void sendMessage({
+  Future<MessageModel?> sendMessage({
     required String conversationId,
     required String content,
     String? replyTo,
     Map<String, dynamic>? replyToMessage,
     List<dynamic>? attachments,
     String? type,
-  }) {
+  }) async {
     if (_socket?.connected != true) {
       debugPrint('[ChatSocket] Not connected — cannot send');
-      return;
+      return null;
     }
     final messageData = {
       'conversationId': conversationId,
@@ -429,17 +429,41 @@ class ChatSocketNotifier extends Notifier<ChatSocketState> {
 
     debugPrint('[ChatSocket] Sending message: $messageData');
 
+    final completer = Completer<MessageModel?>();
+
     _socket?.emitWithAck(
       'send-message',
       messageData,
       ack: (data) {
         if (data != null && data['error'] != null) {
           debugPrint('[ChatSocket] Error sending message: ${data['error']}');
+          completer.complete(null);
         } else {
           debugPrint('[ChatSocket] Message sent successfully');
+          try {
+            if (data is Map<String, dynamic>) {
+              if (data['message'] != null) {
+                completer.complete(
+                  MessageModel.fromJson(
+                    Map<String, dynamic>.from(data['message'] as Map),
+                  ),
+                );
+              } else if (data['_id'] != null || data['id'] != null) {
+                completer.complete(MessageModel.fromJson(data));
+              } else {
+                completer.complete(null);
+              }
+            } else {
+              completer.complete(null);
+            }
+          } catch (e) {
+            completer.complete(null);
+          }
         }
       },
     );
+
+    return completer.future;
   }
 
   Future<void> sendImageMessage({

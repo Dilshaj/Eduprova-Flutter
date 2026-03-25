@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../providers/messages_provider.dart';
+import 'image_preview_screen.dart';
 
 class ChatSharedMediaScreen extends ConsumerStatefulWidget {
   final dynamic conversation;
@@ -104,17 +105,47 @@ class _ChatSharedMediaScreenState extends ConsumerState<ChatSharedMediaScreen>
                   itemCount: mediaAttachments.length,
                   itemBuilder: (context, index) {
                     final media = mediaAttachments[index];
-                    return CachedNetworkImage(
-                      imageUrl: media.url,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
+                    return GestureDetector(
+                      onTap: () {
+                        final imageUrls = mediaAttachments
+                            .where((a) => a.type == 'image')
+                            .map((a) => a.url)
+                            .toList();
+                        final clickedIndex = imageUrls.indexOf(media.url);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ImagePreviewScreen(
+                              imageUrls: imageUrls.isEmpty
+                                  ? [media.url]
+                                  : imageUrls,
+                              initialIndex: clickedIndex >= 0
+                                  ? clickedIndex
+                                  : 0,
+                              heroTag: 'shared_media_${media.url}',
+                            ),
+                          ),
+                        );
+                      },
+                      child: Hero(
+                        tag: 'shared_media_${media.url}',
+                        child: CachedNetworkImage(
+                          imageUrl: media.url,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: isDarkMode
+                                ? Colors.grey[800]
+                                : Colors.grey[200],
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: isDarkMode
+                                ? Colors.grey[800]
+                                : Colors.grey[200],
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ),
                       ),
                     );

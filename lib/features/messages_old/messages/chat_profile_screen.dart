@@ -101,6 +101,94 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen> {
     ).showSnackBar(const SnackBar(content: Text('Participants added')));
   }
 
+  Future<void> _clearChat() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat'),
+        content: const Text(
+          'Are you sure you want to clear this chat for everyone?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final success = await _repository.clearChat(_conversation.id);
+    if (!mounted) return;
+
+    if (success) {
+      ref.read(localMessagesProvider.notifier).clearMessages(_conversation.id);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Chat cleared')));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to clear chat')));
+    }
+  }
+
+  Future<void> _toggleDisappearingMessages() async {
+    // Basic toggle: 7 days or off
+    // If we had fields on ConversationModel for this, we would check them.
+    // Assuming backend returns success and we just show an optimistic UI or message.
+    final enable = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Disappearing Messages'),
+        content: const Text(
+          'New messages will disappear 7 days after they are sent.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Turn Off'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+
+    if (enable == null) return;
+
+    // 604800 seconds = 7 days
+    final duration = enable ? 604800 : 0;
+    final success = await _repository.updateDisappearingMessages(
+      _conversation.id,
+      enable,
+      duration,
+    );
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Disappearing messages ${enable ? 'enabled' : 'disabled'}',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update disappearing messages')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -366,6 +454,22 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen> {
               ),
 
             const SizedBox(height: 24),
+            _buildListTile(
+              LucideIcons.timer,
+              'Disappearing Messages',
+              '',
+              isDarkMode,
+              isRed: false,
+              onTap: _toggleDisappearingMessages,
+            ),
+            _buildListTile(
+              LucideIcons.eraser,
+              'Clear Chat',
+              '',
+              isDarkMode,
+              isRed: true,
+              onTap: _clearChat,
+            ),
             if (_isGroup)
               _buildListTile(
                 LucideIcons.logOut,

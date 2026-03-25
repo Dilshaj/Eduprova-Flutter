@@ -69,6 +69,8 @@ class MessagesRepository {
     required String content,
     MessageType type = MessageType.text,
     String? replyTo,
+    bool isForwarded = false,
+    List<dynamic>? attachments,
   }) async {
     try {
       final response = await _client.post(
@@ -77,7 +79,10 @@ class MessagesRepository {
           'conversationId': conversationId,
           'content': content,
           'type': type.toJson(),
-          'replyTo': ?replyTo,
+          if (replyTo != null) 'replyTo': replyTo,
+          if (isForwarded) 'isForwarded': true,
+          if (attachments != null && attachments.isNotEmpty)
+            'attachments': attachments,
         },
       );
 
@@ -188,11 +193,7 @@ class MessagesRepository {
     try {
       final response = await _client.patch(
         '/conversations/$conversationId',
-        data: {
-          'name': ?name,
-          'avatar': ?avatar,
-          'description': ?description,
-        },
+        data: {'name': ?name, 'avatar': ?avatar, 'description': ?description},
       );
       if (response.statusCode == 200) {
         return ConversationModel.fromJson(
@@ -258,6 +259,98 @@ class MessagesRepository {
     } catch (e) {
       debugPrint('Error uploading chat file: $e');
       return null;
+    }
+  }
+
+  Future<bool> deleteMessages(List<String> messageIds) async {
+    try {
+      final response = await _client.delete(
+        '/messages/bulk',
+        data: {'messageIds': messageIds},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleting messages: $e');
+      return false;
+    }
+  }
+
+  Future<bool> clearChat(String conversationId) async {
+    try {
+      final response = await _client.delete(
+        '/messages/conversation/$conversationId/clear',
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error clearing chat: $e');
+      return false;
+    }
+  }
+
+  Future<bool> pinMessage(String conversationId, String messageId) async {
+    try {
+      final response = await _client.post(
+        '/conversations/$conversationId/pin/$messageId',
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('Error pinning message: $e');
+      return false;
+    }
+  }
+
+  Future<bool> unpinMessage(String conversationId, String messageId) async {
+    try {
+      final response = await _client.delete(
+        '/conversations/$conversationId/pin/$messageId',
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error unpinning message: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateDisappearingMessages(
+    String id,
+    bool enabled,
+    int duration,
+  ) async {
+    try {
+      final response = await _client.patch(
+        '/conversations/$id/disappearing',
+        data: {'enabled': enabled, 'duration': duration},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error updating disappearing messages: $e');
+      return false;
+    }
+  }
+
+  Future<bool> starMessages(List<String> messageIds) async {
+    try {
+      final response = await _client.patch(
+        '/messages/bulk/star',
+        data: {'messageIds': messageIds},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error starring messages: $e');
+      return false;
+    }
+  }
+
+  Future<bool> unstarMessages(List<String> messageIds) async {
+    try {
+      final response = await _client.patch(
+        '/messages/bulk/unstar',
+        data: {'messageIds': messageIds},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error unstarring messages: $e');
+      return false;
     }
   }
 }

@@ -13,7 +13,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:eduprova/theme/theme_model.dart';
 import 'package:eduprova/theme/messages_theme_extension.dart';
 
-import 'meet.dart';
+import '../../meet/meet.dart';
 import 'chat_avatar.dart';
 import '../../models/conversation_model.dart';
 import '../../models/search_user_model.dart';

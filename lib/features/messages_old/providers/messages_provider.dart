@@ -294,6 +294,42 @@ class LocalMessagesNotifier extends Notifier<Map<String, List<MessageModel>>> {
     };
   }
 
+  /// Remove a message (e.g., temporary optimistic message)
+  void removeMessage(String conversationId, String messageId) {
+    final current = state[conversationId];
+    if (current == null) return;
+
+    state = {
+      ...state,
+      conversationId: current.where((m) => m.id != messageId).toList(),
+    };
+  }
+
+  /// Replace a message
+  void replaceMessage(
+    String conversationId,
+    String oldMessageId,
+    MessageModel newMessage,
+  ) {
+    final current = state[conversationId];
+    if (current == null) return;
+
+    if (current.any((m) => m.id == newMessage.id && m.id != oldMessageId)) {
+      state = {
+        ...state,
+        conversationId: current.where((m) => m.id != oldMessageId).toList(),
+      };
+      return;
+    }
+
+    state = {
+      ...state,
+      conversationId: current
+          .map((m) => m.id == oldMessageId ? newMessage : m)
+          .toList(),
+    };
+  }
+
   /// Update reactions on a specific message
   void updateReactions(
     String conversationId,
@@ -315,6 +351,11 @@ class LocalMessagesNotifier extends Notifier<Map<String, List<MessageModel>>> {
           if (m.id == messageId) m.copyWith(reactions: parsed) else m,
       ],
     };
+  }
+
+  /// Clear all messages for a specific conversation locally
+  void clearMessages(String conversationId) {
+    state = {...state, conversationId: []};
   }
 
   Future<void> sendMessage(

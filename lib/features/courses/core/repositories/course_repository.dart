@@ -72,8 +72,12 @@ class CourseRepository {
     try {
       final response = await _dio.get('/orders');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((e) => OrderModel.fromJson(e)).toList();
+        final data = response.data;
+        final List<dynamic> ordersList =
+            (data is Map<String, dynamic> && data.containsKey('orders'))
+            ? data['orders'] as List<dynamic>
+            : data as List<dynamic>;
+        return ordersList.map((e) => OrderModel.fromJson(e)).toList();
       }
       throw Exception('Failed to load orders');
     } on DioException catch (e) {

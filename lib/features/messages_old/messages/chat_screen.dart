@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -9,17 +11,22 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/utils/image_cache_manager.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../models/search_user_model.dart';
 import '../providers/chat_socket_provider.dart';
 import '../providers/messages_provider.dart';
-import '../repository/calling_repository.dart';
 import '../repository/messages_repository.dart';
+import '../repository/calling_repository.dart';
 import '../widgets/participant_picker_screen.dart';
 import 'chat_profile_screen.dart';
 import 'live_call_screen.dart';
 import 'image_preview_screen.dart';
+import 'pinned_messages_screen.dart';
+import 'forward_message_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -32,7 +39,9 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final MessagesRepository _messagesRepository = MessagesRepository();
   final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
   final FocusNode _inputFocusNode = FocusNode();
   late final ActiveConversationNotifier _activeConversationNotifier;
   late final ConversationsNotifier _conversationsNotifier;
@@ -55,6 +64,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _showReactionOverlay = false;
   String? _reactionMessageId;
   Offset? _tapPosition;
+  String? _highlightedMessageId;
 
   // Unsubscribe callbacks
   VoidCallback? _unsubscribeMessages;
@@ -73,13 +83,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
     _loadConversation();
     _setupSocketListeners();
-    _scrollController.addListener(_scrollListener);
+    _itemPositionsListener.itemPositions.addListener(_scrollListener);
   }
 
   void _scrollListener() {
-    if (!_scrollController.hasClients) return;
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isEmpty) return;
 
-    final isAtBottom = _scrollController.offset <= 100;
+    // Find the minimum index (since it's reversed, 0 is at bottom)
+    final minIndex = positions
+        .map((p) => p.index)
+        .reduce((a, b) => a < b ? a : b);
+    final isAtBottom = minIndex <= 1;
+
     if (isAtBottom && !_isAtBottom) {
       if (mounted) {
         setState(() {
@@ -183,28 +199,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             (_) => _scrollToBottom(),
           );
         } else {
-          // Capture old extent to prevent jump
-          final oldExtent = _scrollController.hasClients
-              ? _scrollController.position.maxScrollExtent
-              : 0.0;
-
           if (mounted) {
             setState(() {
               _newMessagesCount++;
             });
           }
-
-          // Adjust scroll position after message is added to stay visually stationary
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
-              final newExtent = _scrollController.position.maxScrollExtent;
-              final diff = newExtent - oldExtent;
-              if (diff > 0) {
-                // Maintain same content position by increasing offset
-                _scrollController.jumpTo(_scrollController.offset + diff);
-              }
-            }
-          });
         }
       },
     );
@@ -221,15 +220,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _scrollToBottom({bool animated = true}) {
-    if (!_scrollController.hasClients) return;
+    if (!_itemScrollController.isAttached) return;
     if (animated) {
-      _scrollController.animateTo(
-        0,
+      _itemScrollController.scrollTo(
+        index: 0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     } else {
-      _scrollController.jumpTo(0);
+      _itemScrollController.jumpTo(index: 0);
+    }
+  }
+
+  Future<void> _scrollToMessage(String messageId) async {
+    final messages = ref.read(combinedMessagesProvider(widget.conversationId));
+    final index = messages.indexWhere((m) => m.id == messageId);
+    if (index != -1) {
+      setState(() => _highlightedMessageId = messageId);
+      await _itemScrollController.scrollTo(
+        index: index,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0.5,
+      );
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted && _highlightedMessageId == messageId) {
+          setState(() => _highlightedMessageId = null);
+        }
+      });
     }
   }
 
@@ -241,7 +259,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _activeConversationNotifier.close(widget.conversationId);
     _typingDebounce?.cancel();
     _messageController.dispose();
-    _scrollController.dispose();
+    _itemPositionsListener.itemPositions.removeListener(_scrollListener);
     _inputFocusNode.dispose();
     super.dispose();
   }
@@ -280,16 +298,126 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _forwardSelected() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Forwarding not implemented')));
+    if (_selectedMessageIds.isEmpty) return;
+
+    final messages = ref.read(combinedMessagesProvider(widget.conversationId));
+    final selectedMsgs = messages
+        .where((m) => _selectedMessageIds.contains(m.id))
+        .toList();
+
     _cancelSelection();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ForwardMessageScreen(messages: selectedMsgs),
+      ),
+    );
   }
 
-  void _deleteSelected() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Deleting not implemented')));
+  Future<void> _deleteSelected() async {
+    if (_selectedMessageIds.isEmpty) return;
+
+    final idsToDelete = _selectedMessageIds.toList();
+    _cancelSelection();
+
+    final repo = ref.read(messagesRepositoryProvider);
+    final success = await repo.deleteMessages(idsToDelete);
+
+    if (success && mounted) {
+      for (final id in idsToDelete) {
+        ref
+            .read(localMessagesProvider.notifier)
+            .removeMessage(widget.conversationId, id);
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete messages')),
+      );
+    }
+  }
+
+  Future<void> _pinSelected() async {
+    if (_selectedMessageIds.length != 1) return;
+    final msgId = _selectedMessageIds.first;
+    _cancelSelection();
+
+    final repo = ref.read(messagesRepositoryProvider);
+    final success = await repo.pinMessage(widget.conversationId, msgId);
+
+    if (success && mounted) {
+      if (_conversation != null) {
+        final currentPins = _conversation!.pinnedMessages;
+        if (!currentPins.contains(msgId)) {
+          setState(() {
+            _conversation = _conversation!.copyWith(
+              pinnedMessages: [...currentPins, msgId],
+            );
+          });
+          _conversationsNotifier.addOrUpdateConversation(_conversation!);
+        }
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Message pinned')));
+    } else if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to pin message')));
+    }
+  }
+
+  Future<void> _toggleFavoriteSelected() async {
+    if (_selectedMessageIds.isEmpty) return;
+
+    final messages = ref.read(combinedMessagesProvider(widget.conversationId));
+    final selectedMsgs = messages
+        .where((m) => _selectedMessageIds.contains(m.id))
+        .toList();
+
+    final allStarred = selectedMsgs.every(
+      (m) => m.starredBy.contains(_currentUserId),
+    );
+
+    final repo = ref.read(messagesRepositoryProvider);
+    final ids = _selectedMessageIds.toList();
+    _cancelSelection();
+
+    final success = allStarred
+        ? await repo.unstarMessages(ids)
+        : await repo.starMessages(ids);
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            allStarred ? 'Removed from favorites' : 'Added to favorites',
+          ),
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Action failed')));
+    }
+  }
+
+  void _copySelected() {
+    if (_selectedMessageIds.isEmpty) return;
+    final messages = ref.read(combinedMessagesProvider(widget.conversationId));
+    final selectedMessages = messages
+        .where((m) => _selectedMessageIds.contains(m.id))
+        .toList();
+    final textToCopy = selectedMessages
+        .map((m) => m.content ?? '')
+        .where((c) => c.isNotEmpty)
+        .join('\n');
+
+    if (textToCopy.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: textToCopy));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Message copied')));
+    }
     _cancelSelection();
   }
 
@@ -395,9 +523,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || !_canSendMessages) return;
+    final messages = ref.read(combinedMessagesProvider(widget.conversationId));
+    if (text.isEmpty || !_canSendMessages(messages)) return;
 
     _messageController.clear();
 
@@ -410,20 +539,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _isTyping = false;
     }
 
-    // Send via socket
+    // Optimistic Update
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final user = ref.read(authProvider).user;
+    final tempMessage = MessageModel(
+      id: tempId,
+      conversationId: widget.conversationId,
+      senderId: _currentUserId,
+      content: text,
+      type: MessageType.text,
+      createdAt: DateTime.now(),
+      attachments: const [],
+      reactions: const [],
+      readBy: [_currentUserId],
+      replyTo: _replyToId,
+      replyToMessage: _replyToMessage,
+      sender: user,
+    );
     ref
-        .read(chatSocketProvider.notifier)
-        .sendMessage(
-          conversationId: widget.conversationId,
-          content: text,
-          replyTo: _replyToId,
-          replyToMessage: _replyToMessage,
-        );
+        .read(localMessagesProvider.notifier)
+        .addMessage(widget.conversationId, tempMessage);
+    _scrollToBottom();
+
+    final prevReplyToId = _replyToId;
+    final prevReplyToMessage = _replyToMessage;
 
     setState(() {
       _replyToId = null;
       _replyToMessage = null;
     });
+
+    // Send via socket
+    final actualMessage = await ref
+        .read(chatSocketProvider.notifier)
+        .sendMessage(
+          conversationId: widget.conversationId,
+          content: text,
+          replyTo: prevReplyToId,
+          replyToMessage: prevReplyToMessage,
+        );
+
+    if (mounted) {
+      if (actualMessage != null) {
+        ref
+            .read(localMessagesProvider.notifier)
+            .replaceMessage(widget.conversationId, tempId, actualMessage);
+      } else {
+        ref
+            .read(localMessagesProvider.notifier)
+            .removeMessage(widget.conversationId, tempId);
+      }
+    }
   }
 
   bool get _isPendingDirectChat =>
@@ -451,9 +617,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _conversation!.type != ConversationType.direct &&
       (_isCurrentUserAdmin || _conversation!.createdBy == _currentUserId);
 
-  bool get _canSendMessages =>
-      !_isPendingWithoutPermission &&
-      (!_isAnnouncementGroup || _isCurrentUserAdmin);
+  bool _canSendMessages(List<MessageModel> messages) {
+    if (_isPendingWithoutPermission) return false;
+    if (_isAnnouncementGroup && !_isCurrentUserAdmin) return false;
+    if (_isPendingCreator && messages.isNotEmpty) return false;
+    return true;
+  }
 
   Future<void> _addParticipantsToCommunityGroup() async {
     if (_conversation == null ||
@@ -565,6 +734,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               onTap: () => Navigator.pop(ctx, 'favorite'),
             ),
+            ListTile(
+              leading: const Icon(LucideIcons.timer),
+              title: const Text('Disappearing messages'),
+              onTap: () => Navigator.pop(ctx, 'disappearing'),
+            ),
+            ListTile(
+              leading: const Icon(LucideIcons.eraser, color: Colors.red),
+              title: const Text(
+                'Clear chat',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () => Navigator.pop(ctx, 'clear'),
+            ),
           ],
         ),
       ),
@@ -583,8 +765,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       await ref
           .read(favoriteConversationIdsProvider.notifier)
           .toggle(widget.conversationId);
-      if (!mounted) return;
-      setState(() {});
+      return;
+    }
+    if (action == 'disappearing') {
+      await _toggleDisappearingMessages();
+      return;
+    }
+    if (action == 'clear') {
+      await _clearChat();
+      return;
     }
   }
 
@@ -640,7 +829,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     if (image == null) return;
 
-    // Show loading or optimistic message? For now, just upload and send
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final user = ref.read(authProvider).user;
+    final tempMessage = MessageModel(
+      id: tempId,
+      conversationId: widget.conversationId,
+      senderId: _currentUserId,
+      content: '',
+      type: MessageType.image,
+      createdAt: DateTime.now(),
+      attachments: [MessageAttachment(type: 'image', url: image.path)],
+      reactions: const [],
+      readBy: [_currentUserId],
+      replyTo: _replyToId,
+      replyToMessage: _replyToMessage,
+      sender: user,
+    );
+
+    ref
+        .read(localMessagesProvider.notifier)
+        .addMessage(widget.conversationId, tempMessage);
+    _scrollToBottom();
+
+    final prevReplyToId = _replyToId;
+
+    setState(() {
+      _replyToId = null;
+      _replyToMessage = null;
+    });
+
     final repo = ref.read(messagesRepositoryProvider);
     final result = await repo.uploadChatFile(
       chatId: widget.conversationId,
@@ -649,20 +866,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     if (result != null && result['url'] != null) {
       final imageUrl = result['url'].toString();
-      ref
+      final actualMessage = await ref
           .read(chatSocketProvider.notifier)
-          .sendImageMessage(
+          .sendMessage(
             conversationId: widget.conversationId,
-            imageUrl: imageUrl,
-            replyTo: _replyToId,
+            content: '',
+            type: 'image',
+            attachments: [
+              {
+                'type': 'image',
+                'url': imageUrl,
+                'storageProvider': 'cloudinary',
+              },
+            ],
+            replyTo: prevReplyToId,
           );
 
-      setState(() {
-        _replyToId = null;
-        _replyToMessage = null;
-      });
+      if (mounted) {
+        if (actualMessage != null) {
+          ref
+              .read(localMessagesProvider.notifier)
+              .replaceMessage(widget.conversationId, tempId, actualMessage);
+        } else {
+          ref
+              .read(localMessagesProvider.notifier)
+              .removeMessage(widget.conversationId, tempId);
+        }
+      }
     } else {
       if (mounted) {
+        ref
+            .read(localMessagesProvider.notifier)
+            .removeMessage(widget.conversationId, tempId);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Failed to upload image')));
@@ -744,15 +979,54 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _addReaction(String messageId, String emoji) async {
+    final messages = ref.read(combinedMessagesProvider(widget.conversationId));
+    final msgOption = messages.where((m) => m.id == messageId).toList();
+
+    if (msgOption.isNotEmpty) {
+      final msg = msgOption.first;
+      final currentReactions = List<MessageReaction>.from(msg.reactions);
+      final existingIndex = currentReactions.indexWhere(
+        (r) => r.emoji == emoji && r.userIds.contains(_currentUserId),
+      );
+
+      if (existingIndex != -1) {
+        final userIds = List<String>.from(
+          currentReactions[existingIndex].userIds,
+        )..remove(_currentUserId);
+        if (userIds.isEmpty) {
+          currentReactions.removeAt(existingIndex);
+        } else {
+          currentReactions[existingIndex] = MessageReaction(
+            emoji: emoji,
+            userIds: userIds,
+          );
+        }
+      } else {
+        final index = currentReactions.indexWhere((r) => r.emoji == emoji);
+        if (index != -1) {
+          currentReactions[index] = MessageReaction(
+            emoji: emoji,
+            userIds: [...currentReactions[index].userIds, _currentUserId],
+          );
+        } else {
+          currentReactions.add(
+            MessageReaction(emoji: emoji, userIds: [_currentUserId]),
+          );
+        }
+      }
+
+      ref
+          .read(localMessagesProvider.notifier)
+          .updateReactions(
+            widget.conversationId,
+            messageId,
+            currentReactions
+                .map((r) => {'emoji': r.emoji, 'userIds': r.userIds})
+                .toList(),
+          );
+    }
+
     await MessagesRepository().addReaction(messageId, emoji);
-    // Real-time update should happen via socket, but we can also update locally
-    ref.read(localMessagesProvider.notifier).updateReactions(
-      widget.conversationId,
-      messageId,
-      [
-        {'emoji': emoji, 'userId': _currentUserId},
-      ],
-    );
   }
 
   @override
@@ -760,6 +1034,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final messages = ref.watch(combinedMessagesProvider(widget.conversationId));
+    final convState = ref.watch(conversationsProvider);
+    final watchedConv = convState.value
+        ?.where((c) => c.id == widget.conversationId)
+        .firstOrNull;
+
+    // Merge watched conversation into local state if it changed
+    if (watchedConv != null && watchedConv != _conversation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _conversation = watchedConv;
+          });
+        }
+      });
+    }
+
     final otherUserId = _getOtherUserId();
     final isOtherTyping = otherUserId != null
         ? ref.watch(isTypingProvider((widget.conversationId, otherUserId)))
@@ -786,6 +1076,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               Column(
                 children: [
+                  if (_conversation != null &&
+                      _conversation!.pinnedMessages.isNotEmpty)
+                    Builder(
+                      builder: (_) {
+                        final pinnedIds = _conversation!.pinnedMessages;
+                        final latestPinId = pinnedIds.last;
+                        try {
+                          final msg = messages.firstWhere(
+                            (m) => m.id == latestPinId,
+                          );
+                          return _buildPinnedMessageBar(msg, cs);
+                        } catch (e) {
+                          // If message not in current list, just show a generic bar
+                          return _buildPinnedMessageBar(
+                            MessageModel(
+                              id: latestPinId,
+                              conversationId: widget.conversationId,
+                              senderId: '',
+                              content: 'Pinned Message',
+                              type: MessageType.text,
+                              createdAt: DateTime.now(),
+                              attachments: const [],
+                              reactions: const [],
+                              readBy: const [],
+                            ),
+                            cs,
+                          );
+                        }
+                      },
+                    ),
                   Expanded(
                     child: _isLoadingConversation
                         ? _buildSkeletonList()
@@ -802,14 +1122,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               }
                               return false;
                             },
-                            child: ListView.builder(
-                              controller: _scrollController,
+                            child: ScrollablePositionedList.builder(
+                              itemScrollController: _itemScrollController,
+                              itemPositionsListener: _itemPositionsListener,
+                              itemCount: messages.length,
                               reverse: true,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
                                 vertical: 12,
                               ),
-                              itemCount: messages.length,
                               itemBuilder: (context, index) {
                                 final msg = messages[index];
                                 final olderMsg = index < messages.length - 1
@@ -829,12 +1150,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             ),
                           ),
                   ),
-                  if (_isPendingDirectChat) _buildPendingInviteBanner(cs),
+                  if (_isPendingDirectChat &&
+                      (!_isPendingCreator || messages.isNotEmpty))
+                    _buildPendingInviteBanner(cs),
                   if (isOtherTyping) _buildTypingIndicator(cs),
                   if (_replyToMessage != null) _buildReplyBanner(cs),
                   if (_isAnnouncementGroup && !_isCurrentUserAdmin)
                     _buildAnnouncementNotice(cs),
-                  if (_canSendMessages) _buildMessageInput(theme, cs),
+                  if (_canSendMessages(messages)) _buildMessageInput(theme, cs),
                 ],
               ),
               if (_showReactionOverlay) _buildReactionOverlay(context, cs),
@@ -869,7 +1192,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHigh.withValues(alpha: 0.9),
+          color: cs.surfaceContainerHigh.withValues(alpha: 0.8),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -917,26 +1240,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildPendingInviteBanner(ColorScheme cs) {
+    final theme = Theme.of(context);
     if (_isPendingCreator) {
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest,
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.7)),
           borderRadius: BorderRadius.circular(20),
         ),
         child: const Text(
           'Waiting for accepted invitation...',
           textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.w700),
+          //italic text
+          style: TextStyle(
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+          ),
         ),
       );
     }
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.primaryContainer.withValues(alpha: 0.55),
@@ -1019,6 +1349,50 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               LucideIcons.trash2,
               color: cs.onSurface.withValues(alpha: 0.7),
             ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(
+              LucideIcons.ellipsisVertical,
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
+            onSelected: (value) {
+              if (value == 'copy') _copySelected();
+              if (value == 'pin') _pinSelected();
+              if (value == 'favorite') _toggleFavoriteSelected();
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'copy',
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.copy, size: 20),
+                    SizedBox(width: 12),
+                    Text('Copy'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'favorite',
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.star, size: 20),
+                    SizedBox(width: 12),
+                    Text('Favorite'),
+                  ],
+                ),
+              ),
+              if (_selectedMessageIds.length == 1)
+                const PopupMenuItem(
+                  value: 'pin',
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.pin, size: 20),
+                      SizedBox(width: 12),
+                      Text('Pin'),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ],
       );
@@ -1168,6 +1542,152 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  Future<void> _clearChat() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat'),
+        content: const Text(
+          'Are you sure you want to clear this chat for everyone?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final repo = ref.read(messagesRepositoryProvider);
+    final success = await repo.clearChat(widget.conversationId);
+    if (!mounted) return;
+
+    if (success) {
+      ref
+          .read(localMessagesProvider.notifier)
+          .clearMessages(widget.conversationId);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Chat cleared')));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to clear chat')));
+    }
+  }
+
+  Future<void> _toggleDisappearingMessages() async {
+    final enable = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Disappearing Messages'),
+        content: const Text(
+          'New messages will disappear 7 days after they are sent.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Turn Off'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+
+    if (enable == null) return;
+
+    final duration = enable ? 604800 : 0;
+    final repo = ref.read(messagesRepositoryProvider);
+    final success = await repo.updateDisappearingMessages(
+      widget.conversationId,
+      enable,
+      duration,
+    );
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Disappearing messages ${enable ? 'enabled' : 'disabled'}',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update disappearing messages')),
+      );
+    }
+  }
+
+  Widget _buildPinnedMessageBar(MessageModel msg, ColorScheme cs) {
+    return GestureDetector(
+      onTap: () => _scrollToMessage(msg.id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+          border: Border(
+            bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(LucideIcons.pin, size: 16, color: cs.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pinned Message',
+                    style: TextStyle(
+                      color: cs.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    msg.content ??
+                        (msg.attachments.isNotEmpty ? 'Attachment' : ''),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(LucideIcons.list, size: 20),
+              onPressed: () async {
+                final selectedId = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PinnedMessagesScreen(conversation: _conversation!),
+                  ),
+                );
+                if (selectedId != null) {
+                  _scrollToMessage(selectedId);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMessageGroup(
     MessageModel msg,
     MessageModel? olderMsg,
@@ -1291,9 +1811,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           _toggleSelection(msg.id);
         }
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
         color: isSelected
             ? cs.primary.withValues(alpha: 0.12)
+            : msg.id == _highlightedMessageId
+            ? cs.primaryContainer.withValues(alpha: 0.6)
             : Colors.transparent,
         padding: EdgeInsets.only(
           top: isPartOfGroupAbove ? 1 : 4,
@@ -1430,11 +1953,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                         ),
                                         child: GestureDetector(
                                           onTap: () {
+                                            final messagesForImages = ref.read(
+                                              combinedMessagesProvider(
+                                                widget.conversationId,
+                                              ),
+                                            );
+                                            final allImageUrls =
+                                                messagesForImages
+                                                    .expand(
+                                                      (m) => m.attachments,
+                                                    )
+                                                    .where(
+                                                      (a) => a.type == 'image',
+                                                    )
+                                                    .map((a) => a.url)
+                                                    .toList();
+                                            final clickedIndex = allImageUrls
+                                                .indexOf(attachment.url);
+                                            final initialIndex =
+                                                clickedIndex >= 0
+                                                ? clickedIndex
+                                                : 0;
+
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (_) => ImagePreviewScreen(
-                                                  imageUrl: attachment.url,
+                                                  imageUrls:
+                                                      allImageUrls.isEmpty
+                                                      ? [attachment.url]
+                                                      : allImageUrls,
+                                                  initialIndex: initialIndex,
                                                   heroTag:
                                                       'msg_${msg.id}_${attachment.url}',
                                                 ),
@@ -1447,29 +1996,54 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                             child: ClipRRect(
                                               borderRadius:
                                                   BorderRadius.circular(12),
-                                              child: CachedNetworkImage(
-                                                imageUrl: attachment.url,
-                                                cacheManager: CacheManagers
-                                                    .messageCacheManager,
-                                                fit: BoxFit.cover,
-                                                placeholder: (context, url) =>
-                                                    Container(
-                                                      height: 200,
+                                              child:
+                                                  attachment.url.startsWith(
+                                                    'http',
+                                                  )
+                                                  ? CachedNetworkImage(
+                                                      imageUrl: attachment.url,
+                                                      cacheManager: CacheManagers
+                                                          .messageCacheManager,
+                                                      fit: BoxFit.cover,
+                                                      placeholder:
+                                                          (
+                                                            context,
+                                                            url,
+                                                          ) => Container(
+                                                            height: 200,
+                                                            width:
+                                                                double.infinity,
+                                                            color: cs
+                                                                .surfaceContainerHighest,
+                                                            child: const Center(
+                                                              child:
+                                                                  CircularProgressIndicator(),
+                                                            ),
+                                                          ),
+                                                      errorWidget:
+                                                          (
+                                                            context,
+                                                            url,
+                                                            error,
+                                                          ) => const Icon(
+                                                            Icons.broken_image,
+                                                            size: 50,
+                                                          ),
+                                                    )
+                                                  : Image.file(
+                                                      File(attachment.url),
+                                                      fit: BoxFit.cover,
                                                       width: double.infinity,
-                                                      color: cs
-                                                          .surfaceContainerHighest,
-                                                      child: const Center(
-                                                        child:
-                                                            CircularProgressIndicator(),
-                                                      ),
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) => const Icon(
+                                                            Icons.broken_image,
+                                                            size: 50,
+                                                          ),
                                                     ),
-                                                errorWidget:
-                                                    (context, url, error) =>
-                                                        const Icon(
-                                                          Icons.broken_image,
-                                                          size: 50,
-                                                        ),
-                                              ),
                                             ),
                                           ),
                                         ),
@@ -1478,16 +2052,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 ),
                               ),
                             if (msg.content != null && msg.content!.isNotEmpty)
-                              Text(
-                                msg.content!,
+                              Linkify(
+                                onOpen: (link) async {
+                                  final uri = Uri.parse(link.url);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
+                                },
+                                text: msg.content!,
                                 style: TextStyle(
                                   color: textColor,
                                   fontSize: 15,
                                   height: 1.4,
                                 ),
+                                linkStyle: TextStyle(
+                                  color: isMe ? Colors.white : cs.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
                                 textAlign: isAnnouncement
                                     ? TextAlign.center
-                                    : null,
+                                    : TextAlign.start,
                               ),
                           ],
                         ),
@@ -1673,22 +2260,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildReplyBanner(ColorScheme cs) {
+    final List? attachments = _replyToMessage!['attachments'] as List?;
+    final hasAttachment = attachments != null && attachments.isNotEmpty;
+    final isImage = hasAttachment && (attachments[0]['type'] == 'image');
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: cs.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border(left: BorderSide(color: cs.primary, width: 4)),
+        color: cs.surfaceContainerHigh,
+        border: Border(top: BorderSide(color: cs.outlineVariant)),
       ),
       child: Row(
         children: [
+          Icon(LucideIcons.reply, size: 16, color: cs.primary),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _replyToMessage!['senderName'] ?? 'User',
+                  'Replying to...',
                   style: TextStyle(
                     color: cs.primary,
                     fontWeight: FontWeight.bold,
@@ -1696,29 +2288,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 Text(
-                  _replyToMessage!['content']?.toString() ?? 'Attachment',
+                  _replyToMessage!['content']?.toString() ??
+                      (hasAttachment ? 'Attachment' : ''),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: cs.onSurface.withValues(alpha: 0.6),
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
               ],
             ),
           ),
+          if (isImage)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CachedNetworkImage(
+                    imageUrl: attachments[0]['url'],
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => Container(color: cs.outlineVariant),
+                    errorWidget: (_, _, _) =>
+                        const Icon(LucideIcons.image, size: 16),
+                  ),
+                ),
+              ),
+            ),
           IconButton(
+            icon: const Icon(LucideIcons.x, size: 20),
+            padding: EdgeInsets.zero,
             onPressed: () => setState(() {
               _replyToId = null;
               _replyToMessage = null;
             }),
-            icon: Icon(
-              LucideIcons.x,
-              size: 18,
-              color: cs.onSurface.withValues(alpha: 0.5),
-            ),
-            constraints: const BoxConstraints(),
-            padding: EdgeInsets.zero,
           ),
         ],
       ),
@@ -1990,26 +2593,46 @@ class _SwipeToReply extends StatefulWidget {
   State<_SwipeToReply> createState() => _SwipeToReplyState();
 }
 
-class _SwipeToReplyState extends State<_SwipeToReply> {
+class _SwipeToReplyState extends State<_SwipeToReply>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
   double _dragOffset = 0;
+  double _baseOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 200),
+        )..addListener(() {
+          setState(() {
+            _dragOffset = _controller.value * _baseOffset;
+          });
+        });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
-        if (details.delta.dx > 0) {
-          setState(() {
-            _dragOffset = (details.delta.dx + _dragOffset).clamp(0, 100);
-          });
-        }
+        setState(() {
+          _dragOffset = (_dragOffset + details.delta.dx).clamp(0, 100);
+        });
       },
       onHorizontalDragEnd: (details) {
-        if (_dragOffset > 50) {
+        if (_dragOffset >= 80) {
           widget.onReply();
         }
-        setState(() {
-          _dragOffset = 0;
-        });
+        _baseOffset = _dragOffset;
+        _controller.reverse(from: 1.0);
       },
       child: Stack(
         alignment: Alignment.centerLeft,
@@ -2023,7 +2646,7 @@ class _SwipeToReplyState extends State<_SwipeToReply> {
               left: _dragOffset / 2 - 20,
               child: Opacity(
                 opacity: (_dragOffset / 50).clamp(0, 1),
-                child: const Icon(Icons.reply, color: Color(0xFF0066FF)),
+                child: const Icon(LucideIcons.reply, color: Color(0xFF0066FF)),
               ),
             ),
         ],
