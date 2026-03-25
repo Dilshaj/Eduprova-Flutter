@@ -327,7 +327,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             name: 'grammar_coach_session',
             path: 'coach/session',
-            builder: (_, _) => const GrammarCoachSessionScreen(),
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+              return GrammarCoachSessionScreen(
+                mode: extra?['mode'] as String?,
+                topic: extra?['topic'] as String?,
+              );
+            },
           ),
         ],
       ),
