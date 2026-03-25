@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:eduprova/core/notifications/push_notification_service.dart';
 import 'package:eduprova/globals.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:developer';
 
@@ -121,8 +122,11 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> googleSignIn() async {
     try {
       await _googleSignIn.initialize(
-        serverClientId:
+        clientId:
             '798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com',
+        serverClientId: kIsWeb
+            ? null
+            : '798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com',
       );
 
       final googleUser = await _googleSignIn.authenticate();

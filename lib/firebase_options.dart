@@ -47,6 +47,8 @@ class DefaultFirebaseOptions {
     projectId: 'eduprova-app',
     authDomain: 'eduprova-app.firebaseapp.com',
     storageBucket: 'eduprova-app.firebasestorage.app',
+    iosClientId:
+        '798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -63,7 +65,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '798282077661',
     projectId: 'eduprova-app',
     storageBucket: 'eduprova-app.firebasestorage.app',
-    iosClientId: '798282077661-pti1ko108t58pnfhokcpd5j2o32uk574.apps.googleusercontent.com',
+    iosClientId:
+        '798282077661-pti1ko108t58pnfhokcpd5j2o32uk574.apps.googleusercontent.com',
     iosBundleId: 'com.dilshaj.infotech.eduprova',
   );
 
@@ -73,7 +76,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '798282077661',
     projectId: 'eduprova-app',
     storageBucket: 'eduprova-app.firebasestorage.app',
-    iosClientId: '798282077661-pti1ko108t58pnfhokcpd5j2o32uk574.apps.googleusercontent.com',
+    iosClientId:
+        '798282077661-pti1ko108t58pnfhokcpd5j2o32uk574.apps.googleusercontent.com',
     iosBundleId: 'com.dilshaj.infotech.eduprova',
   );
 
@@ -84,6 +88,7 @@ class DefaultFirebaseOptions {
     projectId: 'eduprova-app',
     authDomain: 'eduprova-app.firebaseapp.com',
     storageBucket: 'eduprova-app.firebasestorage.app',
+    iosClientId:
+        '798282077661-2sl2th5g4eoo8e6vgokomksvjji7l9lc.apps.googleusercontent.com',
   );
-
 }

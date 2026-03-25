@@ -295,47 +295,13 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen> {
 
             const SizedBox(height: 40),
 
-            // Members Section
-            if (_isGroup) ...[
-              _buildSectionHeader('Participants', isDarkMode),
-              const SizedBox(height: 16),
-              for (
-                var i = 0;
-                i <
-                    (_conversation.participants.length > 4
-                        ? 4
-                        : _conversation.participants.length);
-                i++
-              )
-                _buildMemberTile(_conversation.participants[i], isDarkMode),
-              if (_conversation.participants.length > 4)
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatParticipantsScreen(
-                          conversation: _conversation,
-                          currentUserId: currentUserId,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'View all participants',
-                    style: GoogleFonts.inter(color: const Color(0xFF0066FF)),
-                  ),
-                ),
-              const SizedBox(height: 24),
-            ],
-
             // Media Section
             if (mediaAttachments.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildListTile(
-                    LucideIcons.image,
+                    LucideIcons.galleryHorizontal,
                     'Media, links, and docs',
                     '',
                     isDarkMode,
@@ -409,7 +375,7 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen> {
               )
             else
               _buildListTile(
-                LucideIcons.image,
+                LucideIcons.galleryHorizontal,
                 'Media, links, and docs',
                 'None',
                 isDarkMode,
@@ -430,6 +396,40 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen> {
                 },
               ),
             if (mediaAttachments.isEmpty) const SizedBox(height: 24),
+
+            // Members Section
+            if (_isGroup) ...[
+              _buildSectionHeader('Participants', isDarkMode),
+              const SizedBox(height: 16),
+              for (
+                var i = 0;
+                i <
+                    (_conversation.participants.length > 4
+                        ? 4
+                        : _conversation.participants.length);
+                i++
+              )
+                _buildMemberTile(_conversation.participants[i], isDarkMode),
+              if (_conversation.participants.length > 4)
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatParticipantsScreen(
+                          conversation: _conversation,
+                          currentUserId: currentUserId,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'View all participants',
+                    style: GoogleFonts.inter(color: const Color(0xFF0066FF)),
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
 
             _buildSectionHeader(
               _isGroup ? 'Group Settings' : 'Details',

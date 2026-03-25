@@ -747,6 +747,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
               onTap: () => Navigator.pop(ctx, 'clear'),
             ),
+            ListTile(
+              leading: const Icon(Icons.copy_rounded),
+              title: const Text('Copy Chat ID'),
+              onTap: () => Navigator.pop(ctx, 'copy_id'),
+            ),
           ],
         ),
       ),
@@ -773,6 +778,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
     if (action == 'clear') {
       await _clearChat();
+      return;
+    }
+    if (action == 'copy_id') {
+      Clipboard.setData(ClipboardData(text: widget.conversationId));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Chat ID copied')));
       return;
     }
   }
@@ -914,6 +926,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         'senderName': message.sender != null
             ? '${message.sender!.firstName} ${message.sender!.lastName}'
             : 'User',
+        'attachments': message.attachments
+            .map((a) => {'url': a.url, 'type': a.type, 'fileName': a.fileName})
+            .toList(),
       };
     });
 
@@ -1099,7 +1114,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               createdAt: DateTime.now(),
                               attachments: const [],
                               reactions: const [],
-                              readBy: const [],
                             ),
                             cs,
                           );
@@ -1631,14 +1645,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildPinnedMessageBar(MessageModel msg, ColorScheme cs) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => _scrollToMessage(msg.id),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
           border: Border(
-            bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+            bottom: BorderSide(
+              color: theme.dividerColor.withValues(alpha: 0.5),
+            ),
           ),
         ),
         child: Row(
@@ -1646,29 +1663,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Icon(LucideIcons.pin, size: 16, color: cs.primary),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Pinned Message',
-                    style: TextStyle(
-                      color: cs.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    msg.content ??
-                        (msg.attachments.isNotEmpty ? 'Attachment' : ''),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
-                  ),
-                ],
+              child: Text(
+                msg.content ?? (msg.attachments.isNotEmpty ? 'Attachment' : ''),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
               ),
             ),
             IconButton(
-              icon: const Icon(LucideIcons.list, size: 20),
+              icon: const Icon(LucideIcons.list, size: 16),
               onPressed: () async {
                 final selectedId = await Navigator.push<String>(
                   context,
@@ -1794,6 +1797,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         : (isMe ? cs.onPrimary : cs.onSurfaceVariant);
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onLongPressStart: (details) {
         _tapPosition = details.globalPosition;
       },
@@ -2180,11 +2184,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            replyMsg['content']?.toString() ?? '',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: textColor, fontSize: 13),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  replyMsg['content']?.toString() ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: textColor, fontSize: 13),
+                ),
+              ),
+              if (replyMsg['attachments'] != null &&
+                  (replyMsg['attachments'] as List).isNotEmpty) ...[
+                const SizedBox(width: 8),
+                if ((replyMsg['attachments'] as List)[0]['type'] == 'image')
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: CachedNetworkImage(
+                      imageUrl: (replyMsg['attachments'] as List)[0]['url'],
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorWidget: (context, url, error) =>
+                          Icon(LucideIcons.image, size: 16, color: textColor),
+                    ),
+                  )
+                else
+                  Icon(LucideIcons.fileText, size: 20, color: textColor),
+              ],
+            ],
           ),
         ],
       ),
@@ -2622,9 +2650,10 @@ class _SwipeToReplyState extends State<_SwipeToReply>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: .opaque,
       onHorizontalDragUpdate: (details) {
         setState(() {
-          _dragOffset = (_dragOffset + details.delta.dx).clamp(0, 100);
+          _dragOffset = (_dragOffset + details.delta.dx).clamp(0.0, 100.0);
         });
       },
       onHorizontalDragEnd: (details) {

@@ -23,12 +23,12 @@ class PinnedMessagesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(LucideIcons.pin, size: 20),
             SizedBox(width: 10),
-            Text('Pinned Messages'),
+            Text('Pinned Messages', style: TextStyle(color: cs.onSurface)),
           ],
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -51,25 +51,42 @@ class PinnedMessagesScreen extends ConsumerWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final msg = pinnedMessages[index];
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context, msg.id),
-                      child: _buildPinnedMessageTile(msg, cs),
+                return InkWell(
+                  onTap: () => Navigator.pop(context, msg.id),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
                     ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: IconButton(
-                        icon: Icon(
-                          LucideIcons.pinOff,
-                          size: 18,
-                          color: cs.error.withValues(alpha: 0.7),
-                        ),
-                        onPressed: () => _unpinMessage(context, ref, msg.id),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.dividerColor.withValues(alpha: 0.7),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.dividerColor.withValues(alpha: 0.7),
+                          // blurRadius: 2,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildPinnedMessageTile(msg, cs)),
+                        IconButton(
+                          icon: Icon(
+                            LucideIcons.pinOff,
+                            size: 18,
+                            color: cs.error.withValues(alpha: 0.7),
+                          ),
+                          onPressed: () => _unpinMessage(context, ref, msg.id),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
@@ -103,34 +120,26 @@ class PinnedMessagesScreen extends ConsumerWidget {
   }
 
   Widget _buildPinnedMessageTile(MessageModel msg, ColorScheme cs) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (msg.content != null && msg.content!.isNotEmpty)
-            Text(
-              msg.content!,
-              style: TextStyle(color: cs.onSurface, fontSize: 15, height: 1.4),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (msg.content != null && msg.content!.isNotEmpty)
+          Text(
+            msg.content!,
+            style: TextStyle(color: cs.onSurface, fontSize: 15, height: 1.4),
+          ),
+        if (msg.attachments.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.paperclip, size: 16),
+                const SizedBox(width: 8),
+                Text('${msg.attachments.length} attachment(s)'),
+              ],
             ),
-          if (msg.attachments.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Row(
-                children: [
-                  const Icon(LucideIcons.paperclip, size: 16),
-                  const SizedBox(width: 8),
-                  Text('${msg.attachments.length} attachment(s)'),
-                ],
-              ),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
