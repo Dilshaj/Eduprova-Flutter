@@ -1,5 +1,6 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
+import 'package:eduprova/features/home/bottom_nav/bottom_nav3.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,99 +22,18 @@ class MainLayout extends ConsumerWidget {
       extendBody: true,
       drawer: _buildDrawer(context, isDark, ref),
       body: navigationShell,
-      bottomNavigationBar: _buildBottomNav(context),
-      floatingActionButton: _buildFab(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: BottomAppBar(
-        color: Colors.transparent,
-        elevation: 0,
-        notchMargin: 10,
-        shape: const CircularNotchedRectangle(),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(context, 0, LucideIcons.house, "Home"),
-            _buildNavItem(context, 1, LucideIcons.bookOpen, "Courses"),
-            const SizedBox(width: 48), // Space for FAB
-            _buildNavItem(context, 2, LucideIcons.messageCircle, "Messages"),
-            _buildNavItem(context, 3, LucideIcons.user, "Profile"),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(BuildContext context, int index, IconData icon, String label) {
-    final isSelected = navigationShell.currentIndex == index;
-    return InkWell(
-      onTap: () => navigationShell.goBranch(index),
-      mouseCursor: SystemMouseCursors.click,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF9E9E9E),
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF9E9E9E),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFab(BuildContext context) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: RawMaterialButton(
-        shape: const CircleBorder(),
-        onPressed: () {},
-        child: const Icon(LucideIcons.plus, color: Colors.white, size: 32),
+      bottomNavigationBar: BottomNav3(
+        currentIndex: navigationShell.currentIndex >= 2
+            ? navigationShell.currentIndex + 1
+            : navigationShell.currentIndex,
+        onTap: (index) {
+          if (index == 2) {
+            // Placeholder: Open Create Post Modal
+          } else {
+            final branchIndex = index > 2 ? index - 1 : index;
+            navigationShell.goBranch(branchIndex);
+          }
+        },
       ),
     );
   }

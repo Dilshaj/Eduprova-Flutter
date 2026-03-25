@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'story_repository.dart';
 
@@ -58,5 +59,15 @@ class StoriesNotifier extends Notifier<AsyncValue<List<StatusProfile>>> {
 
   Future<void> refresh() async {
     await _fetchStories();
+  }
+
+  Future<void> createStory(List<String> filePaths, {bool isCollage = false}) async {
+    try {
+      await ref.read(storyRepositoryProvider).createStory(filePaths, isCollage: isCollage);
+      await refresh();
+    } catch (e) {
+      debugPrint('Error in notifier creating story: $e');
+      rethrow;
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
+import 'stories_provider.dart';
 
 class StoryEditorScreen extends ConsumerStatefulWidget {
   final List<XFile> images;
@@ -34,8 +35,35 @@ class _StoryEditorScreenState extends ConsumerState<StoryEditorScreen> {
         File(widget.images[_currentSoloIndex].path),
         callbacks: ProImageEditorCallbacks(
           onImageEditingComplete: (bytes) async {
-            // Edit complete
-            Navigator.pop(context);
+            try {
+              // Show loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(child: CircularProgressIndicator()),
+              );
+
+              // Save to temp file
+              final tempDir = Directory.systemTemp;
+              final file = File('${tempDir.path}/story_${DateTime.now().millisecondsSinceEpoch}.png');
+              await file.writeAsBytes(bytes);
+
+              // Upload story
+              await ref.read(statusProfilesProvider.notifier).createStory([file.path], isCollage: widget.isCollage);
+
+              if (mounted) {
+                Navigator.of(context).pop(); // Close loader
+                Navigator.of(context).pop(); // Close editor
+                Navigator.of(context).pop(); // Close selection screen
+              }
+            } catch (e) {
+              if (mounted) {
+                Navigator.of(context).pop(); // Close loader
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to upload story: $e')),
+                );
+              }
+            }
           },
         ),
         configs: ProImageEditorConfigs(

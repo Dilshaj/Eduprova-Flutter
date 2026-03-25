@@ -42,20 +42,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111827) : const Color(0xFFF3F7FF),
+      backgroundColor: isDark
+          ? const Color(0xFF111827)
+          : const Color(0xFFF3F7FF),
       body: _buildBody(isDark),
     );
   }
 
   Widget _buildBody(bool isDark) {
-    final scaffoldBg = isDark ? const Color(0xFF111827) : const Color(0xFFF3F7FF);
+    final scaffoldBg = isDark
+        ? const Color(0xFF111827)
+        : const Color(0xFFF3F7FF);
 
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
         // 1. App Bar - Solid background when scrolled to prevent merging
         SliverAppBar(
-          backgroundColor: isDark ? const Color(0xFF111827) : const Color(0xFFF3F7FF),
+          backgroundColor: isDark
+              ? const Color(0xFF111827)
+              : const Color(0xFFF3F7FF),
           floating: true,
           snap: true,
           elevation: 0,
@@ -67,15 +73,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             background: AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: _isScrolled ? 1 : 0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.4)
-                        : Colors.white.withValues(alpha: 0.7),
-                  ),
-                ),
+              child: Container(
+                color: isDark
+                    ? const Color(0xFF111827).withValues(alpha: 0.95)
+                    : const Color(0xFFF3F7FF).withValues(alpha: 0.95),
               ),
             ),
           ),
@@ -119,49 +120,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           actions: [
-            IconButton(
-              icon: Icon(LucideIcons.search, size: 24, color: isDark ? Colors.white70 : const Color(0xFF374151)),
-              onPressed: () => context.push(AppRoutes.search),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: InkWell(
-                      onTap: () {},
-                      mouseCursor: SystemMouseCursors.click,
-                      borderRadius: BorderRadius.circular(22),
-                      child: Icon(
-                        LucideIcons.bell,
-                        size: 24,
-                        color: isDark ? Colors.grey[300] : const Color(0xFF374151),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE53E3E),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF111827) : Colors.white,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            SizedBox(
+              width: 40,
+              height: 44,
+              child: InkWell(
+                onTap: () => context.push(AppRoutes.search),
+                mouseCursor: SystemMouseCursors.click,
+                borderRadius: BorderRadius.circular(20),
+                child: Icon(
+                  LucideIcons.search,
+                  size: 24,
+                  color: isDark ? Colors.white70 : const Color(0xFF374151),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                SizedBox(
+                  width: 40,
+                  height: 44,
+                  child: InkWell(
+                    onTap: () => context.push(AppRoutes.notifications),
+                    mouseCursor: SystemMouseCursors.click,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Icon(
+                      LucideIcons.bell,
+                      size: 24,
+                      color: isDark
+                          ? Colors.grey[300]
+                          : const Color(0xFF374151),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 4,
+                  top: 8,
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53E3E),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF111827) : Colors.white,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
           ],
         ),
 
@@ -174,116 +184,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        // 3. Sticky Header - Pinned
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _StickyHeaderDelegate(
-            isDark: isDark,
-            backgroundColor: scaffoldBg,
-          ),
-        ),
+        // 3. Posts Header - No longer sticky
+        const SliverToBoxAdapter(child: _AllPostsHeader()),
 
         // 4. Posts List
-        ref.watch(postsProvider).when(
-          data: (posts) {
-            if (posts.isEmpty) {
-              return const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: Text('No posts found')),
+        ref
+            .watch(postsProvider)
+            .when(
+              data: (posts) {
+                if (posts.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: Text('No posts found')),
+                    ),
+                  );
+                }
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => Post(
+                      key: ValueKey(posts[index].id),
+                      post: posts[index],
+                    ),
+                    childCount: posts.length,
+                  ),
+                );
+              },
+              loading: () => SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => Skeletonizer(
+                    key: ValueKey('skeleton_$index'),
+                    enabled: true,
+                    child: Post(
+                      post: PostModel(
+                        id: 'dummy_$index',
+                        name: 'User Name',
+                        authorAvatar: 'assets/avatars/1.png',
+                        content: 'Loading content...',
+                        imageUrl: null,
+                        createdAt: DateTime.now(),
+                      ),
+                    ),
+                  ),
+                  childCount: 5,
                 ),
-              );
-            }
-            return SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Post(
-                  key: ValueKey(posts[index].id),
-                  post: posts[index],
-                ),
-                childCount: posts.length,
               ),
-            );
-          },
-          loading: () => SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => Skeletonizer(
-                key: ValueKey('skeleton_$index'),
-                enabled: true,
-                child: Post(
-                  post: PostModel(
-                    id: 'dummy_$index',
-                    name: 'User Name',
-                    authorAvatar: 'assets/avatars/1.png',
-                    content: 'Loading content...',
-                    imageUrl: null,
-                    createdAt: DateTime.now(),
+              error: (err, st) => SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Error: $err'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () =>
+                              ref.read(postsProvider.notifier).refresh(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              childCount: 5,
             ),
-          ),
-          error: (err, st) => SliverToBoxAdapter(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text('Error: $err'),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => ref.read(postsProvider.notifier).refresh(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
-}
-
-class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final bool isDark;
-  final Color backgroundColor;
-
-  _StickyHeaderDelegate({required this.isDark, required this.backgroundColor});
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      // Ensure solid background color to block posts from showing through when pinned
-      color: backgroundColor,
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor.withValues(alpha: 0.8),
-          border: Border(
-            bottom: BorderSide(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-              width: 1,
-            ),
-          ),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: overlapsContent ? 10 : 0, sigmaY: overlapsContent ? 10 : 0),
-          child: const _AllPostsHeader(),
-        ),
-      ),
-    );
-  }
-
-  @override
-  double get maxExtent => 76;
-  @override
-  double get minExtent => 76;
-  @override
-  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) => 
-      isDark != oldDelegate.isDark || backgroundColor != oldDelegate.backgroundColor;
 }
 
 class _AllPostsHeader extends StatefulWidget {
@@ -296,7 +269,7 @@ class _AllPostsHeader extends StatefulWidget {
 class _AllPostsHeaderState extends State<_AllPostsHeader> {
   int _selectedTab = 0;
   final List<String> _tabs = ['All', 'Trending', 'Followers', 'Latest'];
-  
+
   final Map<String, String> _tabHeadings = {
     'All': 'All Posts',
     'Trending': 'Hot & Trending',
@@ -328,14 +301,18 @@ class _AllPostsHeaderState extends State<_AllPostsHeader> {
               ),
             ),
           ),
-          
+
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.05),
                 width: 1,
               ),
             ),
@@ -349,19 +326,26 @@ class _AllPostsHeaderState extends State<_AllPostsHeader> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected 
-                        ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white) 
-                        : Colors.transparent,
+                      color: isSelected
+                          ? (isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.white)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(25),
-                      boxShadow: isSelected && !isDark ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        )
-                      ] : null,
+                      boxShadow: isSelected && !isDark
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -370,10 +354,16 @@ class _AllPostsHeaderState extends State<_AllPostsHeader> {
                           _tabs[index],
                           style: TextStyle(
                             fontSize: 11, // Tighter for mobile
-                            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                            color: isSelected 
-                                ? (isDark ? Colors.blue[400] : const Color(0xFF1E293B))
-                                : (isDark ? Colors.grey[500] : const Color(0xFF64748B)),
+                            fontWeight: isSelected
+                                ? FontWeight.w900
+                                : FontWeight.w600,
+                            color: isSelected
+                                ? (isDark
+                                      ? Colors.blue[400]
+                                      : const Color(0xFF1E293B))
+                                : (isDark
+                                      ? Colors.grey[500]
+                                      : const Color(0xFF64748B)),
                           ),
                         ),
                         if (isSelected) ...[
@@ -394,23 +384,29 @@ class _AllPostsHeaderState extends State<_AllPostsHeader> {
               }),
             ),
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.white,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.05),
               ),
-              boxShadow: !isDark ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 4,
-                )
-              ] : null,
+              boxShadow: !isDark
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                      ),
+                    ]
+                  : null,
             ),
             child: Icon(
               LucideIcons.slidersHorizontal,
