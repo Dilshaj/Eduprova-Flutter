@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../providers/messages_provider.dart';
+import '../widgets/messages_background.dart';
 
 class ChatSharedMediaScreen extends ConsumerStatefulWidget {
   final dynamic conversation;
@@ -58,96 +59,109 @@ class _ChatSharedMediaScreenState extends ConsumerState<ChatSharedMediaScreen>
         .where((a) => a.type == 'link')
         .toList();
 
-    return Scaffold(
-      backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: scaffoldBg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Media, Links, and Docs',
-          style: GoogleFonts.inter(
-            color: textColor,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+    return MessagesBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: textColor),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Media, Links, and Docs',
+            style: GoogleFonts.inter(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          centerTitle: true,
+          bottom: TabBar(
+            controller: _tabController,
+            labelColor: const Color(0xFF0066FF),
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: const Color(0xFF0066FF),
+            tabs: const [
+              Tab(text: 'Media'),
+              Tab(text: 'Docs'),
+              Tab(text: 'Links'),
+            ],
           ),
         ),
-        centerTitle: true,
-        bottom: TabBar(
+        body: TabBarView(
           controller: _tabController,
-          labelColor: const Color(0xFF0066FF),
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFF0066FF),
-          tabs: const [
-            Tab(text: 'Media'),
-            Tab(text: 'Docs'),
-            Tab(text: 'Links'),
+          children: [
+            mediaAttachments.isEmpty
+                ? _buildEmptyState('No media shared yet', isDarkMode)
+                : GridView.builder(
+                    padding: const EdgeInsets.all(4),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                        ),
+                    itemCount: mediaAttachments.length,
+                    itemBuilder: (context, index) {
+                      final media = mediaAttachments[index];
+                      return CachedNetworkImage(
+                        imageUrl: media.url,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+            docAttachments.isEmpty
+                ? _buildEmptyState('No documents shared yet', isDarkMode)
+                : ListView.builder(
+                    itemCount: docAttachments.length,
+                    itemBuilder: (context, index) {
+                      final doc = docAttachments[index];
+                      return ListTile(
+                        leading: Icon(
+                          Icons.insert_drive_file,
+                          color: textColor,
+                        ),
+                        title: Text(
+                          doc.fileName ?? 'Document',
+                          style: TextStyle(color: textColor),
+                        ),
+                      );
+                    },
+                  ),
+            linkAttachments.isEmpty
+                ? _buildEmptyState('No links shared yet', isDarkMode)
+                : ListView.builder(
+                    itemCount: linkAttachments.length,
+                    itemBuilder: (context, index) {
+                      final link = linkAttachments[index];
+                      return ListTile(
+                        leading: Icon(Icons.link, color: textColor),
+                        title: Text(
+                          link.url,
+                          style: TextStyle(color: textColor),
+                        ),
+                      );
+                    },
+                  ),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          mediaAttachments.isEmpty
-              ? _buildEmptyState('No media shared yet', isDarkMode)
-              : GridView.builder(
-                  padding: const EdgeInsets.all(4),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                  ),
-                  itemCount: mediaAttachments.length,
-                  itemBuilder: (context, index) {
-                    final media = mediaAttachments[index];
-                    return CachedNetworkImage(
-                      imageUrl: media.url,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-          docAttachments.isEmpty
-              ? _buildEmptyState('No documents shared yet', isDarkMode)
-              : ListView.builder(
-                  itemCount: docAttachments.length,
-                  itemBuilder: (context, index) {
-                    final doc = docAttachments[index];
-                    return ListTile(
-                      leading: Icon(Icons.insert_drive_file, color: textColor),
-                      title: Text(
-                        doc.fileName ?? 'Document',
-                        style: TextStyle(color: textColor),
-                      ),
-                    );
-                  },
-                ),
-          linkAttachments.isEmpty
-              ? _buildEmptyState('No links shared yet', isDarkMode)
-              : ListView.builder(
-                  itemCount: linkAttachments.length,
-                  itemBuilder: (context, index) {
-                    final link = linkAttachments[index];
-                    return ListTile(
-                      leading: Icon(Icons.link, color: textColor),
-                      title: Text(link.url, style: TextStyle(color: textColor)),
-                    );
-                  },
-                ),
-        ],
       ),
     );
   }

@@ -25,7 +25,6 @@ import '../../widgets/messages_background.dart';
 import '../../widgets/participant_picker_screen.dart';
 import '../../communities/page.dart';
 import '../../calendar/widgets/calendar_home_screen.dart';
-import '../../activity/widgets/activity_screen.dart';
 
 class ChatItemWidget extends ConsumerWidget {
   final ConversationModel item;
@@ -39,11 +38,12 @@ class ChatItemWidget extends ConsumerWidget {
     final currentUserId = ref.watch(authProvider).user?.id ?? '';
     final title = item.getDisplayTitle(currentUserId);
     final unreadCount = item.unreadCountFor(currentUserId);
+    final isUnread = unreadCount > 0;
     final isFavorite = ref.watch(
       favoriteConversationIdsProvider.select((ids) => ids.contains(item.id)),
     );
     final lastMessage = switch (item.lastMessage) {
-      Map m => _buildLastMessageLabel(m),
+      Map m => _buildLastMessageLabel(m, currentUserId),
       String s => s,
       _ => '',
     };
@@ -51,150 +51,161 @@ class ChatItemWidget extends ConsumerWidget {
 
     return InkWell(
       onTap: onPress,
-      child: Container(
-        height: 80,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: ChatAvatar(
-                conversation: item,
-                currentUserId: currentUserId,
-                size: 56,
-              ),
-            ),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        children: [
+          SizedBox(
+            height: 72,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  child: isUnread
+                      ? Center(
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF5B5FC7),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: ChatAvatar(
+                    conversation: item,
+                    currentUserId: currentUserId,
+                    size: 48,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: msgTheme.chatTitleColor,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: isUnread
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  color: msgTheme.chatTitleColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             Text(
                               _formatTime(lastMessageTime),
                               style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: unreadCount > 0
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: msgTheme.chatTimeColor,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: isUnread
+                                    ? msgTheme.chatTitleColor
+                                    : msgTheme.chatTimeColor,
                               ),
                             ),
-                            if (unreadCount > 0) ...[
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: msgTheme.unreadBadgeBackground,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  unreadCount > 99 ? '99+' : '$unreadCount',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: msgTheme.unreadBadgeTextColor,
-                                  ),
-                                ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (isFavorite) ...[
+                              Icon(
+                                LucideIcons.star,
+                                size: 14,
+                                color: Colors.amber.shade600,
                               ),
+                              const SizedBox(width: 4),
                             ],
+                            Expanded(
+                              child: Text(
+                                lastMessage,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: isUnread
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: msgTheme.chatSubtitleColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (isFavorite) ...[
-                          Icon(
-                            LucideIcons.star,
-                            size: 16,
-                            color: Colors.amber.shade600,
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        Expanded(
-                          child: Text(
-                            lastMessage,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: unreadCount > 0
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              color: msgTheme.chatSubtitleColor,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Divider(
+            height: 1,
+            thickness: 1,
+            indent: 80,
+            color: msgTheme.chatSubtitleColor.withValues(alpha: 0.1),
+          ),
+        ],
       ),
     );
   }
 
-  static String _buildLastMessageLabel(Map<dynamic, dynamic> message) {
+  static String _buildLastMessageLabel(
+    Map<dynamic, dynamic> message,
+    String currentUserId,
+  ) {
     final content = message['content']?.toString().trim() ?? '';
-    if (content.isNotEmpty) return content;
+    final isMe = message['senderId'] == currentUserId;
+    final prefix = isMe ? 'You: ' : '';
+
+    if (content.isNotEmpty) return '$prefix$content';
 
     final attachments = message['attachments'];
     if (attachments is List && attachments.isNotEmpty) {
       final first = attachments.first;
       if (first is Map && first['type'] == 'image') {
-        return 'Photo';
+        return '$prefix📷 Photo';
       }
-      return 'Attachment';
+      return '$prefix📎 Attachment';
     }
 
     return switch (message['type']?.toString()) {
-      'image' => 'Photo',
-      'file' => 'Attachment',
-      _ => 'New message',
+      'image' => '$prefix📷 Photo',
+      'file' => '$prefix📎 Attachment',
+      _ => '$prefix New message',
     };
   }
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
     final diff = now.difference(time);
-    if (diff.inDays == 0) {
-      final period = time.hour < 12 ? 'am' : 'pm';
-      final hour = time.hour == 0
-          ? 12
-          : (time.hour > 12 ? time.hour - 12 : time.hour);
-      return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
-    } else if (diff.inDays == 1) {
-      return 'Yesterday';
+    if (diff.inDays == 0 && now.day == time.day) {
+      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    } else if (diff.inDays < 7) {
+      const weekdays = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
+      return weekdays[time.weekday - 1];
     } else {
-      return '${time.day}/${time.month}';
+      return '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}';
     }
   }
 }
@@ -231,7 +242,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
   @override
   void initState() {
     super.initState();
-    _defaultTabController = TabController(length: 4, vsync: this);
+    _defaultTabController = TabController(length: 3, vsync: this);
     _filterTabController = TabController(length: 4, vsync: this);
     _activeController = _defaultTabController;
 
@@ -510,7 +521,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
     return MessagesBackground(
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        backgroundColor: msgTheme.scaffoldBackground,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
             children: [
@@ -535,7 +546,11 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Messages',
+            _selectedTabIndex == 1
+                ? 'Communities'
+                : _selectedTabIndex == 2
+                    ? 'Calendar'
+                    : 'Messages',
             style: GoogleFonts.inter(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -544,36 +559,37 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
           ),
           Row(
             children: [
-              GestureDetector(
-                onTap: _goToMeet,
-                child: Container(
-                  height: 38,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    gradient: appTheme.buyNowGradient,
-                    borderRadius: BorderRadius.circular(19),
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    children: [
-                      const Icon(
-                        LucideIcons.video,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Meet',
-                        style: GoogleFonts.inter(
+              if (_selectedTabIndex == 0)
+                GestureDetector(
+                  onTap: _goToMeet,
+                  child: Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      gradient: appTheme.buyNowGradient,
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.video,
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          size: 20,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          'Meet',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(width: 16),
               if (_selectedTabIndex == 0) ...[
                 GestureDetector(
@@ -637,7 +653,11 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
                     _scheduleUserSearch(val);
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search conversations',
+                    hintText: _selectedTabIndex == 1
+                        ? 'Search communities'
+                        : _selectedTabIndex == 2
+                            ? 'Search events'
+                            : 'Search conversations',
                     hintStyle: GoogleFonts.inter(
                       color: msgTheme.searchBarTextColor,
                       fontSize: 16,
@@ -673,9 +693,18 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
   }
 
   Widget _buildTabs(MessagesThemeExtension msgTheme) {
-    final tabs = _showAdvancedFilters
-        ? ['All', 'Unread', 'Groups', 'Direct']
-        : ['Chat', 'Communities', 'Calendar', 'Activity'];
+    final List<({String label, IconData? icon})> tabs = _showAdvancedFilters
+        ? [
+            (label: 'All', icon: null),
+            (label: 'Unread', icon: null),
+            (label: 'Groups', icon: null),
+            (label: 'Direct', icon: null),
+          ]
+        : [
+            (label: 'Chat', icon: LucideIcons.messageCircle),
+            (label: 'Communities', icon: LucideIcons.users),
+            (label: 'Calendar', icon: LucideIcons.calendar),
+          ];
     final controller = _showAdvancedFilters
         ? _filterTabController
         : _activeController;
@@ -688,49 +717,78 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
           animation: controller,
           builder: (context, _) => TabBar(
             controller: controller,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
+            isScrollable: false,
+            indicator: const BoxDecoration(), // Remove sliding indicator
             dividerColor: Colors.transparent,
-            indicator: BoxDecoration(
-              color: msgTheme.tabSelectedBackground,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            labelColor: msgTheme.tabSelectedTextColor,
-            unselectedLabelColor: msgTheme.tabUnselectedTextColor,
-            labelStyle: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            unselectedLabelStyle: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicatorPadding: EdgeInsets.zero,
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStateProperty.all(Colors.transparent),
             labelPadding: const EdgeInsets.symmetric(horizontal: 4),
             tabs: [
               for (int i = 0; i < tabs.length; i++)
-                Tab(
-                  height: 38,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: controller.index == i
-                          ? Colors.transparent
-                          : msgTheme.searchBarFillColor,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: controller.index == i
-                            ? Colors.transparent
-                            : msgTheme.searchBarIconColor.withValues(
-                                alpha: 0.1,
+                AnimatedBuilder(
+                  animation: controller.animation ?? controller,
+                  builder: (context, child) {
+                    final isSelected = controller.index == i;
+                    double offset = isSelected ? 0.0 : 1.0;
+                    if (controller.animation != null) {
+                      offset = (controller.animation!.value - i).abs().clamp(0.0, 1.0);
+                    }
+                    
+                    final bgColor = Color.lerp(
+                      msgTheme.tabSelectedBackground,
+                      msgTheme.searchBarFillColor,
+                      offset,
+                    );
+                    
+                    final borderColor = Color.lerp(
+                      Colors.transparent,
+                      msgTheme.searchBarIconColor.withValues(alpha: 0.1),
+                      offset,
+                    );
+
+                    final textColor = Color.lerp(
+                      msgTheme.tabSelectedTextColor,
+                      msgTheme.tabUnselectedTextColor,
+                      offset,
+                    );
+
+                    return Tab(
+                      height: 48,
+                      child: Container(
+                        width: double.infinity,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: borderColor ?? Colors.transparent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (tabs[i].icon != null) ...[
+                              Icon(
+                                tabs[i].icon,
+                                size: 16,
+                                color: textColor,
                               ),
-                        width: 1,
+                              const SizedBox(width: 8),
+                            ],
+                            Text(
+                              tabs[i].label,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: offset < 0.5 ? FontWeight.w600 : FontWeight.w500,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    child: Text(tabs[i]),
-                  ),
+                    );
+                  },
                 ),
             ],
           ),
@@ -756,17 +814,12 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
       children: [
         _buildChatList(filter: 'all'),
         CommunitiesPage(
+          searchQuery: _searchQuery,
           onBack: () {
             _defaultTabController.animateTo(0);
           },
         ),
         CalendarHomeScreen(
-          isEmbedded: true,
-          onBack: () {
-            _defaultTabController.animateTo(0);
-          },
-        ),
-        ActivityScreen(
           isEmbedded: true,
           onBack: () {
             _defaultTabController.animateTo(0);
@@ -813,7 +866,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
               ref.read(conversationsProvider.notifier).loadConversations(),
           child: ListView(
             controller: _scrollController,
-            padding: const EdgeInsets.only(top: 10, bottom: 100),
+            padding: const EdgeInsets.only(top: 0, bottom: 100),
             children: [
               if (_searchQuery.isNotEmpty && _isSearchingUsers)
                 const Padding(
@@ -864,7 +917,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
               ],
               if (pinnedChats.isNotEmpty) ...[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Text(
                     'PINNED',
                     style: GoogleFonts.inter(
@@ -880,7 +933,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
               ],
               if (recentChats.isNotEmpty) ...[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Text(
                     'RECENT',
                     style: GoogleFonts.inter(
@@ -917,7 +970,14 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
         child: ListView.builder(
           itemCount: 10,
           itemBuilder: (context, index) => ListTile(
-            leading: const CircleAvatar(radius: 28),
+            leading: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                shape: BoxShape.circle,
+              ),
+            ),
             title: Container(width: 150, height: 16, color: Colors.grey),
             subtitle: Container(width: 250, height: 12, color: Colors.grey),
           ),

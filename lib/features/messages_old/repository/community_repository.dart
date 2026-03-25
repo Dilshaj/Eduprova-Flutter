@@ -68,11 +68,7 @@ class CommunityRepository {
   }) async {
     final response = await _dio.patch(
       '/conversations/$conversationId',
-      data: {
-        'name': ?name,
-        'avatar': ?avatar,
-        'description': ?description,
-      },
+      data: {'name': ?name, 'avatar': ?avatar, 'description': ?description},
     );
     return ConversationModel.fromJson(Map<String, dynamic>.from(response.data));
   }

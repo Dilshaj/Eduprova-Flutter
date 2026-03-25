@@ -71,7 +71,8 @@ class _MeetScreenState extends State<MeetScreen> {
     if (!mounted) return;
     setState(() {
       _meetings = [
-        for (final item in _meetings) if (item.id == updated.id) updated else item,
+        for (final item in _meetings)
+          if (item.id == updated.id) updated else item,
       ];
     });
   }
@@ -134,7 +135,9 @@ class _MeetScreenState extends State<MeetScreen> {
                       color: const Color(0xFF2563EB),
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const CreateRoomScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const CreateRoomScreen(),
+                          ),
                         );
                       },
                     ),
@@ -146,11 +149,12 @@ class _MeetScreenState extends State<MeetScreen> {
                       label: 'Schedule',
                       color: const Color(0xFFDB2777),
                       onTap: () async {
-                        final created = await Navigator.of(context).push<MeetingModel>(
-                          MaterialPageRoute(
-                            builder: (_) => const ScheduleMeetingScreen(),
-                          ),
-                        );
+                        final created = await Navigator.of(context)
+                            .push<MeetingModel>(
+                              MaterialPageRoute(
+                                builder: (_) => const ScheduleMeetingScreen(),
+                              ),
+                            );
                         if (created != null && mounted) {
                           setState(() => _meetings = [created, ..._meetings]);
                         }
@@ -165,7 +169,9 @@ class _MeetScreenState extends State<MeetScreen> {
                       color: const Color(0xFF475569),
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const JoinWithIdScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const JoinWithIdScreen(),
+                          ),
                         );
                       },
                     ),
@@ -199,7 +205,9 @@ class _MeetScreenState extends State<MeetScreen> {
                               );
                               if (!mounted) return;
                               messenger.showSnackBar(
-                                const SnackBar(content: Text('Meeting link copied')),
+                                const SnackBar(
+                                  content: Text('Meeting link copied'),
+                                ),
                               );
                             },
                             onCancel: meeting.status == MeetingStatus.cancelled
@@ -246,7 +254,10 @@ class _ActionCard extends StatelessWidget {
           children: [
             Icon(icon, color: color),
             const SizedBox(height: 10),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            ),
           ],
         ),
       ),
@@ -300,7 +311,8 @@ class _MeetingCard extends StatelessWidget {
               _StatusChip(status: meeting.status),
             ],
           ),
-          if (meeting.description != null && meeting.description!.isNotEmpty) ...[
+          if (meeting.description != null &&
+              meeting.description!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               meeting.description!,
@@ -354,7 +366,9 @@ class _MeetingCard extends StatelessWidget {
 
   static String _formatTime(DateTime value) {
     final local = value.toLocal();
-    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final hour = local.hour > 12
+        ? local.hour - 12
+        : (local.hour == 0 ? 12 : local.hour);
     final minutes = local.minute.toString().padLeft(2, '0');
     final suffix = local.hour >= 12 ? 'PM' : 'AM';
     return '$hour:$minutes $suffix';
@@ -383,7 +397,11 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -400,7 +418,11 @@ class _EmptyMeetings extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.video_camera_front_outlined, size: 40, color: Color(0xFF94A3B8)),
+            Icon(
+              Icons.video_camera_front_outlined,
+              size: 40,
+              color: Color(0xFF94A3B8),
+            ),
             SizedBox(height: 12),
             Text(
               'No meetings yet',

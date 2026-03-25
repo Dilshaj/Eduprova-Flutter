@@ -300,7 +300,9 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
     }
   }
 
-  Future<void> _enableAndroidBackgroundScreenShare([bool isRetry = false]) async {
+  Future<void> _enableAndroidBackgroundScreenShare([
+    bool isRetry = false,
+  ]) async {
     try {
       bool hasPermissions = await FlutterBackground.hasPermissions;
       if (!isRetry) {
@@ -308,7 +310,10 @@ class _LiveCallScreenState extends ConsumerState<LiveCallScreen> {
           notificationTitle: 'Screen Sharing',
           notificationText: 'Eduprova is sharing your screen.',
           notificationImportance: AndroidNotificationImportance.normal,
-          notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
+          notificationIcon: AndroidResource(
+            name: 'ic_launcher',
+            defType: 'mipmap',
+          ),
         );
         hasPermissions = await FlutterBackground.initialize(
           androidConfig: androidConfig,

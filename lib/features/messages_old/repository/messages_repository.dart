@@ -188,11 +188,7 @@ class MessagesRepository {
     try {
       final response = await _client.patch(
         '/conversations/$conversationId',
-        data: {
-          'name': ?name,
-          'avatar': ?avatar,
-          'description': ?description,
-        },
+        data: {'name': ?name, 'avatar': ?avatar, 'description': ?description},
       );
       if (response.statusCode == 200) {
         return ConversationModel.fromJson(

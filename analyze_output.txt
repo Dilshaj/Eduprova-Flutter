@@ -1,0 +1,5 @@
+﻿Analyzing widgets...                                            
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\calendar\widgets\course_curriculum.dart:348:56 - deprecated_member_use
+  error - The getter 'alignLeft' isn't defined for the type 'LucideIcons' - lib\features\messages_old\calendar\widgets\new_meeting.dart:114:35 - undefined_getter
+

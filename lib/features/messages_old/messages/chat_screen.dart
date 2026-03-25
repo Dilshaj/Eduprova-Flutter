@@ -17,6 +17,7 @@ import '../providers/messages_provider.dart';
 import '../repository/calling_repository.dart';
 import '../repository/messages_repository.dart';
 import '../widgets/participant_picker_screen.dart';
+import '../widgets/messages_background.dart';
 import 'chat_profile_screen.dart';
 import 'live_call_screen.dart';
 import 'image_preview_screen.dart';
@@ -773,83 +774,85 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           _cancelSelection();
         }
       },
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: _buildAppBar(theme, cs, otherUserId),
-        body: GestureDetector(
-          onTap: () {
-            if (_selectedMessageIds.isNotEmpty) {
-              _cancelSelection();
-            }
-          },
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  Expanded(
-                    child: _isLoadingConversation
-                        ? _buildSkeletonList()
-                        : messages.isEmpty
-                        ? _buildEmptyState(cs)
-                        : NotificationListener<ScrollNotification>(
-                            onNotification: (notification) {
-                              if (notification is ScrollUpdateNotification) {
-                                if (_showReactionOverlay) {
-                                  setState(() {
-                                    _showReactionOverlay = false;
-                                  });
+      child: MessagesBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: _buildAppBar(theme, cs, otherUserId),
+          body: GestureDetector(
+            onTap: () {
+              if (_selectedMessageIds.isNotEmpty) {
+                _cancelSelection();
+              }
+            },
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: _isLoadingConversation
+                          ? _buildSkeletonList()
+                          : messages.isEmpty
+                          ? _buildEmptyState(cs)
+                          : NotificationListener<ScrollNotification>(
+                              onNotification: (notification) {
+                                if (notification is ScrollUpdateNotification) {
+                                  if (_showReactionOverlay) {
+                                    setState(() {
+                                      _showReactionOverlay = false;
+                                    });
+                                  }
                                 }
-                              }
-                              return false;
-                            },
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              reverse: true,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 12,
-                              ),
-                              itemCount: messages.length,
-                              itemBuilder: (context, index) {
-                                final msg = messages[index];
-                                final olderMsg = index < messages.length - 1
-                                    ? messages[index + 1]
-                                    : null;
-                                final newerMsg = index > 0
-                                    ? messages[index - 1]
-                                    : null;
-
-                                return _buildMessageGroup(
-                                  msg,
-                                  olderMsg,
-                                  newerMsg,
-                                  context,
-                                );
+                                return false;
                               },
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                reverse: true,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 12,
+                                ),
+                                itemCount: messages.length,
+                                itemBuilder: (context, index) {
+                                  final msg = messages[index];
+                                  final olderMsg = index < messages.length - 1
+                                      ? messages[index + 1]
+                                      : null;
+                                  final newerMsg = index > 0
+                                      ? messages[index - 1]
+                                      : null;
+
+                                  return _buildMessageGroup(
+                                    msg,
+                                    olderMsg,
+                                    newerMsg,
+                                    context,
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                  ),
-                  if (_isPendingDirectChat) _buildPendingInviteBanner(cs),
-                  if (isOtherTyping) _buildTypingIndicator(cs),
-                  if (_replyToMessage != null) _buildReplyBanner(cs),
-                  if (_isAnnouncementGroup && !_isCurrentUserAdmin)
-                    _buildAnnouncementNotice(cs),
-                  if (_canSendMessages) _buildMessageInput(theme, cs),
-                ],
-              ),
-              if (_showReactionOverlay) _buildReactionOverlay(context, cs),
-              if (!_isAtBottom || _newMessagesCount > 0)
-                Positioned(
-                  right: 16,
-                  bottom:
-                      _isPendingDirectChat ||
-                          isOtherTyping ||
-                          _replyToMessage != null
-                      ? 160
-                      : 100,
-                  child: _buildScrollToBottomButton(cs),
+                    ),
+                    if (_isPendingDirectChat) _buildPendingInviteBanner(cs),
+                    if (isOtherTyping) _buildTypingIndicator(cs),
+                    if (_replyToMessage != null) _buildReplyBanner(cs),
+                    if (_isAnnouncementGroup && !_isCurrentUserAdmin)
+                      _buildAnnouncementNotice(cs),
+                    if (_canSendMessages) _buildMessageInput(theme, cs),
+                  ],
                 ),
-            ],
+                if (_showReactionOverlay) _buildReactionOverlay(context, cs),
+                if (!_isAtBottom || _newMessagesCount > 0)
+                  Positioned(
+                    right: 16,
+                    bottom:
+                        _isPendingDirectChat ||
+                            isOtherTyping ||
+                            _replyToMessage != null
+                        ? 160
+                        : 100,
+                    child: _buildScrollToBottomButton(cs),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

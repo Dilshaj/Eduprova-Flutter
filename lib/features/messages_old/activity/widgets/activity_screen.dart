@@ -55,7 +55,8 @@ final List<ActivityData> activityDataList = [
     id: '2',
     type: 'message',
     title: 'New message from Rose Nguyen',
-    subtitle: '"I\'ve updated the Figma mockups with the new gradient theme as we discussed..."',
+    subtitle:
+        '"I\'ve updated the Figma mockups with the new gradient theme as we discussed..."',
     time: '12m ago',
     avatar: 'https://i.pravatar.cc/300?u=10',
     actionLink: 'Reply',
@@ -76,16 +77,13 @@ final List<ActivityData> activityDataList = [
       'icon': 'image',
     },
   ),
-  ActivityData(
-    id: 'header',
-    isHeader: true,
-    title: 'YESTERDAY',
-  ),
+  ActivityData(id: 'header', isHeader: true, title: 'YESTERDAY'),
   ActivityData(
     id: '4',
     type: 'mention',
     title: 'You were mentioned in Design Enthusiasts',
-    subtitle: 'Bharat: "@Jane what do you think about the new onboarding flow?"',
+    subtitle:
+        'Bharat: "@Jane what do you think about the new onboarding flow?"',
     time: '22h ago',
     icon: Icons.alternate_email,
     iconColor: const Color(0xFF9333EA),
@@ -96,7 +94,8 @@ final List<ActivityData> activityDataList = [
     id: '5',
     type: 'task',
     title: 'Task completed: Platform Review',
-    subtitle: 'Review of the architecture proposal has been marked as finished by Ganesh.',
+    subtitle:
+        'Review of the architecture proposal has been marked as finished by Ganesh.',
     time: '1d ago',
     icon: Icons.check_circle,
     iconColor: const Color(0xFF059669),
@@ -135,14 +134,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
           backgroundColor: Colors.transparent,
           body: Center(child: CircularProgressIndicator()),
         ),
-        
       );
     }
 
     if (widget.isEmbedded) {
       return _buildBody(context);
     }
-    
+
     return MessagesBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -154,7 +152,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   Widget _buildBody(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     const paddingX = 20.0;
-    
+
     return Stack(
       children: [
         Column(
@@ -176,7 +174,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           icon: Icon(
                             Icons.arrow_back,
                             size: 24,
-                            color: isDarkMode ? Colors.white : const Color(0xFF111111),
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF111111),
                           ),
                           onPressed: widget.onBack,
                         ),
@@ -186,7 +186,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       height: 36,
                       margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5),
+                        color: isDarkMode
+                            ? const Color(0xFF064E3B)
+                            : const Color(0xFFD1FAE5),
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -195,7 +197,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode ? const Color(0xFFD1FAE5) : const Color(0xFF065F46),
+                          color: isDarkMode
+                              ? const Color(0xFFD1FAE5)
+                              : const Color(0xFF065F46),
                         ),
                       ),
                     ),
@@ -204,7 +208,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : const Color(0xFF111111),
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF111111),
                       ),
                     ),
                   ],
@@ -213,7 +219,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
             ],
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: paddingX, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: paddingX,
+                vertical: 12,
+              ),
               child: Text(
                 'TODAY',
                 style: GoogleFonts.inter(
@@ -227,7 +236,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.only(left: paddingX, right: paddingX, bottom: 100),
+                padding: const EdgeInsets.only(
+                  left: paddingX,
+                  right: paddingX,
+                  bottom: 100,
+                ),
                 itemCount: activityDataList.length,
                 itemBuilder: (context, index) {
                   final item = activityDataList[index];
@@ -284,7 +297,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             alignment: Alignment.center,
-                            child: Icon(item.icon, size: 24, color: item.iconColor),
+                            child: Icon(
+                              item.icon,
+                              size: 24,
+                              color: item.iconColor,
+                            ),
                           ),
 
                         // Content
@@ -301,7 +318,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                       style: GoogleFonts.inter(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF111111),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF111111),
                                       ),
                                     ),
                                   ),
@@ -310,7 +329,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                     item.time ?? '',
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
-                                      color: isDarkMode ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                                      color: isDarkMode
+                                          ? const Color(0xFF6B7280)
+                                          : const Color(0xFF9CA3AF),
                                     ),
                                   ),
                                 ],
@@ -321,8 +342,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                   item.subtitle!,
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
-                                    color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
-                                    fontStyle: item.type == 'message' ? FontStyle.italic : FontStyle.normal,
+                                    color: isDarkMode
+                                        ? const Color(0xFF9CA3AF)
+                                        : const Color(0xFF6B7280),
+                                    fontStyle: item.type == 'message'
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
                                   ),
                                 ),
                               ],
@@ -340,16 +365,22 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                     const SizedBox(width: 12),
                                     Container(
                                       height: 36,
-                                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                      ),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(8),
-                                        color: isDarkMode ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                                        color: isDarkMode
+                                            ? const Color(0xFF374151)
+                                            : const Color(0xFFF3F4F6),
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
                                         'Dismiss',
                                         style: GoogleFonts.inter(
-                                          color: isDarkMode ? const Color(0xFFE5E7EB) : const Color(0xFF4B5563),
+                                          color: isDarkMode
+                                              ? const Color(0xFFE5E7EB)
+                                              : const Color(0xFF4B5563),
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -365,10 +396,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: isDarkMode ? const Color(0xFF1F2937) : const Color(0xFFF9FAFB),
+                                    color: isDarkMode
+                                        ? const Color(0xFF1F2937)
+                                        : const Color(0xFFF9FAFB),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isDarkMode ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                                      color: isDarkMode
+                                          ? const Color(0xFF374151)
+                                          : const Color(0xFFF3F4F6),
                                     ),
                                   ),
                                   child: Row(
@@ -376,28 +411,39 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                       Container(
                                         width: 36,
                                         height: 36,
-                                        margin: const EdgeInsets.only(right: 12),
+                                        margin: const EdgeInsets.only(
+                                          right: 12,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: isDarkMode ? const Color(0xFF374151) : Colors.white,
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: isDarkMode
+                                              ? const Color(0xFF374151)
+                                              : Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         alignment: Alignment.center,
                                         child: Icon(
                                           Icons.image,
                                           size: 20,
-                                          color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                                          color: isDarkMode
+                                              ? const Color(0xFF9CA3AF)
+                                              : const Color(0xFF6B7280),
                                         ),
                                       ),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               item.attachment!['name']!,
                                               style: GoogleFonts.inter(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
-                                                color: isDarkMode ? Colors.white : const Color(0xFF111111),
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : const Color(0xFF111111),
                                               ),
                                             ),
                                             const SizedBox(height: 2),
@@ -405,7 +451,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                               item.attachment!['size']!,
                                               style: GoogleFonts.inter(
                                                 fontSize: 11,
-                                                color: isDarkMode ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                                                color: isDarkMode
+                                                    ? const Color(0xFF6B7280)
+                                                    : const Color(0xFF9CA3AF),
                                               ),
                                             ),
                                           ],
@@ -414,7 +462,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                       Icon(
                                         Icons.download_outlined,
                                         size: 20,
-                                        color: isDarkMode ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                                        color: isDarkMode
+                                            ? const Color(0xFF9CA3AF)
+                                            : const Color(0xFF6B7280),
                                       ),
                                     ],
                                   ),
@@ -422,8 +472,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               ],
 
                               // Links
-                              if (item.actionLink != null || item.secondaryLink != null) ...[
-                                SizedBox(height: item.subtitle != null ? 12 : 0),
+                              if (item.actionLink != null ||
+                                  item.secondaryLink != null) ...[
+                                SizedBox(
+                                  height: item.subtitle != null ? 12 : 0,
+                                ),
                                 Row(
                                   children: [
                                     if (item.type == 'message')
