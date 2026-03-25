@@ -245,59 +245,58 @@ class _LoginFormState extends State<LoginForm> {
     VoidCallback? onToggleVisibility,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface,
-          ),
+    return TextFormField(
+      obscureText: obscureText,
+      style: GoogleFonts.inter(color: colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(height: 8),
-        TextField(
-          obscureText: obscureText,
-          style: GoogleFonts.inter(color: colorScheme.onSurface),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.inter(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-            ),
-            prefixIcon: Icon(
-              icon,
-              size: 20,
-              color: colorScheme.onSurfaceVariant,
-            ),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      obscureText ? LucideIcons.eye : LucideIcons.eyeOff,
-                      size: 20,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    onPressed: onToggleVisibility,
-                  )
-                : null,
-            filled: true,
-            fillColor: colorScheme.surface,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.outline),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.outline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colorScheme.primary, width: 2),
-            ),
-          ),
+        floatingLabelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.primary,
         ),
-      ],
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        hintText: hint,
+        hintStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          fontWeight: FontWeight.normal,
+        ),
+        prefixIcon: Icon(
+          icon,
+          size: 20,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  obscureText ? LucideIcons.eye : LucideIcons.eyeOff,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                onPressed: onToggleVisibility,
+              )
+            : null,
+        filled: true,
+        fillColor: colorScheme.surface,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+      ),
     );
   }
 }

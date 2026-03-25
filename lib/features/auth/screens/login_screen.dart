@@ -450,54 +450,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     VoidCallback? onToggleVisibility,
   }) {
     final dividerClr = Theme.of(context).dividerColor;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            // color: const Color(0xFF374151),
-            // color: Colors.white,
-          ),
+    return TextFormField(
+      obscureText: obscureText,
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFF6B7280),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          obscureText: obscureText,
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF)),
-            prefixIcon: Icon(icon, size: 20, color: const Color(0xFF6B7280)),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      obscureText ? LucideIcons.eye : LucideIcons.eyeOff,
-                      size: 20,
-                      color: const Color(0xFF6B7280),
-                    ),
-                    onPressed: onToggleVisibility,
-                  )
-                : null,
-            filled: true,
-            // fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: dividerClr),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: dividerClr),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.blue, width: 2),
-            ),
-          ),
+        floatingLabelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.blue,
         ),
-      ],
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        hintText: hint,
+        hintStyle: GoogleFonts.inter(
+          color: const Color(0xFF9CA3AF),
+          fontWeight: FontWeight.normal,
+        ),
+        prefixIcon: Icon(icon, size: 20, color: const Color(0xFF6B7280)),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  obscureText ? LucideIcons.eye : LucideIcons.eyeOff,
+                  size: 20,
+                  color: const Color(0xFF6B7280),
+                ),
+                onPressed: onToggleVisibility,
+              )
+            : null,
+        filled: true,
+        // fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: dividerClr),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: dividerClr),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.blue, width: 2),
+        ),
+      ),
     );
   }
 }

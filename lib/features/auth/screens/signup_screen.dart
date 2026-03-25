@@ -468,7 +468,7 @@ class _SignupScreenState extends State<SignupScreen> {
     int? maxLength,
   }) {
     final dividerClr = Theme.of(context).dividerColor;
-    return TextField(
+    return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
@@ -477,8 +477,18 @@ class _SignupScreenState extends State<SignupScreen> {
           ? [LengthLimitingTextInputFormatter(maxLength)]
           : null,
       decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF)),
+        labelText: hint,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: const Color(0xFF9CA3AF),
+        ),
+        floatingLabelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF3B82F6),
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
         counterText: "", // Hide character counter
         suffixIcon: isPassword
             ? IconButton(

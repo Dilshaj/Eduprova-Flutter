@@ -377,7 +377,7 @@ class _SignupFormState extends State<SignupForm> {
     int? maxLength,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return TextField(
+    return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
@@ -387,10 +387,18 @@ class _SignupFormState extends State<SignupForm> {
           ? [LengthLimitingTextInputFormatter(maxLength)]
           : null,
       decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.inter(
+        labelText: hint,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
         ),
+        floatingLabelStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.primary,
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
         counterText: "", // Hide character counter
         suffixIcon: isPassword
             ? IconButton(
