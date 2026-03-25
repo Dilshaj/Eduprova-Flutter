@@ -46,7 +46,10 @@ class CommunityModel {
           .toList(),
       groups: groupsJson
           .whereType<Map>()
-          .map((group) => ConversationModel.fromJson(Map<String, dynamic>.from(group)))
+          .map(
+            (group) =>
+                ConversationModel.fromJson(Map<String, dynamic>.from(group)),
+          )
           .toList(),
       announcementGroupId: json['announcementGroupId']?.toString(),
       createdAt: json['createdAt'] != null

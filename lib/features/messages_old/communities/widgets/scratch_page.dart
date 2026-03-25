@@ -46,7 +46,7 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: isDarkMode ? const Color(0xFF0F172A) : Colors.white,
       body: SafeArea(
@@ -65,7 +65,9 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       GestureDetector(
@@ -73,7 +75,9 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                         child: Icon(
                           Icons.close,
                           size: 24,
-                          color: isDarkMode ? Colors.white70 : const Color(0xFF94A3B8),
+                          color: isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                     ],
@@ -96,10 +100,14 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                                   width: 100,
                                   height: 100,
                                   decoration: BoxDecoration(
-                                    color: isDarkMode ? Colors.white.withOpacity(0.05) : const Color(0xFFEFF6FF),
+                                    color: isDarkMode
+                                        ? Colors.white.withOpacity(0.05)
+                                        : const Color(0xFFEFF6FF),
                                     borderRadius: BorderRadius.circular(24),
                                     border: Border.all(
-                                      color: isDarkMode ? Colors.white10 : const Color(0xFFBFDBFE),
+                                      color: isDarkMode
+                                          ? Colors.white10
+                                          : const Color(0xFFBFDBFE),
                                       width: 2,
                                     ),
                                   ),
@@ -140,10 +148,14 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                                 child: Container(
                                   height: 56,
                                   decoration: BoxDecoration(
-                                    color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                                    color: isDarkMode
+                                        ? const Color(0xFF1E293B)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0),
+                                      color: isDarkMode
+                                          ? Colors.white10
+                                          : const Color(0xFFE2E8F0),
                                     ),
                                   ),
                                   child: TextField(
@@ -151,15 +163,22 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                                     decoration: InputDecoration(
                                       hintText: 'Community name',
                                       hintStyle: GoogleFonts.inter(
-                                        color: isDarkMode ? Colors.white24 : const Color(0xFF94A3B8),
+                                        color: isDarkMode
+                                            ? Colors.white24
+                                            : const Color(0xFF94A3B8),
                                       ),
                                       border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                          ),
                                     ),
                                     style: GoogleFonts.inter(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
-                                      color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF1E293B),
                                     ),
                                   ),
                                 ),
@@ -182,10 +201,14 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                           Container(
                             height: 140,
                             decoration: BoxDecoration(
-                              color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                              color: isDarkMode
+                                  ? const Color(0xFF1E293B)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0),
+                                color: isDarkMode
+                                    ? Colors.white10
+                                    : const Color(0xFFE2E8F0),
                               ),
                             ),
                             child: TextField(
@@ -194,9 +217,12 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                               expands: true,
                               textAlignVertical: TextAlignVertical.top,
                               decoration: InputDecoration(
-                                hintText: "Write a short description about your community so people know what it's about.",
+                                hintText:
+                                    "Write a short description about your community so people know what it's about.",
                                 hintStyle: GoogleFonts.inter(
-                                  color: isDarkMode ? Colors.white24 : const Color(0xFF94A3B8),
+                                  color: isDarkMode
+                                      ? Colors.white24
+                                      : const Color(0xFF94A3B8),
                                   fontSize: 14,
                                 ),
                                 border: InputBorder.none,
@@ -205,7 +231,9 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                               ),
                               style: GoogleFonts.inter(
                                 fontSize: 14,
-                                color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF475569),
                                 height: 1.4,
                               ),
                             ),
@@ -216,30 +244,39 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: isDarkMode ? const Color(0xFF1E293B).withOpacity(0.5) : const Color(0xFFF8FAFC),
+                              color: isDarkMode
+                                  ? const Color(0xFF1E293B).withOpacity(0.5)
+                                  : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isDarkMode ? Colors.white10 : const Color(0xFFF1F5F9),
+                                color: isDarkMode
+                                    ? Colors.white10
+                                    : const Color(0xFFF1F5F9),
                               ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Community guidelines',
                                       style: GoogleFonts.inter(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A),
                                       ),
                                     ),
                                     Icon(
                                       Icons.edit,
                                       size: 16,
-                                      color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8),
+                                      color: isDarkMode
+                                          ? Colors.white38
+                                          : const Color(0xFF94A3B8),
                                     ),
                                   ],
                                 ),
@@ -248,12 +285,15 @@ class _ScratchPageScreenState extends State<ScratchPageScreen> {
                                   text: TextSpan(
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
-                                      color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                                      color: isDarkMode
+                                          ? Colors.white60
+                                          : const Color(0xFF64748B),
                                       height: 1.6,
                                     ),
                                     children: [
                                       const TextSpan(
-                                        text: "Be kind and respectful to your fellow community members. Don't be rude or cruel. Participate as yourself and don't post anything that violates ",
+                                        text:
+                                            "Be kind and respectful to your fellow community members. Don't be rude or cruel. Participate as yourself and don't post anything that violates ",
                                       ),
                                       TextSpan(
                                         text: 'Community Standards',

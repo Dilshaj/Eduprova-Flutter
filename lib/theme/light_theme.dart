@@ -54,7 +54,7 @@ final _themeColors = AppDesignExtension(
 );
 
 final _messagesLightColors = MessagesThemeExtension(
-  scaffoldBackground: const Color(0xFFEDF3FF),
+  scaffoldBackground: const Color(0xFFFBFCFF),
   titleColor: Colors.black,
   searchBarFillColor: Colors.white,
   searchBarIconColor: const Color(0xFF6B7280),

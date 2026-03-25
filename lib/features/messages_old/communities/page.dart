@@ -7,8 +7,9 @@ import 'widgets/communities_groups.dart';
 
 class CommunitiesPage extends StatefulWidget {
   final VoidCallback? onBack;
+  final String? searchQuery;
 
-  const CommunitiesPage({super.key, this.onBack});
+  const CommunitiesPage({super.key, this.onBack, this.searchQuery});
 
   @override
   State<CommunitiesPage> createState() => _CommunitiesPageState();
@@ -90,10 +91,7 @@ class _CommunitiesPageState extends State<CommunitiesPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  _error!,
-                  style: GoogleFonts.inter(fontSize: 16),
-                ),
+                Text(_error!, style: GoogleFonts.inter(fontSize: 16)),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _loadCommunities,
@@ -108,6 +106,7 @@ class _CommunitiesPageState extends State<CommunitiesPage> {
 
     return CommunitiesGroupsScreen(
       onBack: widget.onBack,
+      searchQuery: widget.searchQuery,
       communities: _communities,
       onCreateCommunity: _createCommunity,
       onRefresh: _loadCommunities,

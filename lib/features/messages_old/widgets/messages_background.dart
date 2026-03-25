@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:ui';
+import 'package:eduprova/theme/messages_theme_extension.dart';
 
 class MessagesBackground extends StatefulWidget {
   final Widget child;
@@ -36,7 +37,13 @@ class _MessagesBackgroundState extends State<MessagesBackground>
       children: [
         // Base background color
         Positioned.fill(
-          child: Container(color: Theme.of(context).scaffoldBackgroundColor),
+          child: Container(
+            color:
+                Theme.of(
+                  context,
+                ).extension<MessagesThemeExtension>()?.scaffoldBackground ??
+                Theme.of(context).scaffoldBackgroundColor,
+          ),
         ),
 
         // Animated Blobs

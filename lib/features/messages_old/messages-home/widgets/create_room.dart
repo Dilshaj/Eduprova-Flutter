@@ -69,13 +69,15 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
     final authState = ref.read(authProvider);
     final user = authState.user;
     if (_participants.isNotEmpty && user != null) {
-      ref.read(chatSocketProvider.notifier).emitCallInvite(
-        recipientIds: _participants.map((item) => item.id).toList(),
-        roomName: room.roomName,
-        conversationType: 'meet',
-        callerName: '${user.firstName} ${user.lastName}'.trim(),
-        callerAvatar: user.avatar,
-      );
+      ref
+          .read(chatSocketProvider.notifier)
+          .emitCallInvite(
+            recipientIds: _participants.map((item) => item.id).toList(),
+            roomName: room.roomName,
+            conversationType: 'meet',
+            callerName: '${user.firstName} ${user.lastName}'.trim(),
+            callerAvatar: user.avatar,
+          );
     }
 
     if (!mounted) return;
@@ -167,7 +169,9 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
                               onDeleted: () {
                                 setState(() {
                                   _participants = _participants
-                                      .where((item) => item.id != participant.id)
+                                      .where(
+                                        (item) => item.id != participant.id,
+                                      )
                                       .toList();
                                 });
                               },
@@ -268,7 +272,9 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
                     OutlinedButton.icon(
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.of(context);
-                        await Clipboard.setData(ClipboardData(text: _room!.joinUrl));
+                        await Clipboard.setData(
+                          ClipboardData(text: _room!.joinUrl),
+                        );
                         if (!mounted) return;
                         messenger.showSnackBar(
                           const SnackBar(content: Text('Meeting link copied')),

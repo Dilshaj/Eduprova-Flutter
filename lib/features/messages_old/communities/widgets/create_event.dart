@@ -333,7 +333,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                                         value: isAllDay,
                                         onChanged: (v) =>
                                             setState(() => isAllDay = v),
-                                        activeThumbColor: const Color(0xFF6674FF),
+                                        activeThumbColor: const Color(
+                                          0xFF6674FF,
+                                        ),
                                         inactiveTrackColor: const Color(
                                           0xFFE2E8F0,
                                         ),

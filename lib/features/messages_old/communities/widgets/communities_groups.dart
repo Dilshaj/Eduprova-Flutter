@@ -9,6 +9,7 @@ import 'new_community_dialog.dart';
 class CommunitiesGroupsScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final bool isEmbedded;
+  final String? searchQuery;
   final List<CommunityModel> communities;
   final Future<CommunityModel?> Function(String name, String description)?
   onCreateCommunity;
@@ -18,6 +19,7 @@ class CommunitiesGroupsScreen extends StatefulWidget {
     super.key,
     this.onBack,
     this.isEmbedded = false,
+    this.searchQuery,
     required this.communities,
     this.onCreateCommunity,
     this.onRefresh,
@@ -29,17 +31,7 @@ class CommunitiesGroupsScreen extends StatefulWidget {
 }
 
 class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
-  final _searchController = TextEditingController();
-  final _searchFocusNode = FocusNode();
-  String _searchQuery = '';
   final Set<String> _expandedCommunities = {};
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _searchFocusNode.dispose();
-    super.dispose();
-  }
 
   Future<void> _openCommunityOverview(CommunityModel community) async {
     final changed = await Navigator.push<bool>(
@@ -77,35 +69,11 @@ class _CommunitiesGroupsScreenState extends State<CommunitiesGroupsScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredCommunities = widget.communities.where((community) {
-      return community.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      return community.name.toLowerCase().contains((widget.searchQuery ?? '').toLowerCase());
     }).toList();
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: TextField(
-            controller: _searchController,
-            focusNode: _searchFocusNode,
-            onChanged: (value) => setState(() => _searchQuery = value),
-            decoration: InputDecoration(
-              hintText: 'Search communities',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFF2563EB)),
-              ),
-            ),
-          ),
-        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => widget.onRefresh?.call(),

@@ -14,6 +14,7 @@ import '../repository/messages_repository.dart';
 import 'chat_shared_media_screen.dart';
 import 'chat_participants_screen.dart';
 import '../../../core/widgets/app_loaders.dart';
+import '../widgets/messages_background.dart';
 
 class ChatProfileScreen extends ConsumerStatefulWidget {
   final ConversationModel conversation;
@@ -209,285 +210,287 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen> {
         .where((a) => a.type == 'image' || a.type == 'video')
         .toList();
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+    return MessagesBackground(
+      child: Scaffold(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, color: textColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          _isGroup ? 'Team Info' : 'Chat Profile',
-          style: GoogleFonts.inter(color: textColor, fontWeight: .bold),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () => ref
-                .read(favoriteConversationIdsProvider.notifier)
-                .toggle(_conversation.id),
-            icon: Icon(
-              isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: isFavorite ? Colors.amber.shade600 : textColor,
-            ),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: Icon(LucideIcons.arrowLeft, color: textColor),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const .symmetric(horizontal: 24),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            // Team Icon
-            Center(
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  shape: .circle,
-                  gradient: LinearGradient.new(
-                    colors: [.new(0xFF0066FF), .new(0xFFE056FD)],
-                  ),
-                ),
-                alignment: .center,
-                child: ChatAvatar(
-                  conversation: _conversation,
-                  currentUserId: currentUserId,
-                  size: 108,
-                ),
+          title: Text(
+            _isGroup ? 'Team Info' : 'Chat Profile',
+            style: GoogleFonts.inter(color: textColor, fontWeight: .bold),
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed: () => ref
+                  .read(favoriteConversationIdsProvider.notifier)
+                  .toggle(_conversation.id),
+              icon: Icon(
+                isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: isFavorite ? Colors.amber.shade600 : textColor,
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 24,
-                fontWeight: .bold,
-                color: textColor,
-              ),
-            ),
-            if (_isGroup)
-              Text(
-                '${_conversation.participants.length} Participants',
-                style: GoogleFonts.inter(fontSize: 16, color: Colors.grey),
-              ),
-            const SizedBox(height: 32),
-
-            // Action Buttons
-            Row(
-              mainAxisAlignment: .spaceEvenly,
-              children: [
-                if (_canManageParticipants)
-                  _buildActionIcon(
-                    LucideIcons.userPlus,
-                    'Add',
-                    isDarkMode,
-                    onTap: _addParticipants,
-                  ),
-                _buildActionIcon(LucideIcons.search, 'Find', isDarkMode),
-                _buildActionIcon(LucideIcons.bell, 'Mute', isDarkMode),
-                _buildActionIcon(LucideIcons.video, 'Meet', isDarkMode),
-              ],
-            ),
-
-            const SizedBox(height: 40),
-
-            // Media Section
-            if (mediaAttachments.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildListTile(
-                    LucideIcons.galleryHorizontal,
-                    'Media, links, and docs',
-                    '',
-                    isDarkMode,
-                    isRed: false,
-                    trailing: Row(
-                      mainAxisSize: .min,
-                      children: [
-                        Text(
-                          '${mediaAttachments.length}',
-                          style: GoogleFonts.inter(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          LucideIcons.chevronRight,
-                          size: 20,
-                          color: Colors.grey,
-                        ),
-                      ],
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const .symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              // Team Icon
+              Center(
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: const BoxDecoration(
+                    shape: .circle,
+                    gradient: LinearGradient.new(
+                      colors: [.new(0xFF0066FF), .new(0xFFE056FD)],
                     ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatSharedMediaScreen(
-                            conversation: _conversation,
-                          ),
-                        ),
-                      );
-                    },
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 100,
-                    child: ListView.separated(
-                      scrollDirection: .horizontal,
-                      itemCount: mediaAttachments.length > 5
-                          ? 5
-                          : mediaAttachments.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final media = mediaAttachments[index];
-                        return ClipRRect(
-                          borderRadius: .circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: media.url,
-                            width: 100,
-                            height: 100,
-                            fit: .cover,
-                            placeholder: (context, url) =>
-                                const ShimmerImageLoader(),
-                            errorWidget: (context, url, error) => Container(
-                              color: isDarkMode
-                                  ? Colors.grey[800]
-                                  : Colors.grey[200],
-                              child: const Icon(
-                                LucideIcons.imageOff,
-                                color: Colors.grey,
-                              ),
+                  alignment: .center,
+                  child: ChatAvatar(
+                    conversation: _conversation,
+                    currentUserId: currentUserId,
+                    size: 108,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 24,
+                  fontWeight: .bold,
+                  color: textColor,
+                ),
+              ),
+              if (_isGroup)
+                Text(
+                  '${_conversation.participants.length} Participants',
+                  style: GoogleFonts.inter(fontSize: 16, color: Colors.grey),
+                ),
+              const SizedBox(height: 32),
+
+              // Action Buttons
+              Row(
+                mainAxisAlignment: .spaceEvenly,
+                children: [
+                  if (_canManageParticipants)
+                    _buildActionIcon(
+                      LucideIcons.userPlus,
+                      'Add',
+                      isDarkMode,
+                      onTap: _addParticipants,
+                    ),
+                  _buildActionIcon(LucideIcons.search, 'Find', isDarkMode),
+                  _buildActionIcon(LucideIcons.bell, 'Mute', isDarkMode),
+                  _buildActionIcon(LucideIcons.video, 'Meet', isDarkMode),
+                ],
+              ),
+
+              const SizedBox(height: 40),
+
+              // Media Section
+              if (mediaAttachments.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildListTile(
+                      LucideIcons.galleryHorizontal,
+                      'Media, links, and docs',
+                      '',
+                      isDarkMode,
+                      isRed: false,
+                      trailing: Row(
+                        mainAxisSize: .min,
+                        children: [
+                          Text(
+                            '${mediaAttachments.length}',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            LucideIcons.chevronRight,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatSharedMediaScreen(
+                              conversation: _conversation,
                             ),
                           ),
                         );
                       },
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              )
-            else
-              _buildListTile(
-                LucideIcons.galleryHorizontal,
-                'Media, links, and docs',
-                'None',
-                isDarkMode,
-                isRed: false,
-                trailing: const Icon(
-                  LucideIcons.chevronRight,
-                  size: 20,
-                  color: Colors.grey,
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          ChatSharedMediaScreen(conversation: _conversation),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        scrollDirection: .horizontal,
+                        itemCount: mediaAttachments.length > 5
+                            ? 5
+                            : mediaAttachments.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final media = mediaAttachments[index];
+                          return ClipRRect(
+                            borderRadius: .circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: media.url,
+                              width: 100,
+                              height: 100,
+                              fit: .cover,
+                              placeholder: (context, url) =>
+                                  const ShimmerImageLoader(),
+                              errorWidget: (context, url, error) => Container(
+                                color: isDarkMode
+                                    ? Colors.grey[800]
+                                    : Colors.grey[200],
+                                child: const Icon(
+                                  LucideIcons.imageOff,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  );
-                },
-              ),
-            if (mediaAttachments.isEmpty) const SizedBox(height: 24),
-
-            // Members Section
-            if (_isGroup) ...[
-              _buildSectionHeader('Participants', isDarkMode),
-              const SizedBox(height: 16),
-              for (
-                var i = 0;
-                i <
-                    (_conversation.participants.length > 4
-                        ? 4
-                        : _conversation.participants.length);
-                i++
-              )
-                _buildMemberTile(_conversation.participants[i], isDarkMode),
-              if (_conversation.participants.length > 4)
-                TextButton(
-                  onPressed: () {
+                    const SizedBox(height: 24),
+                  ],
+                )
+              else
+                _buildListTile(
+                  LucideIcons.galleryHorizontal,
+                  'Media, links, and docs',
+                  'None',
+                  isDarkMode,
+                  isRed: false,
+                  trailing: const Icon(
+                    LucideIcons.chevronRight,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
+                  onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ChatParticipantsScreen(
-                          conversation: _conversation,
-                          currentUserId: currentUserId,
-                        ),
+                        builder: (_) =>
+                            ChatSharedMediaScreen(conversation: _conversation),
                       ),
                     );
                   },
-                  child: Text(
-                    'View all participants',
-                    style: GoogleFonts.inter(color: const Color(0xFF0066FF)),
-                  ),
                 ),
+              if (mediaAttachments.isEmpty) const SizedBox(height: 24),
+
+              // Members Section
+              if (_isGroup) ...[
+                _buildSectionHeader('Participants', isDarkMode),
+                const SizedBox(height: 16),
+                for (
+                  var i = 0;
+                  i <
+                      (_conversation.participants.length > 4
+                          ? 4
+                          : _conversation.participants.length);
+                  i++
+                )
+                  _buildMemberTile(_conversation.participants[i], isDarkMode),
+                if (_conversation.participants.length > 4)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatParticipantsScreen(
+                            conversation: _conversation,
+                            currentUserId: currentUserId,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'View all participants',
+                      style: GoogleFonts.inter(color: const Color(0xFF0066FF)),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+              ],
+
+              _buildSectionHeader(
+                _isGroup ? 'Group Settings' : 'Details',
+                isDarkMode,
+              ),
+              const SizedBox(height: 12),
+              if ((_conversation.description ?? '').isNotEmpty)
+                _buildListTile(
+                  LucideIcons.info,
+                  'Description',
+                  _conversation.description!.trim(),
+                  isDarkMode,
+                  isRed: false,
+                ),
+              if (_isGroup)
+                _buildListTile(
+                  LucideIcons.link,
+                  'Invite Link',
+                  'eduprova.com/j/team',
+                  isDarkMode,
+                  isRed: false,
+                ),
+
               const SizedBox(height: 24),
+              _buildListTile(
+                LucideIcons.timer,
+                'Disappearing Messages',
+                '',
+                isDarkMode,
+                isRed: false,
+                onTap: _toggleDisappearingMessages,
+              ),
+              _buildListTile(
+                LucideIcons.eraser,
+                'Clear Chat',
+                '',
+                isDarkMode,
+                isRed: true,
+                onTap: _clearChat,
+              ),
+              if (_isGroup)
+                _buildListTile(
+                  LucideIcons.logOut,
+                  'Leave Group',
+                  '',
+                  isDarkMode,
+                  isRed: true,
+                ),
+              if (_isCurrentUserAdmin)
+                _buildListTile(
+                  LucideIcons.trash2,
+                  'Delete Group',
+                  '',
+                  isDarkMode,
+                  isRed: true,
+                ),
+              const SizedBox(height: 40),
             ],
-
-            _buildSectionHeader(
-              _isGroup ? 'Group Settings' : 'Details',
-              isDarkMode,
-            ),
-            const SizedBox(height: 12),
-            if ((_conversation.description ?? '').isNotEmpty)
-              _buildListTile(
-                LucideIcons.info,
-                'Description',
-                _conversation.description!.trim(),
-                isDarkMode,
-                isRed: false,
-              ),
-            if (_isGroup)
-              _buildListTile(
-                LucideIcons.link,
-                'Invite Link',
-                'eduprova.com/j/team',
-                isDarkMode,
-                isRed: false,
-              ),
-
-            const SizedBox(height: 24),
-            _buildListTile(
-              LucideIcons.timer,
-              'Disappearing Messages',
-              '',
-              isDarkMode,
-              isRed: false,
-              onTap: _toggleDisappearingMessages,
-            ),
-            _buildListTile(
-              LucideIcons.eraser,
-              'Clear Chat',
-              '',
-              isDarkMode,
-              isRed: true,
-              onTap: _clearChat,
-            ),
-            if (_isGroup)
-              _buildListTile(
-                LucideIcons.logOut,
-                'Leave Group',
-                '',
-                isDarkMode,
-                isRed: true,
-              ),
-            if (_isCurrentUserAdmin)
-              _buildListTile(
-                LucideIcons.trash2,
-                'Delete Group',
-                '',
-                isDarkMode,
-                isRed: true,
-              ),
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );

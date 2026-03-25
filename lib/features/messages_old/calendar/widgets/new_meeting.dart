@@ -1,387 +1,349 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class NewMeetingScreen extends StatelessWidget {
   const NewMeetingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12, left: 24, right: 24),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? colorScheme.surfaceContainer : Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom,
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
+              // Drag indicator
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurface.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Schedule a new meeting',
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0F172A), // slate-900
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Schedule Meeting',
+                          style: GoogleFonts.inter(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Create a meeting for your team',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF1F5F9), // slate-100
-                        shape: BoxShape.circle,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark ? colorScheme.surfaceContainerHighest : const Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        LucideIcons.x,
+                        size: 20,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.close, size: 18, color: Color(0xFF64748B)),
+                      padding: EdgeInsets.zero,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        'MEETING TITLE',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF94A3B8), // slate-400
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC), // slate-50
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'e.g. Design Sync',
-                            hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(16),
-                          ),
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Date
-                      Text(
-                        'DATE',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF94A3B8),
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today, size: 20, color: Color(0xFF64748B)),
-                                const SizedBox(width: 12),
-                                Text(
-                                  '01/21/2026',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Icon(Icons.calendar_month, size: 20, color: Color(0xFFCBD5E1)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Times
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'START TIME',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF94A3B8),
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '10:00 AM',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const Icon(Icons.access_time, size: 16, color: Color(0xFF94A3B8)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'END TIME',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF94A3B8),
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '11:00 AM',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const Icon(Icons.access_time, size: 16, color: Color(0xFF94A3B8)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Participants
-                      Text(
-                        'ADD PARTICIPANTS',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF94A3B8), // slate-400
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC), // slate-50
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(left: 16),
-                              child: Icon(Icons.person_add_alt_1, size: 20, color: Color(0xFF94A3B8)),
-                            ),
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Add by name or email',
-                                  hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.all(16),
-                                ),
-                                style: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFAF5FF), // purple-50
-                              border: Border.all(color: const Color(0xFFF3E8FF)), // purple-100
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Sarah Johnson',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF8B5CF6),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.close, size: 12, color: Color(0xFF8B5CF6)),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFAF5FF), // purple-50
-                              border: Border.all(color: const Color(0xFFF3E8FF)), // purple-100
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Mike Peters',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF8B5CF6),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.close, size: 12, color: Color(0xFF8B5CF6)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
+              // Meeting Title
+              _buildInputLabel(
+                label: 'Meeting Title',
+                icon: LucideIcons.fileText,
+                colorScheme: colorScheme,
               ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                hint: 'e.g., Weekly Standup',
+                colorScheme: colorScheme,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 24),
 
-              // Footer Buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF64748B),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+              // Description
+              _buildInputLabel(
+                label: 'Description',
+                icon: LucideIcons.list,
+                colorScheme: colorScheme,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                hint: "What's this meeting about?",
+                maxLines: 4,
+                colorScheme: colorScheme,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 24),
+
+              // Date
+              _buildInputLabel(
+                label: 'Date',
+                icon: LucideIcons.calendar,
+                colorScheme: colorScheme,
+              ),
+              const SizedBox(height: 12),
+              _buildDateTimeField(
+                text: '24-03-2026',
+                trailingIcon: LucideIcons.calendar,
+                colorScheme: colorScheme,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 24),
+
+              // Start and End Time
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInputLabel(
+                          label: 'Start Time',
+                          icon: LucideIcons.clock,
+                          colorScheme: colorScheme,
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        _buildDateTimeField(
+                          text: '10:00',
+                          trailingIcon: LucideIcons.clock,
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Container(
-                        height: 56,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFD946EF), Color(0xFF8B5CF6)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFA855F7).withOpacity(0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Center(
-                              child: Text(
-                                'Schedule',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Bottom Indicator placeholder
-              Center(
-                child: Container(
-                  width: 100,
-                  height: 6,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0), // slate-200
-                    borderRadius: BorderRadius.circular(3),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInputLabel(
+                          label: 'End Time',
+                          icon: LucideIcons.clock,
+                          colorScheme: colorScheme,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildDateTimeField(
+                          text: '11:00',
+                          trailingIcon: LucideIcons.clock,
+                          colorScheme: colorScheme,
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 24),
+
+              // Add Participants
+              _buildInputLabel(
+                label: 'Add Participants',
+                icon: LucideIcons.users,
+                colorScheme: colorScheme,
+              ),
+              const SizedBox(height: 12),
+              _buildTextField(
+                hint: 'Search by name or email...',
+                colorScheme: colorScheme,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 48),
+
+              // Gradient Schedule Button
+              _buildGradientButton(
+                context: context,
+                text: 'Schedule Meeting',
+                onPressed: () => Navigator.pop(context),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGradientButton({
+    required BuildContext context,
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0066FF), Color(0xFFE056FD)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(30),
+          child: Center(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputLabel({
+    required String label,
+    required IconData icon,
+    required ColorScheme colorScheme,
+  }) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: colorScheme.onSurface.withValues(alpha: 0.7),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onSurface.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required String hint,
+    int maxLines = 1,
+    required ColorScheme colorScheme,
+    required bool isDark,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
+      ),
+      child: TextField(
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.inter(
+            color: colorScheme.onSurface.withValues(alpha: 0.4),
+            fontSize: 14,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+        style: GoogleFonts.inter(
+          fontSize: 14,
+          color: colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateTimeField({
+    required String text,
+    required IconData trailingIcon,
+    required ColorScheme colorScheme,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Icon(
+            trailingIcon,
+            size: 18,
+            color: colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ],
       ),
     );
   }

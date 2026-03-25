@@ -22,7 +22,9 @@ class _JoinWithIdScreenState extends State<JoinWithIdScreen> {
     final parsed = _parseRoomName(_controller.text);
     if (parsed == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid room name or meeting link')),
+        const SnackBar(
+          content: Text('Enter a valid room name or meeting link'),
+        ),
       );
       return;
     }
@@ -59,7 +61,8 @@ class _JoinWithIdScreenState extends State<JoinWithIdScreen> {
                 maxLines: 3,
                 decoration: const InputDecoration(
                   labelText: 'Room / Link',
-                  hintText: 'meeting:abc123 or https://.../dashboard/meet/meeting:abc123',
+                  hintText:
+                      'meeting:abc123 or https://.../dashboard/meet/meeting:abc123',
                   border: OutlineInputBorder(),
                 ),
               ),

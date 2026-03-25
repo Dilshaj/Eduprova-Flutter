@@ -62,7 +62,11 @@ class _NewCommunityDialogState extends State<NewCommunityDialog> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, size: 20, color: Color(0xFF9CA3AF)),
+                  icon: const Icon(
+                    Icons.close,
+                    size: 20,
+                    color: Color(0xFF9CA3AF),
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -83,8 +87,14 @@ class _NewCommunityDialogState extends State<NewCommunityDialog> {
               controller: _nameController,
               decoration: InputDecoration(
                 hintText: 'e.g. Study Squad',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                hintStyle: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 14,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -95,7 +105,10 @@ class _NewCommunityDialogState extends State<NewCommunityDialog> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF3B82F6),
+                    width: 1.5,
+                  ),
                 ),
               ),
               style: GoogleFonts.inter(fontSize: 14),
@@ -116,7 +129,10 @@ class _NewCommunityDialogState extends State<NewCommunityDialog> {
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'What is this community about?',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
+                hintStyle: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 14,
+                ),
                 contentPadding: const EdgeInsets.all(16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -128,7 +144,10 @@ class _NewCommunityDialogState extends State<NewCommunityDialog> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF3B82F6),
+                    width: 1.5,
+                  ),
                 ),
               ),
               style: GoogleFonts.inter(fontSize: 14),
@@ -160,7 +179,9 @@ class _NewCommunityDialogState extends State<NewCommunityDialog> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFA5B4FC), // light blue/indigo
+                      backgroundColor: const Color(
+                        0xFFA5B4FC,
+                      ), // light blue/indigo
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),

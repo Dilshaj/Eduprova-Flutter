@@ -31,7 +31,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.chevron_left, size: 24, color: Color(0xFF64748B)),
+                      child: const Icon(
+                        Icons.chevron_left,
+                        size: 24,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ),
                   Container(
@@ -42,7 +46,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.calendar_month, size: 20, color: Color(0xFFA855F7)),
+                    child: const Icon(
+                      Icons.calendar_month,
+                      size: 20,
+                      color: Color(0xFFA855F7),
+                    ),
                   ),
                 ],
               ),
@@ -67,7 +75,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                       // Date & Time
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today, size: 16, color: Color(0xFF94A3B8)),
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Color(0xFF94A3B8),
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             'Wednesday, Jan 21, 2026',
@@ -82,7 +94,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.access_time, size: 16, color: Color(0xFF94A3B8)),
+                          const Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Color(0xFF94A3B8),
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             '12:00 PM - 1:00 PM',
@@ -145,7 +161,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                                 color: const Color(0xFF0F172A), // slate-900
                               ),
                             ),
-                            const Icon(Icons.copy, size: 20, color: Color(0xFF8B5CF6)),
+                            const Icon(
+                              Icons.copy,
+                              size: 20,
+                              color: Color(0xFF8B5CF6),
+                            ),
                           ],
                         ),
                       ),
@@ -184,7 +204,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(Icons.copy, size: 20, color: Color(0xFF8B5CF6)),
+                            const Icon(
+                              Icons.copy,
+                              size: 20,
+                              color: Color(0xFF8B5CF6),
+                            ),
                           ],
                         ),
                       ),
@@ -217,7 +241,8 @@ class CourseCurriculumScreen extends StatelessWidget {
 
                       // Participant 1
                       _buildParticipantItem(
-                        imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
                         name: 'Dr. Sarah Jenkins',
                         role: 'Organizer',
                         status: 'Accepted',
@@ -228,7 +253,8 @@ class CourseCurriculumScreen extends StatelessWidget {
 
                       // Participant 2
                       _buildParticipantItem(
-                        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+                        imageUrl:
+                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
                         name: 'Mark Thompson',
                         role: 'Lead Instructor',
                         status: 'Tentative',
@@ -280,7 +306,10 @@ class CourseCurriculumScreen extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF0FDF4),
                               borderRadius: BorderRadius.circular(12),
@@ -316,7 +345,7 @@ class CourseCurriculumScreen extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFA855F7).withOpacity(0.3),
+                        color: const Color(0xFFA855F7).withValues(alpha: 0.3),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -330,7 +359,11 @@ class CourseCurriculumScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.videocam, color: Colors.white, size: 20),
+                          const Icon(
+                            Icons.videocam,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Join Meeting',

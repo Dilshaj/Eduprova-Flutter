@@ -77,9 +77,9 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
       Navigator.of(context).pop<MeetingModel>(meeting);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to schedule meeting: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to schedule meeting: $e')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

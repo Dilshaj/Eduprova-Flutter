@@ -271,7 +271,12 @@ class PostsWidget extends StatelessWidget {
                             builder: (_) => const MeetingOrientationScreen(),
                           ),
                         ),
-                        child: _upcomingCard('OCT', '27', 'Design Review', '2:00 PM'),
+                        child: _upcomingCard(
+                          'OCT',
+                          '27',
+                          'Design Review',
+                          '2:00 PM',
+                        ),
                       ),
                     ],
                   ),

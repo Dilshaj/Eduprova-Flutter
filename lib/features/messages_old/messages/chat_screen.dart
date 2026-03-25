@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:eduprova/features/messages_old/widgets/messages_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1078,115 +1079,118 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           _cancelSelection();
         }
       },
-      child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: _buildAppBar(theme, cs, otherUserId),
-        body: GestureDetector(
-          onTap: () {
-            if (_selectedMessageIds.isNotEmpty) {
-              _cancelSelection();
-            }
-          },
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  if (_conversation != null &&
-                      _conversation!.pinnedMessages.isNotEmpty)
-                    Builder(
-                      builder: (_) {
-                        final pinnedIds = _conversation!.pinnedMessages;
-                        final latestPinId = pinnedIds.last;
-                        try {
-                          final msg = messages.firstWhere(
-                            (m) => m.id == latestPinId,
-                          );
-                          return _buildPinnedMessageBar(msg, cs);
-                        } catch (e) {
-                          // If message not in current list, just show a generic bar
-                          return _buildPinnedMessageBar(
-                            MessageModel(
-                              id: latestPinId,
-                              conversationId: widget.conversationId,
-                              senderId: '',
-                              content: 'Pinned Message',
-                              type: MessageType.text,
-                              createdAt: DateTime.now(),
-                              attachments: const [],
-                              reactions: const [],
-                            ),
-                            cs,
-                          );
-                        }
-                      },
-                    ),
-                  Expanded(
-                    child: _isLoadingConversation
-                        ? _buildSkeletonList()
-                        : messages.isEmpty
-                        ? _buildEmptyState(cs)
-                        : NotificationListener<ScrollNotification>(
-                            onNotification: (notification) {
-                              if (notification is ScrollUpdateNotification) {
-                                if (_showReactionOverlay) {
-                                  setState(() {
-                                    _showReactionOverlay = false;
-                                  });
-                                }
-                              }
-                              return false;
-                            },
-                            child: ScrollablePositionedList.builder(
-                              itemScrollController: _itemScrollController,
-                              itemPositionsListener: _itemPositionsListener,
-                              itemCount: messages.length,
-                              reverse: true,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                                vertical: 12,
+      child: MessagesBackground(
+        child: Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: _buildAppBar(theme, cs, otherUserId),
+          body: GestureDetector(
+            onTap: () {
+              if (_selectedMessageIds.isNotEmpty) {
+                _cancelSelection();
+              }
+            },
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    if (_conversation != null &&
+                        _conversation!.pinnedMessages.isNotEmpty)
+                      Builder(
+                        builder: (_) {
+                          final pinnedIds = _conversation!.pinnedMessages;
+                          final latestPinId = pinnedIds.last;
+                          try {
+                            final msg = messages.firstWhere(
+                              (m) => m.id == latestPinId,
+                            );
+                            return _buildPinnedMessageBar(msg, cs);
+                          } catch (e) {
+                            // If message not in current list, just show a generic bar
+                            return _buildPinnedMessageBar(
+                              MessageModel(
+                                id: latestPinId,
+                                conversationId: widget.conversationId,
+                                senderId: '',
+                                content: 'Pinned Message',
+                                type: MessageType.text,
+                                createdAt: DateTime.now(),
+                                attachments: const [],
+                                reactions: const [],
                               ),
-                              itemBuilder: (context, index) {
-                                final msg = messages[index];
-                                final olderMsg = index < messages.length - 1
-                                    ? messages[index + 1]
-                                    : null;
-                                final newerMsg = index > 0
-                                    ? messages[index - 1]
-                                    : null;
-
-                                return _buildMessageGroup(
-                                  msg,
-                                  olderMsg,
-                                  newerMsg,
-                                  context,
-                                );
+                              cs,
+                            );
+                          }
+                        },
+                      ),
+                    Expanded(
+                      child: _isLoadingConversation
+                          ? _buildSkeletonList()
+                          : messages.isEmpty
+                          ? _buildEmptyState(cs)
+                          : NotificationListener<ScrollNotification>(
+                              onNotification: (notification) {
+                                if (notification is ScrollUpdateNotification) {
+                                  if (_showReactionOverlay) {
+                                    setState(() {
+                                      _showReactionOverlay = false;
+                                    });
+                                  }
+                                }
+                                return false;
                               },
+                              child: ScrollablePositionedList.builder(
+                                itemScrollController: _itemScrollController,
+                                itemPositionsListener: _itemPositionsListener,
+                                itemCount: messages.length,
+                                reverse: true,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 12,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final msg = messages[index];
+                                  final olderMsg = index < messages.length - 1
+                                      ? messages[index + 1]
+                                      : null;
+                                  final newerMsg = index > 0
+                                      ? messages[index - 1]
+                                      : null;
+
+                                  return _buildMessageGroup(
+                                    msg,
+                                    olderMsg,
+                                    newerMsg,
+                                    context,
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                  ),
-                  if (_isPendingDirectChat &&
-                      (!_isPendingCreator || messages.isNotEmpty))
-                    _buildPendingInviteBanner(cs),
-                  if (isOtherTyping) _buildTypingIndicator(cs),
-                  if (_replyToMessage != null) _buildReplyBanner(cs),
-                  if (_isAnnouncementGroup && !_isCurrentUserAdmin)
-                    _buildAnnouncementNotice(cs),
-                  if (_canSendMessages(messages)) _buildMessageInput(theme, cs),
-                ],
-              ),
-              if (_showReactionOverlay) _buildReactionOverlay(context, cs),
-              if (!_isAtBottom || _newMessagesCount > 0)
-                Positioned(
-                  right: 16,
-                  bottom:
-                      _isPendingDirectChat ||
-                          isOtherTyping ||
-                          _replyToMessage != null
-                      ? 160
-                      : 100,
-                  child: _buildScrollToBottomButton(cs),
+                    ),
+                    if (_isPendingDirectChat &&
+                        (!_isPendingCreator || messages.isNotEmpty))
+                      _buildPendingInviteBanner(cs),
+                    if (isOtherTyping) _buildTypingIndicator(cs),
+                    if (_replyToMessage != null) _buildReplyBanner(cs),
+                    if (_isAnnouncementGroup && !_isCurrentUserAdmin)
+                      _buildAnnouncementNotice(cs),
+                    if (_canSendMessages(messages))
+                      _buildMessageInput(theme, cs),
+                  ],
                 ),
-            ],
+                if (_showReactionOverlay) _buildReactionOverlay(context, cs),
+                if (!_isAtBottom || _newMessagesCount > 0)
+                  Positioned(
+                    right: 16,
+                    bottom:
+                        _isPendingDirectChat ||
+                            isOtherTyping ||
+                            _replyToMessage != null
+                        ? 160
+                        : 100,
+                    child: _buildScrollToBottomButton(cs),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

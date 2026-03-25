@@ -37,7 +37,7 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
       'name': communityName,
       'category': category,
     }); // Close Create community screen
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Community "$communityName" created successfully!'),
@@ -72,7 +72,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       InkWell(
@@ -81,7 +83,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                         child: Icon(
                           Icons.close,
                           size: 24,
-                          color: isDarkMode ? Colors.white70 : const Color(0xFF94A3B8),
+                          color: isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                     ],
@@ -102,10 +106,14 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                               width: 100,
                               height: 100,
                               decoration: BoxDecoration(
-                                color: isDarkMode ? Colors.white.withOpacity(0.05) : const Color(0xFFF8FAFC),
+                                color: isDarkMode
+                                    ? Colors.white.withOpacity(0.05)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0),
+                                  color: isDarkMode
+                                      ? Colors.white10
+                                      : const Color(0xFFE2E8F0),
                                   width: 2,
                                 ),
                               ),
@@ -113,7 +121,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                               child: Icon(
                                 Icons.camera_alt_outlined,
                                 size: 24,
-                                color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8),
+                                color: isDarkMode
+                                    ? Colors.white38
+                                    : const Color(0xFF94A3B8),
                               ),
                             ),
                             Positioned(
@@ -125,9 +135,13 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                                  color: isDarkMode
+                                      ? const Color(0xFF1E293B)
+                                      : Colors.white,
                                   border: Border.all(
-                                    color: isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0),
+                                    color: isDarkMode
+                                        ? Colors.white10
+                                        : const Color(0xFFE2E8F0),
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
@@ -143,7 +157,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                                     Icon(
                                       Icons.edit,
                                       size: 10,
-                                      color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                                      color: isDarkMode
+                                          ? Colors.white70
+                                          : const Color(0xFF64748B),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -151,7 +167,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                                       style: GoogleFonts.inter(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                                        color: isDarkMode
+                                            ? Colors.white70
+                                            : const Color(0xFF64748B),
                                       ),
                                     ),
                                   ],
@@ -176,16 +194,24 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                         Container(
                           height: 52,
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                            color: isDarkMode
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0)),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? Colors.white10
+                                  : const Color(0xFFE2E8F0),
+                            ),
                           ),
                           child: TextField(
                             controller: _nameController,
                             decoration: InputDecoration(
                               hintText: 'e.g. CS Sophomore Study Group',
                               hintStyle: GoogleFonts.inter(
-                                color: isDarkMode ? Colors.white24 : const Color(0xFF94A3B8),
+                                color: isDarkMode
+                                    ? Colors.white24
+                                    : const Color(0xFF94A3B8),
                               ),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
@@ -195,7 +221,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF1E293B),
                             ),
                           ),
                         ),
@@ -215,9 +243,15 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                         Container(
                           height: 120,
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF1E293B).withOpacity(0.5) : const Color(0xFFF8FAFC),
+                            color: isDarkMode
+                                ? const Color(0xFF1E293B).withOpacity(0.5)
+                                : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: isDarkMode ? Colors.white10 : Colors.transparent),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? Colors.white10
+                                  : Colors.transparent,
+                            ),
                           ),
                           child: TextField(
                             controller: _descController,
@@ -227,7 +261,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                               hintText:
                                   "Write a short description about your community so people know what it's about.",
                               hintStyle: GoogleFonts.inter(
-                                color: isDarkMode ? Colors.white24 : const Color(0xFF94A3B8),
+                                color: isDarkMode
+                                    ? Colors.white24
+                                    : const Color(0xFF94A3B8),
                                 fontSize: 14,
                               ),
                               border: InputBorder.none,
@@ -236,7 +272,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                             textAlignVertical: TextAlignVertical.top,
                             style: GoogleFonts.inter(
                               fontSize: 14,
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                         ),
@@ -246,9 +284,15 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF0066FF).withOpacity(0.05) : const Color(0xFFF0F9FF),
+                            color: isDarkMode
+                                ? const Color(0xFF0066FF).withOpacity(0.05)
+                                : const Color(0xFFF0F9FF),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: isDarkMode ? Colors.blue.withOpacity(0.2) : const Color(0xFFE0F2FE)),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? Colors.blue.withOpacity(0.2)
+                                  : const Color(0xFFE0F2FE),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +306,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                                     style: GoogleFonts.inter(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
-                                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                   const Icon(
@@ -277,7 +323,9 @@ class _CommunityCategoriesScreenState extends State<CommunityCategoriesScreen> {
                                 text: TextSpan(
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
-                                    color: isDarkMode ? Colors.white60 : const Color(0xFF475569),
+                                    color: isDarkMode
+                                        ? Colors.white60
+                                        : const Color(0xFF475569),
                                     height: 1.6,
                                   ),
                                   children: [

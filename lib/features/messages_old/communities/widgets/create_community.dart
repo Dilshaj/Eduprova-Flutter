@@ -64,7 +64,9 @@ class CreateCommunityScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
@@ -84,7 +86,9 @@ class CreateCommunityScreen extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
-                            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -92,7 +96,9 @@ class CreateCommunityScreen extends StatelessWidget {
                           "Select how you'd like to bring your students together.",
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                            color: isDarkMode
+                                ? Colors.white70
+                                : const Color(0xFF64748B),
                             height: 1.5,
                           ),
                         ),
@@ -108,14 +114,18 @@ class CreateCommunityScreen extends StatelessWidget {
                       height: 32,
                       margin: const EdgeInsets.only(top: 4),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? Colors.white10 : const Color(0xFFF1F5F9),
+                        color: isDarkMode
+                            ? Colors.white10
+                            : const Color(0xFFF1F5F9),
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
                       child: Icon(
                         Icons.close,
                         size: 18,
-                        color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF64748B),
                       ),
                     ),
                   ),
@@ -134,15 +144,23 @@ class CreateCommunityScreen extends StatelessWidget {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const ScratchPageScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const ScratchPageScreen(),
+                            ),
                           );
                         },
                         child: Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                            color: isDarkMode
+                                ? const Color(0xFF1E293B)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFF1F5F9)),
+                            border: Border.all(
+                              color: isDarkMode
+                                  ? Colors.white10
+                                  : const Color(0xFFF1F5F9),
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.04),
@@ -157,7 +175,9 @@ class CreateCommunityScreen extends StatelessWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isDarkMode ? Colors.blue.withOpacity(0.1) : const Color(0xFFDBEAFE),
+                                  color: isDarkMode
+                                      ? Colors.blue.withOpacity(0.1)
+                                      : const Color(0xFFDBEAFE),
                                 ),
                                 alignment: Alignment.center,
                                 child: Container(
@@ -185,7 +205,9 @@ class CreateCommunityScreen extends StatelessWidget {
                                       style: GoogleFonts.inter(
                                         fontSize: 17,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A),
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -193,7 +215,9 @@ class CreateCommunityScreen extends StatelessWidget {
                                       'Full control over your structure and settings.',
                                       style: GoogleFonts.inter(
                                         fontSize: 13,
-                                        color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                                        color: isDarkMode
+                                            ? Colors.white60
+                                            : const Color(0xFF64748B),
                                       ),
                                     ),
                                   ],
@@ -202,7 +226,9 @@ class CreateCommunityScreen extends StatelessWidget {
                               Icon(
                                 Icons.chevron_right,
                                 size: 20,
-                                color: isDarkMode ? Colors.white24 : const Color(0xFFCBD5E1),
+                                color: isDarkMode
+                                    ? Colors.white24
+                                    : const Color(0xFFCBD5E1),
                               ),
                             ],
                           ),
@@ -242,10 +268,14 @@ class CreateCommunityScreen extends StatelessWidget {
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                                color: isDarkMode
+                                    ? const Color(0xFF1E293B)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: isDarkMode ? Colors.white10 : const Color(0xFFF8FAFC),
+                                  color: isDarkMode
+                                      ? Colors.white10
+                                      : const Color(0xFFF8FAFC),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -260,8 +290,10 @@ class CreateCommunityScreen extends StatelessWidget {
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: isDarkMode 
-                                          ? (cat['color'] as Color).withOpacity(0.15)
+                                      color: isDarkMode
+                                          ? (cat['color'] as Color).withOpacity(
+                                              0.15,
+                                            )
                                           : cat['bgColor'] as Color,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -279,7 +311,9 @@ class CreateCommunityScreen extends StatelessWidget {
                                       style: GoogleFonts.inter(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF1E293B),
                                       ),
                                       maxLines: 2,
                                     ),

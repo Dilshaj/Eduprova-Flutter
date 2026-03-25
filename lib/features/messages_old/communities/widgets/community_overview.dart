@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../theme/theme.dart';
 import '../../models/community_model.dart';
 import '../../models/conversation_model.dart';
+import '../../widgets/messages_background.dart';
 import '../../repository/community_repository.dart';
 
 class CommunityOverviewScreen extends StatefulWidget {
@@ -353,207 +354,214 @@ class _CommunityOverviewScreenState extends State<CommunityOverviewScreen> {
     final community = _community;
 
     if (_isLoading && community == null) {
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: const Center(child: CircularProgressIndicator()),
+      return MessagesBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: const Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     if (community == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: Text('Community not found')),
+      return MessagesBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+          body: const Center(child: Text('Community not found')),
+        ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context, false),
-          icon: Icon(Icons.close, color: colorScheme.onSurface),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _showCreateGroupDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.add, size: 18),
-                  const SizedBox(width: 4),
-                  Text(
-                    _isSubmitting ? 'Creating...' : 'Create Group',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+    return MessagesBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context, false),
+            icon: Icon(Icons.close, color: colorScheme.onSurface),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _showCreateGroupDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.add, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isSubmitting ? 'Creating...' : 'Create Group',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          IconButton(
-            onPressed: _loadCommunity,
-            icon: Icon(Icons.refresh, color: themeExt.secondaryText),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadCommunity,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child:
-                          community.avatar != null &&
-                              community.avatar!.isNotEmpty
-                          ? Image.network(
-                              community.avatar!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Icon(
+            IconButton(
+              onPressed: _loadCommunity,
+              icon: Icon(Icons.refresh, color: themeExt.secondaryText),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _loadCommunity,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child:
+                            community.avatar != null &&
+                                community.avatar!.isNotEmpty
+                            ? Image.network(
+                                community.avatar!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Icon(
+                                  Icons.groups_outlined,
+                                  color: colorScheme.onPrimary,
+                                  size: 32,
+                                ),
+                              )
+                            : Icon(
                                 Icons.groups_outlined,
                                 color: colorScheme.onPrimary,
                                 size: 32,
                               ),
-                            )
-                          : Icon(
-                              Icons.groups_outlined,
-                              color: colorScheme.onPrimary,
-                              size: 32,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    community.name,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'COMMUNITY',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '• ${community.groups.length} groups',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: themeExt.secondaryText,
+                                  ),
+                                ),
+                              ],
                             ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 4),
+                            Text(
+                              '"${community.description ?? 'No description'}"',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: themeExt.secondaryText,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${community.memberCount} members',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: themeExt.secondaryText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  community.name,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'COMMUNITY',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '• ${community.groups.length} groups',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: themeExt.secondaryText,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
+                          Icon(Icons.tag, size: 20, color: colorScheme.primary),
+                          const SizedBox(width: 8),
                           Text(
-                            '"${community.description ?? 'No description'}"',
+                            'Community Channels',
                             style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: themeExt.secondaryText,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${community.memberCount} members',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: themeExt.secondaryText,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.tag, size: 20, color: colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Community Channels',
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
+                      Text(
+                        'Pull to refresh',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
                         ),
-                      ],
-                    ),
-                    Text(
-                      'Pull to refresh',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.primary,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ...community.groups.map(_buildGroupRow),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 16),
+                ...community.groups.map(_buildGroupRow),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
