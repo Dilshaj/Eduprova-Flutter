@@ -8,10 +8,10 @@ import 'dart:math';
 import 'package:go_router/go_router.dart';
 
 import 'banner_carousel.dart';
-import 'category_tabs.dart';
 import 'courses_header.dart';
 import 'horizontal_course_row.dart';
-import '../widgets/skeleton_loader.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../theme/theme.dart';
 import '../core/models/course_model.dart';
@@ -27,7 +27,14 @@ class CoursesScreen extends ConsumerStatefulWidget {
 class _CoursesScreenState extends ConsumerState<CoursesScreen> {
   bool filterModalVisible = false;
   bool isPopularDropdownOpen = false;
-  String popularFilterSelection = 'Most Popular';
+  String featuredFilterSelection = 'Filters';
+  final List<String> featuredFilterOptions = [
+    'None',
+    'Most Popular',
+    'Intermediate',
+    'Advanced',
+    'New and Trending',
+  ];
   String selectedSort = 'Most Relevant';
   List<String> selectedDurations = ['3-6 Hours'];
 
@@ -41,7 +48,7 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
 
   int currentPage = 1;
   final int rowsPerPage = 5;
-  final int itemsPerRow = 6;
+  final int itemsPerRow = 5;
   late final int titlesPerPage;
 
   @override
@@ -94,348 +101,340 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                 children: [
                   const CoursesHeader(),
                   Expanded(
-                    child: isLoading
-                        ? const CoursesHomeSkeleton()
-                        : RefreshIndicator(
-                            onRefresh: () => ref
-                                .read(coursesProvider.notifier)
-                                .fetchCourses(),
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.only(bottom: 80),
-                              physics: const AlwaysScrollableScrollPhysics(
-                                parent: BouncingScrollPhysics(),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Top Actions Row
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      20,
-                                      16,
-                                      0,
-                                      16,
-                                    ),
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      physics: const BouncingScrollPhysics(),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          // All Courses - Gradient
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: 12,
+                    child: RefreshIndicator(
+                      onRefresh: () =>
+                          ref.read(coursesProvider.notifier).fetchCourses(),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics(),
+                        ),
+                        child: Skeletonizer(
+                          enabled: isLoading,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Top Actions Row
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  16,
+                                  0,
+                                  16,
+                                ),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      // All Courses - Gradient
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 12,
+                                        ),
+                                        child: InkWell(
+                                          onTap: () {},
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 10,
                                             ),
-                                            child: InkWell(
-                                              onTap: () {},
+                                            decoration: BoxDecoration(
+                                              gradient: themeExt.buyNowGradient,
                                               borderRadius:
                                                   BorderRadius.circular(25),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 10,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  gradient:
-                                                      themeExt.buyNowGradient,
-                                                  // gradient: LinearGradient(
-                                                  //   colors: [
-                                                  //     colorScheme.primary,
-                                                  //     themeExt
-                                                  //         .highestRatedBadgeColor,
-                                                  //   ],
-                                                  //   begin: Alignment.centerLeft,
-                                                  //   end: Alignment.centerRight,
-                                                  // ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(25),
+                                            ),
+                                            child: const Text(
+                                              'All Courses',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      // My Learning
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 12,
+                                        ),
+                                        child: InkWell(
+                                          onTap: () {
+                                            context.push(
+                                              AppRoutes.myLearning,
+                                              extra: {'tab': 'Ongoing'},
+                                            );
+                                          },
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: themeExt.cardColor,
+                                              border: Border.all(
+                                                color: themeExt.borderColor,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: themeExt.shadowColor,
+                                                  blurRadius: 2,
+                                                  offset: const Offset(
+                                                    0,
+                                                    1,
+                                                  ),
                                                 ),
-                                                child: const Text(
-                                                  'All Courses',
+                                              ],
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.school_outlined,
+                                                  size: 16,
+                                                  color: themeExt.secondaryText,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'My Learning',
                                                   style: TextStyle(
-                                                    color: Colors.white,
+                                                    color:
+                                                        colorScheme.onSurface,
                                                     fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
+                                                    fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
-                                              ),
+                                              ],
                                             ),
                                           ),
-                                          // My Learning
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: 12,
-                                            ),
-                                            child: InkWell(
-                                              onTap: () {
-                                                context.push(
-                                                  AppRoutes.myLearning,
-                                                  extra: {'tab': 'Ongoing'},
-                                                );
-                                              },
-                                              borderRadius:
-                                                  BorderRadius.circular(25),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 10,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: themeExt.cardColor,
-                                                  border: Border.all(
-                                                    color: themeExt.borderColor,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(25),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color:
-                                                          themeExt.shadowColor,
-                                                      blurRadius: 2,
-                                                      offset: const Offset(
-                                                        0,
-                                                        1,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.school_outlined,
-                                                      size: 16,
-                                                      color: themeExt
-                                                          .secondaryText,
-                                                    ),
-                                                    const SizedBox(width: 6),
-                                                    Text(
-                                                      'My Learning',
-                                                      style: TextStyle(
-                                                        color: colorScheme
-                                                            .onSurface,
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          // Wishlist
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: 20,
-                                            ),
-                                            child: InkWell(
-                                              onTap: () {
-                                                context.push(
-                                                  AppRoutes.myWishlist,
-                                                );
-                                              },
-                                              borderRadius:
-                                                  BorderRadius.circular(25),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 10,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: themeExt.cardColor,
-                                                  border: Border.all(
-                                                    color: themeExt.borderColor,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(25),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color:
-                                                          themeExt.shadowColor,
-                                                      blurRadius: 2,
-                                                      offset: const Offset(
-                                                        0,
-                                                        1,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.favorite_border,
-                                                      size: 16,
-                                                      color: themeExt
-                                                          .secondaryText,
-                                                    ),
-                                                    const SizedBox(width: 6),
-                                                    Text(
-                                                      'Wishlist',
-                                                      style: TextStyle(
-                                                        color: colorScheme
-                                                            .onSurface,
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
+                                      // Wishlist
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 20,
+                                        ),
+                                        child: InkWell(
+                                          onTap: () {
+                                            context.push(
+                                              AppRoutes.myWishlist,
+                                            );
+                                          },
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: themeExt.cardColor,
+                                              border: Border.all(
+                                                color: themeExt.borderColor,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: themeExt.shadowColor,
+                                                  blurRadius: 2,
+                                                  offset: const Offset(
+                                                    0,
+                                                    1,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.favorite_border,
+                                                  size: 16,
+                                                  color: themeExt.secondaryText,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'Wishlist',
+                                                  style: TextStyle(
+                                                    color:
+                                                        colorScheme.onSurface,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-
-                                  const CategoryTabs(),
-                                  const BannerCarousel(),
-                                  const SizedBox(height: 10),
-
-                                  // Rows
-                                  if (currentCourses.isEmpty)
-                                    const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(40.0),
-                                        child: Text("No courses found."),
-                                      ),
-                                    )
-                                  else
-                                    ...List.generate(rowsPerPage, (rowIndex) {
-                                      int start = rowIndex * itemsPerRow;
-                                      int end = (rowIndex + 1) * itemsPerRow;
-                                      if (start >= currentCourses.length) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      List<CourseModel> rowCourses =
-                                          currentCourses.sublist(
-                                            start,
-                                            min(end, currentCourses.length),
-                                          );
-                                      if (rowCourses.isEmpty) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      return HorizontalCourseRow(
-                                        title: rowIndex == 0
-                                            ? "Featured Courses"
-                                            : "More Courses",
-                                        courses: rowCourses,
-                                        categoryId: "Category-$rowIndex",
-                                      );
-                                    }),
-
-                                  // Pagination
-                                  if (totalPages > 1)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: 16,
-                                        bottom: 32,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          InkWell(
-                                            onTap: currentPage > 1
-                                                ? () => setState(
-                                                    () => currentPage--,
-                                                  )
-                                                : null,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                            child: Container(
-                                              width: 40,
-                                              height: 40,
-                                              margin: const EdgeInsets.only(
-                                                right: 16,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: currentPage == 1
-                                                      ? themeExt.borderColor
-                                                      : colorScheme.primary,
-                                                ),
-                                                color: currentPage == 1
-                                                    ? themeExt.skeletonBase
-                                                    : themeExt.cardColor,
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: Icon(
-                                                Icons.chevron_left,
-                                                size: 20,
-                                                color: currentPage == 1
-                                                    ? themeExt.secondaryText
-                                                          .withValues(
-                                                            alpha: 0.5,
-                                                          )
-                                                    : colorScheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                          Text(
-                                            'Page $currentPage of $totalPages',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: colorScheme.onSurface,
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: currentPage < totalPages
-                                                ? () => setState(
-                                                    () => currentPage++,
-                                                  )
-                                                : null,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                            child: Container(
-                                              width: 40,
-                                              height: 40,
-                                              margin: const EdgeInsets.only(
-                                                left: 16,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color:
-                                                      currentPage == totalPages
-                                                      ? themeExt.borderColor
-                                                      : colorScheme.primary,
-                                                ),
-                                                color: currentPage == totalPages
-                                                    ? themeExt.skeletonBase
-                                                    : themeExt.cardColor,
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: Icon(
-                                                Icons.chevron_right,
-                                                size: 20,
-                                                color: currentPage == totalPages
-                                                    ? themeExt.secondaryText
-                                                          .withValues(
-                                                            alpha: 0.5,
-                                                          )
-                                                    : colorScheme.primary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  const SizedBox(height: 96),
-                                ],
+                                ),
                               ),
-                            ),
+
+                              const BannerCarousel(),
+                              const SizedBox(height: 4),
+
+                              _buildFeaturedHeader(
+                                  context, themeExt, colorScheme),
+                              const SizedBox(height: 16),
+
+                              // Rows
+                              if (currentCourses.isEmpty && !isLoading)
+                                const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(40.0),
+                                    child: Text("No courses found."),
+                                  ),
+                                )
+                              else
+                                ...List.generate(rowsPerPage, (rowIndex) {
+                                  int start = rowIndex * itemsPerRow;
+                                  int end = (rowIndex + 1) * itemsPerRow;
+
+                                  // If loading, show skeletons
+                                  if (isLoading && currentCourses.isEmpty) {
+                                    // Skeletonizer handles this via inner widgets
+                                  } else if (start >= currentCourses.length) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  List<CourseModel> rowCourses = isLoading &&
+                                          currentCourses.isEmpty
+                                      ? List.generate(
+                                          itemsPerRow, (_) => CourseModel.mock())
+                                      : currentCourses.sublist(
+                                          start,
+                                          min(end, currentCourses.length),
+                                        );
+
+                                  if (rowCourses.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return HorizontalCourseRow(
+                                    title: rowIndex == 0
+                                        ? "Featured Courses"
+                                        : "More Courses",
+                                    courses: rowCourses,
+                                    categoryId: "Category-$rowIndex",
+                                  );
+                                }),
+
+                              // Pagination
+                              if (totalPages > 1)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 16,
+                                    bottom: 32,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      InkWell(
+                                        onTap: currentPage > 1
+                                            ? () => setState(
+                                                  () => currentPage--,
+                                                )
+                                            : null,
+                                        borderRadius: BorderRadius.circular(
+                                          20,
+                                        ),
+                                        child: Container(
+                                          width: 40,
+                                          height: 40,
+                                          margin: const EdgeInsets.only(
+                                            right: 16,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: currentPage == 1
+                                                  ? themeExt.borderColor
+                                                  : colorScheme.primary,
+                                            ),
+                                            color: currentPage == 1
+                                                ? themeExt.skeletonBase
+                                                : themeExt.cardColor,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Icon(
+                                            Icons.chevron_left,
+                                            size: 20,
+                                            color: currentPage == 1
+                                                ? themeExt.secondaryText
+                                                      .withValues(
+                                                    alpha: 0.5,
+                                                  )
+                                                : colorScheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Page $currentPage of $totalPages',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: currentPage < totalPages
+                                            ? () => setState(
+                                                  () => currentPage++,
+                                                )
+                                            : null,
+                                        borderRadius: BorderRadius.circular(
+                                          20,
+                                        ),
+                                        child: Container(
+                                          width: 40,
+                                          height: 40,
+                                          margin: const EdgeInsets.only(
+                                            left: 16,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: currentPage == totalPages
+                                                  ? themeExt.borderColor
+                                                  : colorScheme.primary,
+                                            ),
+                                            color: currentPage == totalPages
+                                                ? themeExt.skeletonBase
+                                                : themeExt.cardColor,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Icon(
+                                            Icons.chevron_right,
+                                            size: 20,
+                                            color: currentPage == totalPages
+                                                ? themeExt.secondaryText
+                                                      .withValues(
+                                                    alpha: 0.5,
+                                                  )
+                                                : colorScheme.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(height: 96),
+                            ],
                           ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -507,6 +506,119 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedHeader(
+    BuildContext context,
+    AppDesignExtension themeExt,
+    ColorScheme colorScheme,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Featured Courses',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          MenuAnchor(
+            alignmentOffset: const Offset(-8, 8), // Shifted left and down for premium floating feel
+            style: MenuStyle(
+              backgroundColor: WidgetStatePropertyAll(themeExt.cardColor),
+              surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+              elevation: const WidgetStatePropertyAll(12),
+              padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 8)),
+              shape: WidgetStatePropertyAll(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: themeExt.borderColor.withValues(alpha: 0.5)),
+                ),
+              ),
+            ),
+            builder: (context, controller, child) {
+              return InkWell(
+                onTap: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: themeExt.cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: themeExt.borderColor.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: themeExt.shadowColor.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    LucideIcons.slidersHorizontal,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              );
+            },
+            menuChildren: [
+              for (final option in featuredFilterOptions)
+                MenuItemButton(
+                  onPressed: () {
+                    setState(() {
+                      featuredFilterSelection = option == 'None' ? 'Filters' : option;
+                    });
+                    ref.read(coursesProvider.notifier).fetchCourses(
+                          category: (option == 'Most Popular' || option == 'None') ? null : option,
+                        );
+                  },
+                  style: ButtonStyle(
+                    padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (featuredFilterSelection == (option == 'None' ? 'Filters' : option)) {
+                        return colorScheme.primary.withValues(alpha: 0.1);
+                      }
+                      return null;
+                    }),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (featuredFilterSelection == (option == 'None' ? 'Filters' : option))
+                        Icon(Icons.check_rounded, size: 14, color: colorScheme.primary),
+                      if (featuredFilterSelection == (option == 'None' ? 'Filters' : option))
+                        const SizedBox(width: 8),
+                      Text(
+                        option,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: featuredFilterSelection == (option == 'None' ? 'Filters' : option)
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: featuredFilterSelection == (option == 'None' ? 'Filters' : option)
+                              ? colorScheme.primary
+                              : colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -207,7 +207,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
             );
           }).toList(),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 4),
       ],
     );
   }
@@ -225,8 +225,6 @@ class PaginationDot extends StatefulWidget {
 class _PaginationDotState extends State<PaginationDot>
     with TickerProviderStateMixin {
   late AnimationController _progressController;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseOpacity;
 
   @override
   void initState() {
@@ -235,16 +233,6 @@ class _PaginationDotState extends State<PaginationDot>
       vsync: this,
       duration: const Duration(seconds: 5), // Same as AUTO_SCROLL_INTERVAL
     );
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-
-    _pulseOpacity = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.5, end: 0.8), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 0.8, end: 0.5), weight: 1),
-    ]).animate(CurvedAnimation(parent: _pulseController, curve: Curves.linear));
 
     if (widget.isActive) {
       _progressController.forward();
@@ -267,7 +255,6 @@ class _PaginationDotState extends State<PaginationDot>
   @override
   void dispose() {
     _progressController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -276,12 +263,12 @@ class _PaginationDotState extends State<PaginationDot>
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      height: 6,
-      width: widget.isActive ? 80 : 30,
+      height: 4,
+      width: widget.isActive ? 24 : 8,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF9CA3AF), // textTertiary proxy
-        borderRadius: BorderRadius.circular(9999),
+        color: const Color(0xFFD1D5DB).withValues(alpha: 0.5), // Light grey for inactive
+        borderRadius: BorderRadius.circular(4),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -295,23 +282,8 @@ class _PaginationDotState extends State<PaginationDot>
                   alignment: Alignment.centerLeft,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0066FF),
-                      borderRadius: BorderRadius.circular(9999),
-                    ),
-                  ),
-                );
-              },
-            ),
-          if (widget.isActive)
-            AnimatedBuilder(
-              animation: _pulseOpacity,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _pulseOpacity.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFA3C0FF),
-                      borderRadius: BorderRadius.circular(9999),
+                      color: const Color(0xFF0066FF), // Primary blue for active fill
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 );

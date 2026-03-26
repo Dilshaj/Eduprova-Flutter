@@ -13,7 +13,7 @@ class ApiClient {
       return 'http://$override:4000';
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.107:4000';
+      return 'http://192.168.1.122:4000';
     }
     debugPrint('Using iOS/Web URL: http://localhost:4000');
     return 'http://localhost:4000';

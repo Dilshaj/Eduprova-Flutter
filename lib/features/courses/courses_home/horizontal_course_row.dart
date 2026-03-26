@@ -17,7 +17,7 @@ class HorizontalCourseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayCourses = courses.take(6).toList();
+    final displayCourses = courses.take(5).toList();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -37,7 +37,7 @@ class HorizontalCourseRow extends StatelessWidget {
               },
               child: Container(
                 width: 100,
-                height: 270,
+                height: 255,
                 margin: const EdgeInsets.only(right: 16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

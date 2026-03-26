@@ -67,6 +67,26 @@ class CourseModel {
       isOwner: json['isOwner'] ?? false,
     );
   }
+
+  factory CourseModel.mock() {
+    return CourseModel(
+      id: 'mock',
+      title: 'Course Loading Placeholder Title',
+      subtitle: 'Subtitle placeholder for loading state',
+      category: 'Development',
+      level: 'Beginner',
+      language: 'English',
+      description: 'Loading description...',
+      originalPrice: 1999,
+      discountedPrice: 499,
+      thumbnail: '',
+      rating: 4.5,
+      numReviews: 100,
+      studentCount: 1000,
+      duration: '10h 30m',
+      instructor: InstructorModel.mock(),
+    );
+  }
 }
 
 class InstructorModel {
@@ -99,6 +119,16 @@ class InstructorModel {
       lastName: json['lastName'] ?? '',
       avatar: avatar,
       bio: json['bio'],
+    );
+  }
+
+  factory InstructorModel.mock() {
+    return InstructorModel(
+      id: 'mock',
+      firstName: 'Instructor',
+      lastName: 'Name',
+      avatar: '',
+      bio: 'Instructor bio placeholder',
     );
   }
 
