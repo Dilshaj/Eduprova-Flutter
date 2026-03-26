@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'messages-home/page.dart';
-import 'communities/page.dart';
-import 'calendar/page.dart';
-
-import 'widgets/messages_background.dart';
 
 class MessagesShell extends StatefulWidget {
   const MessagesShell({super.key});
@@ -14,21 +10,8 @@ class MessagesShell extends StatefulWidget {
 }
 
 class _MessagesShellState extends State<MessagesShell> {
-  int _currentIndex = 0;
-
-  List<Widget> get _pages => [
-    MessagesHomePage(onTabChange: (i) => setState(() => _currentIndex = i)),
-    CommunitiesPage(onBack: () => setState(() => _currentIndex = 0)),
-    CalendarPage(onBack: () => setState(() => _currentIndex = 0)),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return MessagesBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: IndexedStack(index: _currentIndex, children: _pages),
-      ),
-    );
+    return const MessagesHomePage();
   }
 }

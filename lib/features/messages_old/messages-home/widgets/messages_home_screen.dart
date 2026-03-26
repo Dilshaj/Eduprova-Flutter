@@ -235,6 +235,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
   Timer? _searchDebounce;
   String _searchQuery = '';
   int _selectedTabIndex = 0;
+  int _selectedFilterIndex = 0;
   bool _showAdvancedFilters = false;
   bool _isSearchingUsers = false;
   List<SearchUserModel> _searchedUsers = const [];
@@ -246,12 +247,52 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
     _filterTabController = TabController(length: 4, vsync: this);
     _activeController = _defaultTabController;
 
+    _defaultTabController.animation?.addListener(_onDefaultTabAnimation);
+    _filterTabController.animation?.addListener(_onFilterTabAnimation);
+
     _defaultTabController.addListener(() {
       if (!mounted) return;
-      setState(() {
-        _selectedTabIndex = _defaultTabController.index;
-      });
+      if (!_defaultTabController.indexIsChanging) {
+        setState(() {
+          _selectedTabIndex = _defaultTabController.index;
+          widget.onTabChange?.call(_selectedTabIndex);
+        });
+      }
     });
+
+    _filterTabController.addListener(() {
+      if (!mounted) return;
+      if (!_filterTabController.indexIsChanging) {
+        setState(() {
+          _selectedFilterIndex = _filterTabController.index;
+        });
+      }
+    });
+  }
+
+  void _onDefaultTabAnimation() {
+    if (_showAdvancedFilters) return;
+    final value = _defaultTabController.animation?.value;
+    if (value == null) return;
+
+    final nextIndex = value.round();
+    if (nextIndex != _selectedTabIndex) {
+      setState(() {
+        _selectedTabIndex = nextIndex;
+        widget.onTabChange?.call(nextIndex);
+      });
+    }
+  }
+
+  void _onFilterTabAnimation() {
+    if (!_showAdvancedFilters) return;
+    final value = _filterTabController.animation?.value;
+    if (value == null) return;
+
+    final nextIndex = value.round();
+    if (nextIndex != _selectedFilterIndex) {
+      setState(() => _selectedFilterIndex = nextIndex);
+    }
   }
 
   @override
@@ -260,6 +301,8 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
     _scrollController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _defaultTabController.animation?.removeListener(_onDefaultTabAnimation);
+    _filterTabController.animation?.removeListener(_onFilterTabAnimation);
     _defaultTabController.dispose();
     _filterTabController.dispose();
     super.dispose();
@@ -509,6 +552,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
           : _defaultTabController;
       if (!_showAdvancedFilters) {
         _filterTabController.animateTo(0);
+        _selectedFilterIndex = 0;
       }
     });
   }
@@ -546,11 +590,13 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            _selectedTabIndex == 1
-                ? 'Communities'
-                : _selectedTabIndex == 2
-                    ? 'Calendar'
-                    : 'Messages',
+            _showAdvancedFilters
+                ? 'Messages'
+                : switch (_selectedTabIndex) {
+                    1 => 'Communities',
+                    2 => 'Calendar',
+                    _ => 'Messages',
+                  },
             style: GoogleFonts.inter(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -559,37 +605,36 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
           ),
           Row(
             children: [
-              if (_selectedTabIndex == 0)
-                GestureDetector(
-                  onTap: _goToMeet,
-                  child: Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      gradient: appTheme.buyNowGradient,
-                      borderRadius: BorderRadius.circular(19),
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.video,
+              GestureDetector(
+                onTap: _goToMeet,
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    gradient: appTheme.buyNowGradient,
+                    borderRadius: BorderRadius.circular(19),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.video,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Meet',
+                        style: GoogleFonts.inter(
                           color: Colors.white,
-                          size: 20,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Meet',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
               const SizedBox(width: 16),
               if (_selectedTabIndex == 0) ...[
                 GestureDetector(
@@ -656,8 +701,8 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
                     hintText: _selectedTabIndex == 1
                         ? 'Search communities'
                         : _selectedTabIndex == 2
-                            ? 'Search events'
-                            : 'Search conversations',
+                        ? 'Search events'
+                        : 'Search conversations',
                     hintStyle: GoogleFonts.inter(
                       color: msgTheme.searchBarTextColor,
                       fontSize: 16,
@@ -710,88 +755,54 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen>
         : _activeController;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      margin: const EdgeInsets.only(bottom: 8),
+      height: 40,
       child: Align(
         alignment: Alignment.centerLeft,
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) => TabBar(
-            controller: controller,
-            isScrollable: false,
-            indicator: const BoxDecoration(), // Remove sliding indicator
-            dividerColor: Colors.transparent,
-            splashFactory: NoSplash.splashFactory,
-            overlayColor: WidgetStateProperty.all(Colors.transparent),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-            tabs: [
-              for (int i = 0; i < tabs.length; i++)
-                AnimatedBuilder(
-                  animation: controller.animation ?? controller,
-                  builder: (context, child) {
-                    final isSelected = controller.index == i;
-                    double offset = isSelected ? 0.0 : 1.0;
-                    if (controller.animation != null) {
-                      offset = (controller.animation!.value - i).abs().clamp(0.0, 1.0);
-                    }
-                    
-                    final bgColor = Color.lerp(
-                      msgTheme.tabSelectedBackground,
-                      msgTheme.searchBarFillColor,
-                      offset,
-                    );
-                    
-                    final borderColor = Color.lerp(
-                      Colors.transparent,
-                      msgTheme.searchBarIconColor.withValues(alpha: 0.1),
-                      offset,
-                    );
-
-                    final textColor = Color.lerp(
-                      msgTheme.tabSelectedTextColor,
-                      msgTheme.tabUnselectedTextColor,
-                      offset,
-                    );
-
-                    return Tab(
-                      height: 48,
-                      child: Container(
-                        width: double.infinity,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: borderColor ?? Colors.transparent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (tabs[i].icon != null) ...[
-                              Icon(
-                                tabs[i].icon,
-                                size: 16,
-                                color: textColor,
-                              ),
-                              const SizedBox(width: 8),
-                            ],
-                            Text(
-                              tabs[i].label,
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: offset < 0.5 ? FontWeight.w600 : FontWeight.w500,
-                                color: textColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
+        child: TabBar(
+          controller: controller,
+          isScrollable: true,
+          tabAlignment: .start,
+          indicator: BoxDecoration(
+            color: msgTheme.tabSelectedBackground,
+            borderRadius: .circular(20),
+            border: .all(
+              color: msgTheme.searchBarIconColor.withValues(alpha: 0.1),
+              width: 1,
+            ),
           ),
+          indicatorSize: .tab,
+          dividerColor: Colors.transparent,
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          labelPadding: .symmetric(horizontal: 16),
+          labelColor: msgTheme.tabSelectedTextColor,
+          unselectedLabelColor: msgTheme.tabUnselectedTextColor,
+          labelStyle: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          tabs: [
+            for (int i = 0; i < tabs.length; i++)
+              Tab(
+                height: 40,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (tabs[i].icon != null) ...[
+                      Icon(tabs[i].icon, size: 16),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(tabs[i].label),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
