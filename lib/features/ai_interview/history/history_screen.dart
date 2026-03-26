@@ -8,6 +8,7 @@ import '../widgets/ai_theme.dart';
 import '../../../theme/theme_model.dart';
 import '../core/models/interview_session_model.dart';
 import '../core/providers/interview_providers.dart';
+import '../core/utils/interview_pdf_generator.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   final bool isSubView;
@@ -18,6 +19,7 @@ class HistoryPage extends ConsumerStatefulWidget {
 }
 
 class _HistoryPageState extends ConsumerState<HistoryPage> {
+  final Set<String> _downloadingSessionIds = {};
   String _selectedTab = 'All Sessions';
   final TextEditingController _searchController = TextEditingController();
 
@@ -484,6 +486,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         : '—';
 
     return _buildSessionCard(
+      isDownloading: _downloadingSessionIds.contains(session.id),
       data: {
         'type': session.typeLabel,
         'status': session.status.toUpperCase(),
@@ -498,10 +501,36 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         'badgeColor': colors.text,
         'badgeBg': colors.bg,
       },
-      onDownload: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PDF Download coming soon!')),
-        );
+      onDownload: () async {
+        if (_downloadingSessionIds.contains(session.id)) return;
+
+        setState(() => _downloadingSessionIds.add(session.id));
+
+        try {
+          var feedback = session.feedback;
+
+          // If feedback not embedded, fetch it
+          if (feedback == null) {
+            feedback = await ref
+                .read(interviewRepositoryProvider)
+                .generateFeedback(session.id);
+          }
+
+          await InterviewPdfGenerator.generateAndSave(
+            session: session,
+            feedback: feedback,
+          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to download PDF: $e')),
+            );
+          }
+        } finally {
+          if (mounted) {
+            setState(() => _downloadingSessionIds.remove(session.id));
+          }
+        }
       },
       onViewReport: () async {
         context
@@ -542,6 +571,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     required Map<String, dynamic> data,
     required VoidCallback onDownload,
     required VoidCallback onViewReport,
+    bool isDownloading = false,
   }) {
     final t = AiTheme.of(context);
     final Color typeColor = data['color'] as Color;
@@ -699,6 +729,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     onTap: onDownload,
                     outlined: true,
                     color: const Color(0xFF374151),
+                    isLoading: isDownloading,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -719,31 +750,53 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     required VoidCallback onTap,
     required bool outlined,
     required Color color,
+    bool isLoading = false,
   }) {
-    final t = AiTheme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        decoration: BoxDecoration(
-          border: outlined ? Border.all(color: t.chipBorder) : null,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: t.isDark ? Colors.white : color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: t.isDark ? Colors.white : color,
-              ),
-            ),
-          ],
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isLoading ? null : onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            border: outlined
+                ? Border.all(color: color.withValues(alpha: 0.2))
+                : null,
+            color: outlined ? null : color,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: outlined ? color : Colors.white,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 16,
+                        color: outlined ? color : Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: outlined ? color : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );
