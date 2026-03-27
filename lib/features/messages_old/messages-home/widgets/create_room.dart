@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:eduprova/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../auth/providers/auth_provider.dart';
 import '../../messages/live_call_screen.dart';
@@ -59,7 +62,10 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
       ),
     );
     if (result == null || !mounted) return;
-    setState(() => _participants = result);
+    setState(() {
+      _participants = result;
+      _room = null; // Reset room if participants change to force re-creation
+    });
   }
 
   Future<void> _startMeeting() async {
@@ -94,231 +100,383 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appTheme = Theme.of(context).extension<AppDesignExtension>()!;
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Instant Meeting')),
+      backgroundColor: const Color(0xFFFDFBFF),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.chevronLeft, color: Color(0xFF33334F)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Create Instant Meeting',
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF33334F),
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: _room == null
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: const Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 34,
-                            backgroundColor: Color(0xFFDBEAFE),
-                            child: Icon(
-                              Icons.videocam_rounded,
-                              color: Color(0xFF2563EB),
-                              size: 34,
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'Create an instant meeting',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Add people first if you want to notify them as soon as you start.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      title: const Text('Participants'),
-                      subtitle: Text(
-                        _participants.isEmpty
-                            ? 'No participants selected'
-                            : _participants
-                                  .map((item) => item.displayName)
-                                  .join(', '),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: const Icon(Icons.group_add_outlined),
-                      onTap: _pickParticipants,
-                    ),
-                    if (_participants.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final participant in _participants)
-                            InputChip(
-                              label: Text(participant.displayName),
-                              onDeleted: () {
-                                setState(() {
-                                  _participants = _participants
-                                      .where(
-                                        (item) => item.id != participant.id,
-                                      )
-                                      .toList();
-                                });
-                              },
-                            ),
-                        ],
-                      ),
-                    ],
-                    const Spacer(),
-                    FilledButton.icon(
-                      onPressed: _loading ? null : _createRoom,
-                      icon: _loading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.videocam_rounded),
-                      label: Text(
-                        _loading ? 'Creating...' : 'Create Meeting Room',
-                      ),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.redAccent),
-                      ),
-                    ],
-                  ],
-                )
-              : _error != null
-              ? _ErrorPanel(message: _error!, onRetry: _createRoom)
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Column(
-                        children: [
-                          const CircleAvatar(
-                            radius: 34,
-                            backgroundColor: Color(0xFFDBEAFE),
-                            child: Icon(
-                              Icons.videocam_rounded,
-                              color: Color(0xFF2563EB),
-                              size: 34,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Your meeting room is ready',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _room!.roomName,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Join link',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Text(_room!.joinUrl),
-                    ),
-                    if (_participants.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Inviting ${_participants.length} participant(s) when you start',
-                        style: const TextStyle(color: Color(0xFF475569)),
-                      ),
-                    ],
-                    const Spacer(),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        await Clipboard.setData(
-                          ClipboardData(text: _room!.joinUrl),
-                        );
-                        if (!mounted) return;
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Meeting link copied')),
-                        );
-                      },
-                      icon: const Icon(Icons.copy_rounded),
-                      label: const Text('Copy Link'),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: _startMeeting,
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Start Meeting'),
-                    ),
-                  ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopInfo(),
+              const SizedBox(height: 32),
+              _buildParticipantsSection(),
+              if (_room != null) ...[
+                const SizedBox(height: 32),
+                _buildMeetingLinkCard(),
+                const SizedBox(height: 16),
+                _buildActionRow(
+                  icon: LucideIcons.share2,
+                  label: 'Share via',
+                  iconColor: const Color(0xFF3B82F6),
+                  bgColor: const Color(0xFFEFF6FF),
+                  onTap: () {},
                 ),
+                const SizedBox(height: 12),
+                _buildActionRow(
+                  icon: LucideIcons.messageSquare,
+                  label: 'Send to chat',
+                  iconColor: const Color(0xFF8B5CF6),
+                  bgColor: const Color(0xFFF5F3FF),
+                  onTap: () {},
+                ),
+                const SizedBox(height: 40),
+                _buildStartMeetingButton(),
+              ] else ...[
+                const SizedBox(height: 48),
+                _buildCreateRoomButton(),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 13),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _ErrorPanel extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorPanel({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 36, color: Colors.redAccent),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF64748B)),
+  Widget _buildTopInfo() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF0F0FF)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3B82F6).withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(LucideIcons.video, color: Color(0xFF3B82F6), size: 32),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Instant Meeting',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF33334F),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start a quick meeting and invite others to join you instantly.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: const Color(0xFF71719A),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParticipantsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Participants',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF33334F),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _pickParticipants,
+              icon: const Icon(LucideIcons.userPlus, size: 18),
+              label: Text(
+                'Add',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_participants.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9F7FF),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEBE6FF), style: BorderStyle.solid),
+            ),
+            child: Text(
+              'No participants selected yet',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: const Color(0xFF71719A),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final participant in _participants)
+                Chip(
+                  label: Text(
+                    participant.displayName,
+                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF33334F)),
+                  ),
+                  backgroundColor: const Color(0xFFF3EEFF),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide.none,
+                  deleteIcon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF71719A)),
+                  onDeleted: () {
+                    setState(() {
+                      _participants = _participants.where((p) => p.id != participant.id).toList();
+                      _room = null;
+                    });
+                  },
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMeetingLinkCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF0F0FF)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'MEETING LINK',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+              color: const Color(0xFFBCBCCF),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _room!.joinUrl,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF33334F),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () async {
+                  await Clipboard.setData(ClipboardData(text: _room!.joinUrl));
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Meeting link copied')),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.copy, size: 20, color: Color(0xFF3B82F6)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionRow({
+    required IconData icon,
+    required String label,
+    required Color iconColor,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF0F0FF)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF33334F),
+                ),
+              ),
+            ),
+            const Icon(LucideIcons.chevronRight, size: 18, color: Color(0xFFBCBCCF)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateRoomButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFFE056FD)]),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0066FF).withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _loading ? null : _createRoom,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: _loading
+            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.plus, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Create Meeting Room',
+                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildStartMeetingButton() {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFFE056FD)]),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0066FF).withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _startMeeting,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Start Meeting',
+              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            const Icon(LucideIcons.arrowRight, color: Colors.white),
+          ],
+        ),
       ),
     );
   }
