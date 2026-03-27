@@ -212,17 +212,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
               loading: () => SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => Skeletonizer(
-                    key: ValueKey('skeleton_$index'),
-                    enabled: true,
-                    child: Post(
-                      post: PostModel(
-                        id: 'dummy_$index',
-                        name: 'User Name',
-                        authorAvatar: 'assets/avatars/1.png',
-                        content: 'Loading content...',
-                        imageUrl: null,
-                        createdAt: DateTime.now(),
+                  (context, index) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Container(
+                      height: 240,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Skeletonizer(
+                        enabled: true,
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: const CircleAvatar(),
+                              title: Container(height: 12, color: Colors.grey),
+                              subtitle: Container(
+                                height: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Expanded(child: Container(color: Colors.grey[200])),
+                          ],
+                        ),
                       ),
                     ),
                   ),

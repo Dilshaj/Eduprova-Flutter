@@ -62,9 +62,7 @@ class PostCreateCard extends StatelessWidget {
                 child: Text(
                   "What's your creative spark today?",
                   style: TextStyle(
-                    color: isDark
-                        ? Colors.grey[400]
-                        : const Color(0xFF9CA3AF),
+                    color: isDark ? Colors.grey[400] : const Color(0xFF9CA3AF),
                     fontSize: 14,
                   ),
                 ),

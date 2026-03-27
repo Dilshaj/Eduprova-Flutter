@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:eduprova/features/home/posts/post_provider.dart';
-import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/features/home/posts/widgets/comment_sheet.dart';
 import 'package:eduprova/features/home/posts/widgets/share_sheet.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PostActionBar extends ConsumerStatefulWidget {
@@ -28,18 +26,17 @@ class PostActionBar extends ConsumerStatefulWidget {
   ConsumerState<PostActionBar> createState() => _PostActionBarState();
 }
 
-class _PostActionBarState extends ConsumerState<PostActionBar> with TickerProviderStateMixin {
-  late final AnimationController _likeController;
-  late final Animation<double> _likeScale;
+class _PostActionBarState extends ConsumerState<PostActionBar>
+    with TickerProviderStateMixin {
+  late AnimationController _likeController;
 
   @override
   void initState() {
     super.initState();
-    _likeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _likeScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4).chain(CurveTween(curve: Curves.easeOut)), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)), weight: 50),
-    ]).animate(_likeController);
+    _likeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
   }
 
   @override
@@ -49,9 +46,7 @@ class _PostActionBarState extends ConsumerState<PostActionBar> with TickerProvid
   }
 
   void _handleLike() {
-    if (!widget.isLiked) {
-      _likeController.forward(from: 0);
-    }
+    _likeController.forward(from: 0);
     ref.read(postsProvider.notifier).toggleLike(widget.postId);
   }
 
@@ -71,101 +66,121 @@ class _PostActionBarState extends ConsumerState<PostActionBar> with TickerProvid
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => ShareSheet(postId: widget.postId, content: widget.content),
+      builder: (context) =>
+          ShareSheet(postId: widget.postId, content: widget.content),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final design = context.design;
-    final colorScheme = context.colorScheme;
-    final color = design.secondaryText.withValues(alpha: 0.6);
-    final activeColor = colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildActionItem(
-            'Likes',
-            LucideIcons.messageSquare,
-            isActive: widget.isLiked,
-            onTap: _handleLike,
-            color: widget.isLiked ? activeColor : color,
-            isAnimated: true,
+          Row(
+            children: [
+              // Like Action
+              _buildImageActionItem(
+                widget.isLiked ? 'assets/eduprovaE.png' : 'assets/like.png',
+                widget.likeCount,
+                onTap: _handleLike,
+                isActive: widget.isLiked,
+                iconSize: 20,
+              ),
+              const SizedBox(width: 20),
+
+              // Comment Action
+              _buildImageActionItem(
+                'assets/comments.png',
+                widget.commentCount,
+                onTap: _showComments,
+                iconSize: 28,
+              ),
+              const SizedBox(width: 20),
+
+              // Repost Action
+              _buildImageActionItem(
+                'assets/repost.png',
+                0, // Backend might not provide this yet
+                onTap: () {},
+                iconSize: 22,
+              ),
+              const SizedBox(width: 20),
+
+              // Share Action
+              _buildImageActionItem(
+                'assets/share.png',
+                0, // Backend might not provide this yet
+                onTap: _showShare,
+                iconSize: 20,
+              ),
+            ],
           ),
-          const SizedBox(width: 24),
-          _buildActionItem(
-            'Comments',
-            LucideIcons.monitor,
-            onTap: _showComments,
-            color: color,
-          ),
-          const SizedBox(width: 24),
-          _buildActionItem(
-            'Repost',
-            LucideIcons.rotateCcw,
-            onTap: () {},
-            color: color,
-          ),
-          const SizedBox(width: 24),
-          _buildActionItem(
-            'Share',
-            LucideIcons.redo2,
-            onTap: _showShare,
-            color: color,
-          ),
-          const Spacer(),
-          Text(
-            '${widget.likeCount > 1000 ? (widget.likeCount / 1000).toStringAsFixed(0) : widget.likeCount}${widget.likeCount > 1000 ? 'k' : ''} Likes',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: color.withValues(alpha: 0.5),
-              letterSpacing: -0.5,
+
+          // Save Action
+          IconButton(
+            onPressed: () {
+              ref.read(postsProvider.notifier).toggleSave(widget.postId);
+            },
+            icon: Icon(
+              LucideIcons.bookmark,
+              size: 22,
+              color: isDark ? Colors.grey[400] : const Color(0xFF94A3B8),
             ),
-          ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.1),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActionItem(
-    String label,
-    IconData icon, {
+  Widget _buildImageActionItem(
+    String assetPath,
+    int count, {
     bool isActive = false,
     VoidCallback? onTap,
-    Color? color,
-    bool isAnimated = false,
+    double iconSize = 24,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
-      mouseCursor: SystemMouseCursors.click,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      child: Column(
+      borderRadius: BorderRadius.circular(8),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (isAnimated)
-            ScaleTransition(
-              scale: _likeScale,
-              child: Icon(icon, size: 26, color: color),
-            )
-          else
-            Icon(icon, size: 26, color: color),
-          const SizedBox(height: 6),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+            child: Center(
+              child: Image.asset(
+                assetPath,
+                width: iconSize,
+                height: iconSize,
+                color: (assetPath.contains('eduprovaE') || isActive)
+                    ? null
+                    : (isDark ? Colors.grey[400] : const Color(0xFF94A3B8)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Text(
-            label,
+            count > 0 ? count.toString() : '0',
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: color,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-              letterSpacing: -0.2,
+              fontWeight: FontWeight.w600,
+              color: isActive
+                  ? const Color(0xFF3B82F6)
+                  : (isDark ? Colors.grey[400] : const Color(0xFF94A3B8)),
             ),
           ),
         ],
       ),
-    ).animate(target: isActive ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.05, 1.05), duration: 200.ms);
+    );
   }
 }
