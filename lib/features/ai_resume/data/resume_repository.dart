@@ -64,4 +64,35 @@ class ResumeRepository {
     // The import API returns ResumeData parsed from the file
     return ResumeData.fromJson(response.data);
   }
+
+  Future<List<Map<String, dynamic>>> improveResumeText(
+    List<Map<String, String>> items,
+  ) async {
+    final response = await _dio.post(
+      '/ai/resume/improve',
+      data: {'items': items},
+    );
+    return List<Map<String, dynamic>>.from(response.data);
+  }
+
+  Future<Map<String, dynamic>> tailorResume(
+    ResumeData resumeData,
+    String jobDescription,
+  ) async {
+    final response = await _dio.post(
+      '/ai/resume/tailor',
+      data: {
+        'resumeData': resumeData.toJson(),
+        'jobDescription': jobDescription,
+      },
+    );
+    return response.data;
+  }
+
+  Future<Response<List<int>>> downloadResumePdf(String id) async {
+    return await _dio.get<List<int>>(
+      '/resume/print/$id',
+      options: Options(responseType: ResponseType.bytes),
+    );
+  }
 }

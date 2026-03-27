@@ -13,6 +13,8 @@ class ResumeNotifier extends Notifier<ResumeData> {
   Timer? _saveTimer;
   late ResumeRepository _repository;
 
+  String? get currentResumeId => _currentResumeId;
+
   @override
   ResumeData build() {
     _repository = ref.watch(resumeRepositoryProvider);
@@ -49,6 +51,10 @@ class ResumeNotifier extends Notifier<ResumeData> {
 
   void updateBasics(Basics newBasics) {
     _setState(state.copyWith(basics: newBasics));
+  }
+
+  void setResumeData(ResumeData newData) {
+    _setState(newData);
   }
 
   void updatePicture(Picture newPicture) {

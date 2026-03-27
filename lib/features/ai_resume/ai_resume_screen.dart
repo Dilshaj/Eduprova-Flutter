@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/preview_view.dart';
 import 'providers/resume_provider.dart';
 import 'ai_resume_editor_screen.dart';
+import 'widgets/builder_dock.dart';
 
 class AiResumeScreen extends ConsumerStatefulWidget {
   final String resumeId;
@@ -107,7 +108,17 @@ class _AiResumeScreenState extends ConsumerState<AiResumeScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       // floatingActionButton: _buildFloatingTabBar(context, theme),
-      body: PreviewView(),
+      body: Stack(
+        children: const [
+          Positioned.fill(child: PreviewView()),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 8,
+            child: Center(child: BuilderDock()),
+          ),
+        ],
+      ),
     );
   }
 

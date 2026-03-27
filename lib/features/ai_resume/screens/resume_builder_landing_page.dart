@@ -232,7 +232,7 @@ class ResumeBuilderLandingPage extends StatelessWidget {
           Container(
             padding: .all(8),
             decoration: BoxDecoration(
-              color: textColor.withValues(alpha: 0.2),
+              color: textColor.withValues(alpha: 0.05),
               shape: BoxShape.circle,
               // borderRadius: .circular(30),
             ),
