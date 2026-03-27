@@ -201,7 +201,7 @@ class ResumeBuilderLandingPage extends StatelessWidget {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     return Container(
-      padding: .symmetric(horizontal: 8, vertical: 8),
+      padding: .only(left: 8, right: 16, top: 8, bottom: 8),
       decoration: BoxDecoration(
         // color: isDark ? textColor.withValues(alpha: 0.15) : backgroundColor,
         // color: isDark ? const Color.fromARGB(255, 30, 30, 30) : Colors.white,

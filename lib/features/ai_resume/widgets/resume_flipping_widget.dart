@@ -79,17 +79,10 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
     double x = lerp(0, 16, t);
     double rot = lerp(0, 0.18, t);
     double scale = lerp(1.0, 0.85, t);
-    double opacity = lerp(1.0, 0.7, t);
     // Raise card so bottom corners align with front card:
     // rotation around bottomCenter dips corners by (halfWidth*scale)*sin(|rot|)
     double y = -(100 * scale * math.sin(rot.abs()));
-    return _CardState(
-      x: x,
-      y: y,
-      scale: scale,
-      opacity: opacity,
-      rotation: rot,
-    );
+    return _CardState(x: x, y: y, scale: scale, rotation: rot);
   }
 
   _CardState _getRightToLeftBack(double t) {
@@ -97,22 +90,14 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
     double x = lerp(16, -16, t);
     double rot = lerp(0.18, -0.18, t);
     double scale = 0.85;
-    double opacity = 0.7;
     double y = -(100 * scale * math.sin(rot.abs()));
-    return _CardState(
-      x: x,
-      y: y,
-      scale: scale,
-      opacity: opacity,
-      rotation: rot,
-    );
+    return _CardState(x: x, y: y, scale: scale, rotation: rot);
   }
 
   _CardState _getLeftBackToFront(double t) {
     // P1 (LeftBack) -> P0 (Front) (The FLIP)
     double x = -16;
     double scale = 0.85;
-    double opacity = 0.7;
     double rotation = -0.18;
 
     if (t < 0.45) {
@@ -123,19 +108,12 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
       double tt = ((t - 0.45) / 0.55).clamp(0.0, 1.0);
       x = lerp(-180, 0, Curves.easeIn.transform(tt));
       scale = lerp(0.85, 1.0, tt);
-      opacity = lerp(0.7, 1.0, tt);
       rotation = lerp(-0.25, 0, tt);
     }
 
     // Raise card so bottom corners align with front card
     double y = -(100 * scale * math.sin(rotation.abs()));
-    return _CardState(
-      x: x,
-      y: y,
-      scale: scale,
-      opacity: opacity,
-      rotation: rotation,
-    );
+    return _CardState(x: x, y: y, scale: scale, rotation: rotation);
   }
 
   double lerp(double a, double b, double t) => a + (b - a) * t;
@@ -149,27 +127,24 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
         child: Transform.scale(
           scale: state.scale,
           alignment: .bottomCenter,
-          child: Opacity(
-            opacity: state.opacity.clamp(0.0, 1.0),
-            child: Container(
-              width: 200,
-              // height: 280,
-              decoration: BoxDecoration(
-                borderRadius: .circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: state.scale > 0.95 ? 0.12 : 0.04,
-                    ),
-                    blurRadius: state.scale > 0.95 ? 20 : 10,
-                    offset: .new(0, 10),
+          child: Container(
+            width: 200,
+            // height: 280,
+            decoration: BoxDecoration(
+              borderRadius: .circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: state.scale > 0.95 ? 0.12 : 0.04,
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: .circular(16),
-                child: Image.asset(_images[index], fit: .cover),
-              ),
+                  blurRadius: state.scale > 0.95 ? 20 : 10,
+                  offset: .new(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: .circular(16),
+              child: Image.asset(_images[index], fit: .cover),
             ),
           ),
         ),
@@ -179,12 +154,11 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
 }
 
 class _CardState {
-  final double x, y, scale, opacity, rotation;
+  final double x, y, scale, rotation;
   _CardState({
     required this.x,
     required this.y,
     required this.scale,
-    required this.opacity,
     required this.rotation,
   });
 }
