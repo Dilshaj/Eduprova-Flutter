@@ -61,13 +61,66 @@ class StoriesNotifier extends Notifier<AsyncValue<List<StatusProfile>>> {
     await _fetchStories();
   }
 
-  Future<void> createStory(List<String> filePaths, {bool isCollage = false}) async {
+  Future<void> createStory(List<dynamic> mediaItems, {bool isCollage = false}) async {
     try {
-      await ref.read(storyRepositoryProvider).createStory(filePaths, isCollage: isCollage);
+      await ref.read(storyRepositoryProvider).createStory(mediaItems, isCollage: isCollage);
       await refresh();
     } catch (e) {
       debugPrint('Error in notifier creating story: $e');
       rethrow;
     }
   }
+}
+
+List<StatusProfile> getGreetingDummyStories() {
+  return [
+    StatusProfile(
+      id: '1',
+      name: 'Design',
+      profileUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=600&fit=crop',
+      hasUnseen: true,
+      statuses: [
+        const StatusItem(url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f', type: StatusType.image),
+        const StatusItem(url: 'https://images.unsplash.com/photo-1558655146-d09347e92766', type: StatusType.image),
+      ],
+    ),
+    StatusProfile(
+      id: '2',
+      name: 'Code',
+      profileUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=600&fit=crop',
+      hasUnseen: true,
+      statuses: [
+        const StatusItem(url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085', type: StatusType.image),
+      ],
+    ),
+    StatusProfile(
+      id: '3',
+      name: 'Lifestyle',
+      profileUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=600&fit=crop',
+      hasUnseen: false,
+      statuses: [
+        const StatusItem(url: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167', type: StatusType.image),
+      ],
+    ),
+    StatusProfile(
+      id: '4',
+      name: 'Ideas',
+      profileUrl: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=400&h=600&fit=crop',
+      hasUnseen: false,
+      statuses: [
+        const StatusItem(url: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32', type: StatusType.image),
+      ],
+    ),
+    StatusProfile(
+      id: '5',
+      name: 'EduProva',
+      profileUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=600&fit=crop',
+      hasUnseen: true,
+      statuses: [
+        const StatusItem(url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f', type: StatusType.image),
+        const StatusItem(url: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e', type: StatusType.image),
+        const StatusItem(url: 'https://images.unsplash.com/photo-1523240715637-8a3635196fe0', type: StatusType.image),
+      ],
+    ),
+  ];
 }

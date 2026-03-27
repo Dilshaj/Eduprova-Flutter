@@ -268,6 +268,7 @@ class _AllPostsHeader extends StatefulWidget {
 
 class _AllPostsHeaderState extends State<_AllPostsHeader> {
   int _selectedTab = 0;
+  bool _showFilters = true;
   final List<String> _tabs = ['All', 'Trending', 'Followers', 'Latest'];
 
   final Map<String, String> _tabHeadings = {
@@ -283,138 +284,203 @@ class _AllPostsHeaderState extends State<_AllPostsHeader> {
     final activeTab = _tabs[_selectedTab];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                _tabHeadings[activeTab] ?? 'Community Posts',
-                key: ValueKey(activeTab),
-                style: TextStyle(
-                  fontSize: 18, // Adjusted for mobile
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                  letterSpacing: -0.5,
+      padding: const .fromLTRB(22, 12, 16, 12),
+      child: SizedBox(
+        height: 44,
+        child: Row(
+          children: [
+            Expanded(
+              child: ClipRect(
+                child: AnimatedSwitcher(
+                  duration: const .new(milliseconds: 500),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    final isEntering =
+                        (child.key as ValueKey).value == activeTab;
+                    return SlideTransition(
+                      position: animation.drive(
+                        Tween<Offset>(
+                          begin: isEntering
+                              ? const .new(0, -1.5)
+                              : const .new(0, 1.5),
+                          end: .zero,
+                        ),
+                      ),
+                      child: FadeTransition(opacity: animation, child: child),
+                    );
+                  },
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      alignment: .centerLeft,
+                      clipBehavior: .none,
+                      children: [...previousChildren, ?currentChild],
+                    );
+                  },
+                  child: _showFilters
+                      ? const SizedBox(key: ValueKey('empty_space'))
+                      : Text(
+                          _tabHeadings[activeTab] ?? 'Community Posts',
+                          key: ValueKey(activeTab),
+                          style: .new(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
                 ),
               ),
             ),
-          ),
 
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                width: 1,
+            AnimatedSize(
+              duration: const .new(milliseconds: 400),
+              curve: Curves.fastOutSlowIn,
+              child: Row(
+                mainAxisSize: .min,
+                children: [
+                  if (_showFilters) ...[
+                    Container(
+                      padding: const .all(4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
+                        borderRadius: .circular(30),
+                        border: .all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.05),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          for (var (index, tab) in _tabs.indexed)
+                            InkWell(
+                              onTap: () => setState(() => _selectedTab = index),
+                              mouseCursor: SystemMouseCursors.click,
+                              borderRadius: .circular(25),
+                              child: AnimatedContainer(
+                                duration: const .new(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                                padding: const .symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: index == _selectedTab
+                                      ? (isDark
+                                            ? Colors.white.withValues(
+                                                alpha: 0.1,
+                                              )
+                                            : Colors.white)
+                                      : Colors.transparent,
+                                  borderRadius: .circular(25),
+                                  boxShadow: index == _selectedTab && !isDark
+                                      ? [
+                                          .new(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const .new(0, 1),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Column(
+                                  mainAxisSize: .min,
+                                  children: [
+                                    Text(
+                                      tab,
+                                      style: .new(
+                                        fontSize: 11, // Tighter for mobile
+                                        fontWeight: index == _selectedTab
+                                            ? FontWeight.w900
+                                            : FontWeight.w600,
+                                        color: index == _selectedTab
+                                            ? (isDark
+                                                  ? Colors.blue[400]
+                                                  : const Color(0xFF1E293B))
+                                            : (isDark
+                                                  ? Colors.grey[500]
+                                                  : const Color(0xFF64748B)),
+                                      ),
+                                    ),
+                                    if (index == _selectedTab) ...[
+                                      const SizedBox(height: 1),
+                                      Container(
+                                        width: 10,
+                                        height: 1.5,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF3B82F6),
+                                          borderRadius: .circular(2),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
               ),
             ),
-            child: Row(
-              children: List.generate(_tabs.length, (index) {
-                final isSelected = index == _selectedTab;
-                return InkWell(
-                  onTap: () => setState(() => _selectedTab = index),
-                  mouseCursor: SystemMouseCursors.click,
-                  borderRadius: BorderRadius.circular(25),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+
+            const SizedBox(width: 8),
+
+            InkWell(
+              onTap: () => setState(() {
+                _showFilters = !_showFilters;
+                if (!_showFilters) {
+                  _selectedTab = 0;
+                }
+              }),
+              borderRadius: .circular(30),
+              child: AnimatedContainer(
+                duration: const .new(milliseconds: 300),
+                padding: const .all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Color(0xFF0066FF), Color(0xFFE056FD)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    .new(
+                      color: const Color(0xFF0066FF).withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const .new(0, 4),
                     ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.white)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: isSelected && !isDark
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _tabs[index],
-                          style: TextStyle(
-                            fontSize: 11, // Tighter for mobile
-                            fontWeight: isSelected
-                                ? FontWeight.w900
-                                : FontWeight.w600,
-                            color: isSelected
-                                ? (isDark
-                                      ? Colors.blue[400]
-                                      : const Color(0xFF1E293B))
-                                : (isDark
-                                      ? Colors.grey[500]
-                                      : const Color(0xFF64748B)),
-                          ),
-                        ),
-                        if (isSelected) ...[
-                          const SizedBox(height: 1),
-                          Container(
-                            width: 10,
-                            height: 1.5,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ],
-                      ],
+                  ],
+                ),
+                child: AnimatedRotation(
+                  duration: const .new(milliseconds: 300),
+                  turns: _showFilters ? 0 : 1,
+                  child: AnimatedSwitcher(
+                    duration: const .new(milliseconds: 200),
+                    child: Icon(
+                      _showFilters
+                          ? LucideIcons.chevronRight
+                          : LucideIcons.slidersHorizontal,
+                      key: ValueKey(_showFilters),
+                      size: 16,
+                      color: Colors.white,
                     ),
                   ),
-                );
-              }),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
+                ),
               ),
-              boxShadow: !isDark
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 4,
-                      ),
-                    ]
-                  : null,
             ),
-            child: Icon(
-              LucideIcons.slidersHorizontal,
-              size: 16,
-              color: isDark ? Colors.grey[400] : const Color(0xFF64748B),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

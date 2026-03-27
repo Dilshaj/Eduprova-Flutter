@@ -53,49 +53,43 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             Column(
               children: [
-                if (!_isFocused) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 8),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      IconButton(
                         icon: const Icon(LucideIcons.chevronLeft, size: 28),
-                        onPressed: () => context.pop(),
+                        onPressed: () {
+                          if (_isFocused || _searchController.text.isNotEmpty) {
+                            _focusNode.unfocus();
+                            setState(() {
+                              _isFocused = false;
+                              _showDropdown = false;
+                              _searchController.clear();
+                            });
+                          } else {
+                            context.pop();
+                          }
+                        },
                       ),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Search',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                      if (!_isFocused) ...[
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Search',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: _buildSearchInput(isDark, cardColor),
-                  ),
-                ] else
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(LucideIcons.chevronLeft, size: 28),
-                          onPressed: () => context.pop(),
-                        ),
+                      ] else
                         Expanded(child: _buildSearchInput(isDark, cardColor)),
-                      ],
-                    ),
+                    ],
+                  ),
+                ),
+                if (!_isFocused)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: _buildSearchInput(isDark, cardColor),
                   ),
                 Expanded(
                   child: _isFocused
@@ -131,8 +125,10 @@ class _SearchScreenState extends State<SearchScreen> {
       child: TextField(
         controller: _searchController,
         focusNode: _focusNode,
-        onTap: () {
-          if (_showDropdown) setState(() => _showDropdown = false);
+        onChanged: (val) {
+          setState(() {
+            _showDropdown = false;
+          });
         },
         decoration: InputDecoration(
           hintText: (_afterDate == null && _beforeDate == null) ? 'Search' : '',
@@ -371,21 +367,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 220,
-                child: CupertinoTheme(
-                  data: CupertinoThemeData(
-                    textTheme: CupertinoTextThemeData(
-                      dateTimePickerTextStyle: TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
-                        fontSize: 22,
-                      ),
-                    ),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: isDark 
+                    ? const ColorScheme.dark(primary: Colors.white, onPrimary: Colors.black, surface: Color(0xFF1F2937))
+                    : const ColorScheme.light(primary: Colors.black, onPrimary: Colors.white, surface: Colors.white),
+                  textButtonTheme: TextButtonThemeData(
+                    style: TextButton.styleFrom(foregroundColor: isDark ? Colors.white : Colors.black),
                   ),
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.date,
-                    initialDateTime: selectedDate,
-                    onDateTimeChanged: (DateTime newDate) {
+                ),
+                child: SizedBox(
+                  height: 300,
+                  child: CalendarDatePicker(
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                    onDateChanged: (DateTime newDate) {
                       setModalState(() {
                         selectedDate = newDate;
                       });
@@ -482,6 +479,48 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSuggestions(bool isDark, Color cardColor) {
+    if (_searchController.text.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      final allProfiles = [
+        ('vaibhavsisinty', 'Vaibhav Sisinty', '75.6K followers', true),
+        ('_.hemanthhhhh._', 'Sai Hemanth Pediredla', '97 followers', false),
+        ('catherinetresa', 'Catherine Tresa Alexander', '314K followers', true),
+        ('krystledsouza', 'Krystle Dsouza', '745K followers', true),
+        ('manish__tripurana', 'Manish Tripurana', '27 followers', false),
+        ('_sai_304', 'S A I', '6.7K followers', false),
+      ];
+
+      final filtered = allProfiles.where((p) => 
+        p.$1.toLowerCase().contains(query) || 
+        p.$2.toLowerCase().contains(query)
+      ).toList();
+
+      if (filtered.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(LucideIcons.search, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                'No results for "${_searchController.text}"',
+                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 8),
+        itemCount: filtered.length,
+        itemBuilder: (context, i) {
+          final p = filtered[i];
+          return _buildProfileTile(p.$1, p.$2, p.$3, p.$4, isDark);
+        },
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -648,7 +687,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildProfileTile(
     String username,
     String fullName,
-    String followers,
+    String subtext,
     bool isVerified,
     bool isDark,
   ) {
@@ -656,16 +695,41 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: const Color(0xFF0066FF).withValues(alpha: 0.1),
-            child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0066FF), Color(0xFF2563EB)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          // Squircle Profile Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: ShapeDecoration(
+              color: isDark ? Colors.grey[800] : Colors.grey[200],
+              shape: const ContinuousRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(32)),
+              ),
+              shadows: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipPath(
+              clipper: const ShapeBorderClipper(
+                shape: ContinuousRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(32)),
+                ),
+              ),
+              child: Image.network(
+                'https://i.pravatar.cc/150?u=$username',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Center(
+                  child: Text(
+                    username.substring(0, 1).toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -678,9 +742,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 Row(
                   children: [
                     Text(
-                      username,
+                      fullName,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
                     ),
@@ -696,49 +760,61 @@ class _SearchScreenState extends State<SearchScreen> {
                   ],
                 ),
                 Text(
-                  fullName,
+                  'Eduprov...', // Matching subtext style from screenshot
                   style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  followers,
-                  style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? Colors.grey[500] : Colors.grey[500],
                     fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
+          // Squircle Follow Button with Icon
           Container(
-            decoration: BoxDecoration(
+            height: 44,
+            width: 120, // Calibrated width to match screenshot proportion
+            decoration: ShapeDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF0066FF), Color(0xFFE056FD)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                elevation: 0,
+              shape: const ContinuousRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(24)),
               ),
-              child: const Text(
-                'Follow',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              shadows: [
+                BoxShadow(
+                  color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {},
+                customBorder: const ContinuousRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(24)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person_add_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Follow',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

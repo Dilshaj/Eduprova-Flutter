@@ -32,12 +32,15 @@ class MainApp extends ConsumerWidget {
         theme: lightTheme,
         darkTheme: darkTheme,
         builder: (context, child) {
-          return Stack(
-            children: [
-              child ?? const SizedBox.shrink(),
-              const IncomingCallOverlay(key: ValueKey('incoming_call_overlay')),
-              const GlobalMiniPlayerOverlay(key: ValueKey('global_mini_player_overlay')),
-            ],
+          return ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+            child: Stack(
+              children: [
+                child ?? const SizedBox.shrink(),
+                const IncomingCallOverlay(key: ValueKey('incoming_call_overlay')),
+                const GlobalMiniPlayerOverlay(key: ValueKey('global_mini_player_overlay')),
+              ],
+            ),
           );
         },
         routerConfig: router,

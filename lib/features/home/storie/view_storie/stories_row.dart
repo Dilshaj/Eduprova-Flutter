@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:eduprova/core/navigation/app_routes.dart';
+import 'package:image_picker/image_picker.dart';
 import 'stories_provider.dart';
+import 'story_editor_screen.dart';
 
 class StatusRow extends ConsumerWidget {
   const StatusRow({super.key});
@@ -17,12 +19,12 @@ class StatusRow extends ConsumerWidget {
 
     return profilesAsync.when(
       data: (profiles) {
-        final displayProfiles = profiles.isEmpty ? _getGreetingDummyStories() : profiles;
+        final displayProfiles = profiles.isEmpty ? getGreetingDummyStories() : profiles;
         return _buildStoriesCarousel(context, displayProfiles, isDark);
       },
       loading: () => _buildStoriesCarousel(
         context,
-        _getGreetingDummyStories(),
+        getGreetingDummyStories(),
         isDark,
         isLoading: true,
       ),
@@ -69,8 +71,10 @@ class StatusRow extends ConsumerWidget {
           Container(
             width: 80,
             height: 105,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(26),
+            decoration: ShapeDecoration(
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.circular(42),
+              ),
               gradient: hasUnseen
                   ? const LinearGradient(
                       colors: [Color(0xFF0066FF), Color(0xFF8B5CF6), Color(0xFFE056FD)],
@@ -78,34 +82,40 @@ class StatusRow extends ConsumerWidget {
                       end: Alignment.topRight,
                     )
                   : null,
-              color: hasUnseen ? null : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+              color: hasUnseen ? null : (isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.15)),
             ),
-            // The padding defines the visible "Ring" border thickness
-            padding: const EdgeInsets.all(2.5),
+            // The padding defines the visible thickness of the Status Ring
+            padding: const EdgeInsets.all(2.4),
             child: Container(
-              decoration: BoxDecoration(
-                // Crucial fix: The inner container should have a background that matches the theme 
-                // but let the image stretch to fill it. 
+              decoration: ShapeDecoration(
+                // The white inner border thickness increased
                 color: isDark ? const Color(0xFF111827) : Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // The Story Thumbnail (Full Cover)
-                  Image.network(
-                    profile.profileUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(color: isDark ? Colors.grey[900] : Colors.grey[200]);
-                    },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: isDark ? Colors.grey[900] : Colors.grey[200],
-                      child: const Center(child: Icon(Icons.person, color: Colors.grey)),
-                    ),
+                shape: ContinuousRectangleBorder(
+                  borderRadius: BorderRadius.circular(39.6),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    width: 1.2,
                   ),
+                ),
+              ),
+              child: ClipPath(
+                clipper: _SquircleClipper(radius: 39.6),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // The Story Thumbnail (Full Cover)
+                    Image.network(
+                      profile.profileUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(color: isDark ? Colors.grey[900] : Colors.grey[200]);
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: isDark ? Colors.grey[900] : Colors.grey[200],
+                        child: const Center(child: Icon(Icons.person, color: Colors.grey)),
+                      ),
+                    ),
                   // Darken/Grayscale for seen stories
                   if (!hasUnseen)
                     BackdropFilter(
@@ -151,6 +161,7 @@ class StatusRow extends ConsumerWidget {
               ),
             ),
           ),
+        ),
           const SizedBox(height: 6),
           Text(
             profile.name.split(' ').first,
@@ -164,49 +175,9 @@ class StatusRow extends ConsumerWidget {
           ),
         ],
       ),
-      ),
-    );
-  }
-
-  List<StatusProfile> _getGreetingDummyStories() {
-    return [
-      StatusProfile(
-        id: '1',
-        name: 'Design',
-        profileUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=600&fit=crop',
-        hasUnseen: true,
-        statuses: [const StatusItem(url: '', type: StatusType.image), const StatusItem(url: '', type: StatusType.image)],
-      ),
-      StatusProfile(
-        id: '2',
-        name: 'Code',
-        profileUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=600&fit=crop',
-        hasUnseen: true,
-        statuses: [const StatusItem(url: '', type: StatusType.image)],
-      ),
-      StatusProfile(
-        id: '3',
-        name: 'Lifestyle',
-        profileUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=600&fit=crop',
-        hasUnseen: false,
-        statuses: [const StatusItem(url: '', type: StatusType.image)],
-      ),
-      StatusProfile(
-        id: '4',
-        name: 'Ideas',
-        profileUrl: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=400&h=600&fit=crop',
-        hasUnseen: false,
-        statuses: [const StatusItem(url: '', type: StatusType.image)],
-      ),
-      StatusProfile(
-        id: '5',
-        name: 'EduProva',
-        profileUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=600&fit=crop',
-        hasUnseen: true,
-        statuses: [const StatusItem(url: '', type: StatusType.image), const StatusItem(url: '', type: StatusType.image), const StatusItem(url: '', type: StatusType.image)],
-      ),
-    ];
-  }
+    ),
+  );
+ }
 }
 
 class _AddStoryCard extends StatefulWidget {
@@ -236,7 +207,7 @@ class _AddStoryCardState extends State<_AddStoryCard> with SingleTickerProviderS
     super.dispose();
   }
 
-  void _handleTap() {
+  Future<void> _handleTap() async {
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastClickTime < 2500) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -249,7 +220,20 @@ class _AddStoryCardState extends State<_AddStoryCard> with SingleTickerProviderS
       return;
     }
     _lastClickTime = now;
-    GoRouter.of(context).push(AppRoutes.createStory);
+
+    final ImagePicker picker = .new();
+    final List<XFile> images = await picker.pickMultiImage();
+
+    if (images.isNotEmpty && mounted) {
+      Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute(
+          builder: (context) => StoryEditorScreen(
+            images: images,
+            isCollage: images.length > 1,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -279,8 +263,10 @@ class _AddStoryCardState extends State<_AddStoryCard> with SingleTickerProviderS
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
+                      decoration: ShapeDecoration(
+                        shape: ContinuousRectangleBorder(
+                          borderRadius: BorderRadius.circular(38),
+                        ),
                         color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F7FF),
                       ),
                     ),
@@ -291,7 +277,7 @@ class _AddStoryCardState extends State<_AddStoryCard> with SingleTickerProviderS
                           return CustomPaint(
                             painter: _MarchingDashedPainter(
                               color: const Color(0xFF0066FF).withValues(alpha: _isHovering ? 0.6 : 0.4),
-                              radius: 23,
+                              radius: 38,
                               animationValue: _controller.value,
                             ),
                           );
@@ -387,13 +373,11 @@ class _MarchingDashedPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = 3;
 
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(1, 1, size.width - 2, size.height - 2),
-        Radius.circular(radius),
-      ));
+    final path = ContinuousRectangleBorder(
+      borderRadius: BorderRadius.circular(radius), // Correct factor for squircle matching
+    ).getOuterPath(Rect.fromLTWH(1, 1, size.width - 2, size.height - 2));
 
     const double dashWidth = 6;
     const double dashSpace = 4;
@@ -420,4 +404,21 @@ class _MarchingDashedPainter extends CustomPainter {
   bool shouldRepaint(covariant _MarchingDashedPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue || oldDelegate.color != color;
   }
+}
+
+class _SquircleClipper extends CustomClipper<Path> {
+  final double radius;
+
+  _SquircleClipper({required this.radius});
+
+  @override
+  Path getClip(Size size) {
+    return ContinuousRectangleBorder(
+      borderRadius: BorderRadius.circular(radius),
+    ).getOuterPath(Offset.zero & size);
+  }
+
+  @override
+  bool shouldReclip(covariant _SquircleClipper oldClipper) =>
+      oldClipper.radius != radius;
 }

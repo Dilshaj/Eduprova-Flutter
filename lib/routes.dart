@@ -22,7 +22,6 @@ import 'package:eduprova/features/courses/screens/profile_settings/profile_setti
 import 'package:eduprova/features/help_and_support.dart';
 import 'package:eduprova/features/home/main_layout.dart';
 import 'package:eduprova/features/home/search/search_screen.dart';
-import 'package:eduprova/features/home/storie/view_storie/storie_create_screen.dart';
 import 'package:eduprova/features/home/storie/view_storie/storie_users_pager.dart';
 import 'package:eduprova/features/home/liked/liked_posts_screen.dart';
 import 'package:eduprova/features/home/saved/saved_posts_screen.dart';
@@ -159,11 +158,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           final initialIndex = state.pathParameters['id']!;
           return StatusUsersPager(initialIndex: int.parse(initialIndex));
         },
-      ),
-      GoRoute(
-        path: AppRoutes.createStory,
-        parentNavigatorKey: rootNavigatorKey,
-        builder: (_, _) => const StatusScreen(),
       ),
 
       /*********************************************

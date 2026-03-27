@@ -23,9 +23,11 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
     _pageController = PageController(initialPage: widget.initialIndex);
     _currentPageValue = widget.initialIndex.toDouble();
     _pageController.addListener(() {
-      setState(() {
-        _currentPageValue = _pageController.page ?? 0.0;
-      });
+      if (mounted) {
+        setState(() {
+          _currentPageValue = _pageController.page ?? 0.0;
+        });
+      }
     });
   }
 
@@ -38,8 +40,8 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
   void _onComplete(int currentIndex, int totalUsers) {
     if (currentIndex < totalUsers - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeIn,
+        duration: const Duration(milliseconds: 600), // Slower, more deliberate transition
+        curve: Curves.easeOutCubic,
       );
     } else {
       Navigator.of(context).pop();
@@ -49,8 +51,8 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
   void _onPrevious(int currentIndex) {
     if (currentIndex > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeIn,
+        duration: const Duration(milliseconds: 600), // Slower, more deliberate transition
+        curve: Curves.easeOutCubic,
       );
     } else {
       Navigator.of(context).pop();
@@ -64,31 +66,59 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: profilesAsync.when(
-        data: (profiles) => PageView.builder(
-          controller: _pageController,
-          itemCount: profiles.length,
-          itemBuilder: (context, index) {
-            final double value = _currentPageValue - index;
+        data: (profiles) {
+          final displayProfiles = profiles.isEmpty ? getGreetingDummyStories() : profiles;
+          return PageView.builder(
+            controller: _pageController,
+            itemCount: displayProfiles.length,
+            itemBuilder: (context, index) {
+              final double value = _currentPageValue - index;
 
-            if (value <= -1.0 || value >= 1.0) {
-              return const SizedBox.shrink();
-            }
+              if (value <= -1.0 || value >= 1.0) {
+                return const SizedBox.shrink();
+              }
 
-            return Transform(
-              alignment:
-                  value > 0 ? Alignment.centerRight : Alignment.centerLeft,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.002) // perspective
-                ..rotateY(value * (pi / 2)),
-              child: StatusViewScreen(
-                profile: profiles[index],
-                pageOffset: value,
-                onComplete: () => _onComplete(index, profiles.length),
-                onPrevious: () => _onPrevious(index),
-              ),
-            );
-          },
-        ),
+              // Modern Fixed-Depth Slide (Curtain) Transition Logic
+              double xTranslation = 0.0;
+              double opacity = 1.0;
+              double overlayOpacity = 0.0;
+
+              if (value < 0) {
+                // Outgoing page (being covered)
+                // We counter-translate it to stay fixed while the next page slides on top
+                xTranslation = -value * MediaQuery.sizeOf(context).width; 
+                opacity = 1.0;
+                // Add a subtle darkening as it's covered
+                overlayOpacity = value.abs() * 0.5;
+              } else {
+                // Incoming page (sliding over)
+                xTranslation = 0.0; // Standard slide-in
+                opacity = 1.0;
+                overlayOpacity = 0.0;
+              }
+
+              return Transform.translate(
+                offset: Offset(xTranslation, 0.0),
+                child: Stack(
+                  children: [
+                    StatusViewScreen(
+                      profile: displayProfiles[index],
+                      pageOffset: value,
+                      onComplete: () => _onComplete(index, displayProfiles.length),
+                      onPrevious: () => _onPrevious(index),
+                    ),
+                    if (value < 0)
+                      IgnorePointer(
+                        child: Container(
+                          color: Colors.black.withValues(alpha: overlayOpacity),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, st) => const Center(child: Icon(Icons.error_outline)),
       ),

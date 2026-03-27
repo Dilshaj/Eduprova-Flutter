@@ -98,5 +98,12 @@ final darkTheme = ThemeData(
   //   ),
   //   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   // ),
+  scrollbarTheme: ScrollbarThemeData(
+    thumbVisibility: WidgetStateProperty.all(false),
+    trackVisibility: WidgetStateProperty.all(false),
+    thickness: WidgetStateProperty.all(0),
+    radius: Radius.zero,
+    interactive: false,
+  ),
   extensions: [_darkColors],
 );
