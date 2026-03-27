@@ -60,6 +60,7 @@ dependencies:
   open_filex: ^4.5.0
   flutter_linkify: ^6.0.0
   scrollable_positioned_list: ^0.3.8
+  flex_color_picker: ^3.8.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

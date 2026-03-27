@@ -16,7 +16,7 @@ class ApiClient {
       return 'http://192.168.1.10:4000';
     }
     debugPrint('Using iOS/Web URL: http://localhost:4000');
-    return 'http://192.168.1.10:4000';
+    return 'http://localhost:4000';
   }
 
   static String? get baseUrlOverride => prefs.getString(_overrideUrlKey);

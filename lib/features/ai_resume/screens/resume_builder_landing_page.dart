@@ -14,6 +14,7 @@ class ResumeBuilderLandingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == .dark;
     final themeExt = theme.extension<AppDesignExtension>()!;
 
     return Scaffold(
@@ -91,13 +92,16 @@ class ResumeBuilderLandingPage extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 55),
                   // Animation Section
                   const ResumeFlippingWidget(),
                   // Description
+                  const SizedBox(height: 45),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
-                      'Create a professional, ATS-friendly resume in minutes with our advanced AI. Land your dream job with data-backed templates and smart suggestions.',
+                      // 'Create a professional, ATS-friendly resume in minutes with our advanced AI. Land your dream job with data-backed templates and smart suggestions.',
+                      'Create a professional, ATS-friendly resume in minutes with our advanced AI.',
                       textAlign: .center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: themeExt.secondaryText,
@@ -119,21 +123,27 @@ class ResumeBuilderLandingPage extends StatelessWidget {
                           label: 'Ai Assisted Writing',
                           iconSymbol: LucideIcons.sparkles,
                           backgroundColor: const Color(0xFFEEF2FF),
-                          textColor: const Color(0xFF4F46E5),
+                          textColor: isDark
+                              ? const Color(0xFFA5A0FF)
+                              : const Color(0xFF4F46E5),
                         ),
                         _buildFeatureBadge(
                           context,
                           label: 'Instant Pdf Export',
-                          iconSymbol: LucideIcons.fileDown,
+                          iconSymbol: LucideIcons.download,
                           backgroundColor: const Color(0xFFFFF1F2),
-                          textColor: const Color(0xFFE11D48),
+                          textColor: isDark
+                              ? const Color(0xFFFFA5A5)
+                              : const Color(0xFFE11D48),
                         ),
                         _buildFeatureBadge(
                           context,
                           label: 'ATS Optimized',
                           iconSymbol: LucideIcons.target,
                           backgroundColor: const Color(0xFFF0FDF4),
-                          textColor: const Color(0xFF16A34A),
+                          textColor: isDark
+                              ? const Color(0xFFA5FFA5)
+                              : const Color(0xFF16A34A),
                         ),
                       ],
                     ),
@@ -188,25 +198,32 @@ class ResumeBuilderLandingPage extends StatelessWidget {
     required Color textColor,
   }) {
     final isDark = Theme.of(context).brightness == .dark;
+    final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     return Container(
       padding: .symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? textColor.withValues(alpha: 0.15) : backgroundColor,
+        // color: isDark ? textColor.withValues(alpha: 0.15) : backgroundColor,
+        // color: isDark ? const Color.fromARGB(255, 30, 30, 30) : Colors.white,
+        color: themeExt.cardColor,
         borderRadius: .circular(30),
+        // border: Border.all(
+        //   color: isDark
+        //       ? textColor.withValues(alpha: 0.3)
+        //       : textColor.withValues(alpha: 0.1),
+        //   width: 1,
+        // ),
         border: Border.all(
-          color: isDark
-              ? textColor.withValues(alpha: 0.3)
-              : textColor.withValues(alpha: 0.1),
+          color: themeExt.borderColor.withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: textColor.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const .new(0, 4),
-            ),
+          // if (!isDark)
+          BoxShadow(
+            color: textColor.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const .new(0, 4),
+          ),
         ],
       ),
       child: Row(

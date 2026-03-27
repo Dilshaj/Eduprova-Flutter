@@ -37,7 +37,6 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 440,
       width: double.infinity,
       child: AnimatedBuilder(
         animation: _controller,
@@ -154,7 +153,7 @@ class _ResumeFlippingWidgetState extends State<ResumeFlippingWidget>
             opacity: state.opacity.clamp(0.0, 1.0),
             child: Container(
               width: 200,
-              height: 280,
+              // height: 280,
               decoration: BoxDecoration(
                 borderRadius: .circular(16),
                 boxShadow: [

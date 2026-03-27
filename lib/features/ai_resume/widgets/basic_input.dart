@@ -91,7 +91,8 @@ class BasicInput extends StatelessWidget {
               color: themeExt.secondaryText.withValues(alpha: 0.5),
             ),
             filled: true,
-            fillColor: themeExt.cardColor,
+            // fillColor: themeExt.cardColor,
+            fillColor: theme.colorScheme.surfaceContainerHighest,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: themeExt.borderColor),

@@ -23,7 +23,7 @@ final _themeColors = AppDesignExtension(
   cardColor: Colors.white,
   borderColor: _dividerColor,
   secondaryText: const Color(0xFF6B7280),
-  shadowColor: Colors.black.withOpacity(0.05),
+  shadowColor: Colors.black.withValues(alpha: 0.05),
   saleColor: const Color(0xFFFF3D00),
   skeletonBase: const Color(0xFFF3F4F6),
   skeletonHighlight: Colors.white,
@@ -84,7 +84,11 @@ final lightTheme = ThemeData(
     foregroundColor: Color(0xFF111827),
     elevation: 0,
     centerTitle: false,
-    titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    titleTextStyle: TextStyle(
+      color: Color(0xFF111827),
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+    ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     fillColor: _colorSchema.surfaceContainerHighest,

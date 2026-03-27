@@ -13,6 +13,7 @@ class SectionItemRenderer extends StatelessWidget {
   final bool isSidebar;
   final Metadata metadata;
   final SectionTheme? themeOverride;
+  final bool isLast;
 
   const SectionItemRenderer({
     super.key,
@@ -23,6 +24,7 @@ class SectionItemRenderer extends StatelessWidget {
     required this.isSidebar,
     required this.metadata,
     this.themeOverride,
+    this.isLast = false,
   });
 
   @override
@@ -95,7 +97,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -169,7 +171,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -235,7 +237,7 @@ class SectionItemRenderer extends StatelessWidget {
     Color badgeTextColor = themeOverride?.badgeTextColor ?? textColor;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,6 +249,17 @@ class SectionItemRenderer extends StatelessWidget {
               color: badgeTextColor,
             ),
           ),
+          if (item.keywords.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              item.keywords.join(', '),
+              style: TextStyle(
+                fontSize: bodySize - 1,
+                color: badgeTextColor.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: 2),
+          ],
           SkillLevelDisplay(
             level: item.level,
             type: metadata.design.level.type,
@@ -264,7 +277,7 @@ class SectionItemRenderer extends StatelessWidget {
     double bodySize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -313,7 +326,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -343,7 +356,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -351,17 +364,26 @@ class SectionItemRenderer extends StatelessWidget {
             item.title,
             style: TextStyle(
               fontSize: titleSize - 0.5,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w400,
               color: textColor,
             ),
           ),
-          Text(
-            '${item.issuer} | ${item.date}',
-            style: TextStyle(
-              fontSize: subtitleSize,
-              color: textColor.withValues(alpha: 0.7),
+          if (item.issuer.isNotEmpty && item.date.isNotEmpty)
+            Text(
+              '${item.issuer} | ${item.date}',
+              style: TextStyle(
+                fontSize: subtitleSize,
+                color: textColor.withValues(alpha: 0.7),
+              ),
             ),
-          ),
+          if (item.issuer.isNotEmpty || item.date.isNotEmpty)
+            Text(
+              item.issuer.isNotEmpty ? item.issuer : item.date,
+              style: TextStyle(
+                fontSize: subtitleSize,
+                color: textColor.withValues(alpha: 0.7),
+              ),
+            ),
         ],
       ),
     );
@@ -373,7 +395,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -399,7 +421,7 @@ class SectionItemRenderer extends StatelessWidget {
 
   Widget _buildInterestItem(InterestItem item, double bodySize) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 4),
       child: Text(
         item.name,
         style: TextStyle(fontSize: bodySize, color: textColor),
@@ -413,7 +435,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -443,7 +465,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -474,7 +496,7 @@ class SectionItemRenderer extends StatelessWidget {
     double subtitleSize,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -509,7 +531,7 @@ class SectionItemRenderer extends StatelessWidget {
 
   Widget _buildProfileItem(ProfileItem item, double bodySize) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 4),
       child: Text(
         '${item.network}: ${item.username}',
         style: TextStyle(fontSize: bodySize, color: textColor),
@@ -519,7 +541,7 @@ class SectionItemRenderer extends StatelessWidget {
 
   Widget _buildGenericItem(dynamic item, double bodySize) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       child: Text(
         item.toString(),
         style: TextStyle(fontSize: bodySize, color: textColor),

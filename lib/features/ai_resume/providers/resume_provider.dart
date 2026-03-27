@@ -261,7 +261,7 @@ class ResumeNotifier extends Notifier<ResumeData> {
       title: section.title,
       columns: section.columns,
       hidden: section.hidden,
-      items: newItems as List<T>,
+      items: List<T>.from(newItems),
     );
     updateSection(sectionKey, newSection);
   }
@@ -276,7 +276,7 @@ class ResumeNotifier extends Notifier<ResumeData> {
       title: section.title,
       columns: section.columns,
       hidden: section.hidden,
-      items: newItems as List<T>,
+      items: List<T>.from(newItems),
     );
     updateSection(sectionKey, newSection);
   }

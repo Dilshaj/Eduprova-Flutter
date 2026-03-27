@@ -77,6 +77,7 @@ class SectionListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final themeExt = theme.extension<AppDesignExtension>()!;
+    final isDark = theme.brightness == Brightness.dark;
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
@@ -85,13 +86,22 @@ class SectionListView extends ConsumerWidget {
       itemBuilder: (context, index) {
         final section = sections[index];
         return Card(
-          elevation: 0,
-          color: themeExt.cardColor.withValues(alpha: 0.3),
+          // elevation: 0,
+          color: themeExt.cardColor.withValues(alpha: 1),
+          // shadow
+          shadowColor: isDark
+              ? Colors.black.withValues(alpha: 0.5)
+              : Colors.black.withValues(alpha: 0.2),
+          elevation: 3,
+
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: themeExt.borderColor),
           ),
           child: ListTile(
+            splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+            focusColor: Colors.red,
+            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.1),
             // radius
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

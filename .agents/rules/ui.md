@@ -63,3 +63,7 @@ routes: [
 ## Icons
 - for icons use lucid_icons_flutter . or may be huge icons.
 - don't use default Icons they look bad and outdated.
+
+## dialogs
+- don't use alert dialogs
+- use Dialog widget and built dialogs.

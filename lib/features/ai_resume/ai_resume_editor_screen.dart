@@ -37,131 +37,100 @@ class _AiResumeEditorScreenState extends State<AiResumeEditorScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Edit Resume'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
+
       body: TabBarView(
         controller: _tabController,
         children: const [SectionListView(), DesignView()],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Hero(
-          tag: 'tab_container',
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.8,
+
+      // bottomNavigationBar: SafeArea(
+      //   child:,
+      // ),
+      appBar: AppBar(
+        // title: const Text('Edit Resume'),
+        titleSpacing: 0,
+        automaticallyImplyLeading: false,
+        scrolledUnderElevation: 0,
+        title: Row(
+          children: [
+            Hero(
+              tag: 'back_button',
+              child: IconButton(
+                icon: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: const Icon(Icons.arrow_back_ios_new, size: 16),
                 ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TabBar(
-                controller: _tabController,
-                dividerColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                labelColor: Colors.white,
-                unselectedLabelColor: theme.iconTheme.color?.withValues(
-                  alpha: 0.7,
-                ),
-                tabs: [
-                  Tab(
-                    // child: Hero(
-                    //   tag: 'tab_content',
-                    //   child: Material(
-                    //     color: Colors.transparent,
-                    //     child: Row(
-                    //       mainAxisAlignment: MainAxisAlignment.center,
-                    //       children: [
-                    //         const Icon(Icons.edit_note, size: 16),
-                    //         const SizedBox(width: 6),
-                    //         const Text(
-                    //           'Content',
-                    //           style: TextStyle(
-                    //             fontSize: 12,
-                    //             fontWeight: FontWeight.bold,
-                    //           ),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.edit_note, size: 16),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Content',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Tab(
-                    // child: Hero(
-                    //   tag: 'tab_design',
-                    //   child: Material(
-                    //     color: Colors.transparent,
-                    //     child: Row(
-                    //       mainAxisAlignment: MainAxisAlignment.center,
-                    //       children: [
-                    //         const Icon(Icons.palette_outlined, size: 16),
-                    //         const SizedBox(width: 6),
-                    //         const Text(
-                    //           'Design',
-                    //           style: TextStyle(
-                    //             fontSize: 12,
-                    //             fontWeight: FontWeight.bold,
-                    //           ),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.palette_outlined, size: 16),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Design',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                onPressed: () => Navigator.pop(context),
               ),
             ),
+            Expanded(child: _buildTabBar()),
+          ],
+        ),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    final theme = Theme.of(context);
+    return Hero(
+      tag: 'tab_container',
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.8,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TabBar(
+            controller: _tabController,
+            dividerColor: Colors.transparent,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            labelColor: Colors.white,
+            labelStyle: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelColor: theme.iconTheme.color?.withValues(alpha: 0.7),
+            tabs: [
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.edit_note, size: 16),
+                    const SizedBox(width: 6),
+                    const Text('Content'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.palette_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    const Text('Design'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

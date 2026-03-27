@@ -42,69 +42,129 @@ class _AiResumeScreenState extends ConsumerState<AiResumeScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      // appBar: AppBar(
+      //   // title: const Text('AI Resume Builder'),
+      //   // backgroundColor: theme.scaffoldBackgroundColor,
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   scrolledUnderElevation: 0,
+      // ),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        // title: const Text('AI Resume Builder'),
-        // backgroundColor: theme.scaffoldBackgroundColor,
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        // leading: IconButton(
+        //   icon: Container(
+        //     padding: const EdgeInsets.all(8),
+        //     decoration: BoxDecoration(
+        //       gradient: LinearGradient(
+        //         colors: [
+        //           theme.colorScheme.primary,
+        //           theme.colorScheme.primary.withValues(alpha: 0.8),
+        //         ],
+        //       ),
+        //       shape: BoxShape.circle,
+        //     ),
+        //     child: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+        //   ),
+        //   onPressed: () => Navigator.pop(context),
+        // ),
+        title: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              child: Hero(
+                tag: 'back_button',
+                child: IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.primary.withValues(alpha: 0.8),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            Center(child: _buildFloatingTabBar(context, theme)),
+          ],
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildFloatingTabBar(context, theme),
-      body: const PreviewView(),
+      // floatingActionButton: _buildFloatingTabBar(context, theme),
+      body: PreviewView(),
     );
   }
 
   Widget _buildFloatingTabBar(BuildContext context, ThemeData theme) {
-    return Hero(
-      tag: 'tab_container',
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.8,
+    return Center(
+      child: Hero(
+        tag: 'tab_container',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          decoration: BoxDecoration(
+            // color: Colors.red,
+            color: theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.8,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _FloatingTabButton(
-              heroTag: 'tab_content',
-              icon: Icons.edit_note,
-              label: 'Content',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AiResumeEditorScreen(initialIndex: 0),
-                  ),
-                );
-              },
-              theme: theme,
-            ),
-            const SizedBox(width: 8),
-            _FloatingTabButton(
-              heroTag: 'tab_design',
-              icon: Icons.palette_outlined,
-              label: 'Design',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AiResumeEditorScreen(initialIndex: 1),
-                  ),
-                );
-              },
-              theme: theme,
-            ),
-          ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _FloatingTabButton(
+                heroTag: 'tab_content',
+                icon: Icons.edit_note,
+                label: 'Content',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const AiResumeEditorScreen(initialIndex: 0),
+                    ),
+                  );
+                },
+                theme: theme,
+              ),
+              const SizedBox(width: 8),
+              _FloatingTabButton(
+                heroTag: 'tab_design',
+                icon: Icons.palette_outlined,
+                label: 'Design',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const AiResumeEditorScreen(initialIndex: 1),
+                    ),
+                  );
+                },
+                theme: theme,
+              ),
+            ],
+          ),
         ),
       ),
     );

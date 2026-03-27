@@ -1,4 +1,5 @@
 import 'package:eduprova/features/ai_resume/widgets/basic_input.dart';
+import 'package:eduprova/ui/pill_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -17,7 +18,7 @@ class SkillItemEditor extends ConsumerStatefulWidget {
 class _SkillItemEditorState extends ConsumerState<SkillItemEditor> {
   late TextEditingController _nameController;
   late TextEditingController _proficiencyController;
-  late TextEditingController _keywordsController;
+  late List<String> _keywords;
   double _level = 0;
 
   @override
@@ -28,16 +29,13 @@ class _SkillItemEditorState extends ConsumerState<SkillItemEditor> {
       text: widget.item?.proficiency ?? '',
     );
     _level = (widget.item?.level ?? 0).toDouble();
-    _keywordsController = TextEditingController(
-      text: widget.item?.keywords.join(', ') ?? '',
-    );
+    _keywords = List.from(widget.item?.keywords ?? []);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _proficiencyController.dispose();
-    _keywordsController.dispose();
     super.dispose();
   }
 
@@ -50,19 +48,13 @@ class _SkillItemEditorState extends ConsumerState<SkillItemEditor> {
       return;
     }
 
-    final keywords = _keywordsController.text
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-
     const uuid = Uuid();
     final newItem = SkillItem(
       id: widget.item?.id ?? uuid.v4(),
       name: name,
       proficiency: _proficiencyController.text.trim(),
       level: _level.toInt(),
-      keywords: keywords,
+      keywords: _keywords,
       hidden: widget.item?.hidden ?? false,
       icon: widget.item?.icon ?? '',
     );
@@ -120,10 +112,17 @@ class _SkillItemEditorState extends ConsumerState<SkillItemEditor> {
               },
             ),
             const SizedBox(height: 16),
-            BasicInput(
-              controller: _keywordsController,
-              label: 'Keywords',
-              hint: 'e.g. React, JavaScript, Html',
+            const Text(
+              'Keywords',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            PillInput(
+              initialValues: _keywords,
+              placeholder: 'Type a keyword and press enter',
+              onChanged: (val) {
+                setState(() => _keywords = val);
+              },
             ),
           ],
         ),

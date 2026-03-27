@@ -1,3 +1,4 @@
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -21,6 +22,7 @@ class ThemeEditor extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _buildColorSection(
+            context,
             'Primary Color',
             resumeTheme.primary,
             (color) => ref
@@ -31,6 +33,7 @@ class ThemeEditor extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _buildColorSection(
+            context,
             'Text Color',
             resumeTheme.text,
             (color) => ref
@@ -41,6 +44,7 @@ class ThemeEditor extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _buildColorSection(
+            context,
             'Background Color',
             resumeTheme.background,
             (color) => ref
@@ -63,6 +67,7 @@ class ThemeEditor extends ConsumerWidget {
   }
 
   Widget _buildColorSection(
+    BuildContext context,
     String title,
     String hexColor,
     Function(String) onChanged,
@@ -141,22 +146,77 @@ class ThemeEditor extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: TextFormField(
-                      initialValue: hexColor,
-                      decoration: InputDecoration(
-                        labelText: 'Hex Color',
-                        hintText: '#RRGGBB',
-                        prefixIcon: const Icon(LucideIcons.hash, size: 16),
-                        border: OutlineInputBorder(
+                    child: InkWell(
+                      onTap: () async {
+                        final Color newColor = await showColorPickerDialog(
+                          context,
+                          currentColor,
+                          title: Text(title, style: theme.textTheme.titleLarge),
+                          width: 40,
+                          height: 40,
+                          spacing: 10,
+                          runSpacing: 10,
+                          borderRadius: 20,
+                          wheelDiameter: 165,
+                          enableOpacity: true,
+                          showColorCode: true,
+                          colorCodeHasColor: true,
+                          pickersEnabled: const <ColorPickerType, bool>{
+                            ColorPickerType.both: false,
+                            ColorPickerType.primary: true,
+                            ColorPickerType.accent: true,
+                            ColorPickerType.bw: false,
+                            ColorPickerType.custom: true,
+                            ColorPickerType.wheel: true,
+                          },
+                          copyPasteBehavior: const ColorPickerCopyPasteBehavior(
+                            copyButton: true,
+                            pasteButton: true,
+                            longPressMenu: true,
+                          ),
+                          actionButtons: const ColorPickerActionButtons(
+                            okButton: true,
+                            closeButton: true,
+                            dialogActionButtons: true,
+                          ),
+                          constraints: const BoxConstraints(
+                            minHeight: 480,
+                            minWidth: 300,
+                            maxWidth: 320,
+                          ),
+                        );
+                        onChanged(_colorToHex(newColor));
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: themeExt.borderColor),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(LucideIcons.palette, size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Pick Custom Color',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const Spacer(),
+                            Text(
+                              hexColor.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: themeExt.secondaryText,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      onFieldSubmitted: (val) {
-                        if (val.startsWith('#') &&
-                            (val.length == 7 || val.length == 9)) {
-                          onChanged(val);
-                        }
-                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -236,5 +296,9 @@ class ThemeEditor extends ConsumerWidget {
     if (h.length == 6) return Color(int.parse('FF$h', radix: 16));
     if (h.length == 8) return Color(int.parse(h, radix: 16));
     return Colors.transparent;
+  }
+
+  String _colorToHex(Color color) {
+    return '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
   }
 }

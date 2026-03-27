@@ -68,7 +68,8 @@ class ResumeSection extends StatelessWidget {
 
     // Get section content based on ID
     final sectionData = _getSectionData();
-    if (sectionData == null) return const SizedBox.shrink();
+    if (sectionData == null) return Container(color: Colors.red, height: 2);
+    // if (sectionData == null) return const SizedBox.shrink();
 
     // Check if section is hidden
     bool isHidden = false;
@@ -85,7 +86,9 @@ class ResumeSection extends StatelessWidget {
         if (visibleItems.isEmpty) isHidden = true;
       }
     }
-    if (isHidden) return const SizedBox.shrink();
+    // if (isHidden) return const SizedBox.shrink();
+    if (isHidden)
+      return Container(color: const Color.fromARGB(255, 1, 30, 2), height: 2);
 
     // The heading component
     Widget? headingWidget;
@@ -102,7 +105,7 @@ class ResumeSection extends StatelessWidget {
               bottom: themeOverride?.headingLeft == true ? 0 : 2,
             ),
             child: Text(
-              _getSectionTitle(sectionData).toUpperCase(),
+              _getSectionTitle(sectionData),
               style:
                   customHeadingStyle ??
                   TextStyle(
@@ -256,22 +259,30 @@ class ResumeSection extends StatelessWidget {
 
     if (sectionData is Section) {
       final items = sectionData.items as List;
-      if (items.isEmpty) return const SizedBox.shrink();
+      final visibleItems = items.where((item) => !item.hidden).toList();
+      // if (visibleItems.isEmpty) return const SizedBox.shrink();
+      if (visibleItems.isEmpty) {
+        print('visibleItems is empty');
+        return Container(color: Colors.pink, height: 2);
+      }
+      debugPrint(
+        "@title: ${sectionData.title} has ${visibleItems.length} items",
+      );
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final item in items)
-            if (!item.hidden)
-              SectionItemRenderer(
-                item: item,
-                sectionId: sectionId,
-                textColor: textColor,
-                primaryColor: primaryColor,
-                isSidebar: isSidebar,
-                metadata: resume.metadata,
-                themeOverride: themeOverride,
-              ),
+          for (var i = 0; i < visibleItems.length; i++)
+            SectionItemRenderer(
+              item: visibleItems[i],
+              sectionId: sectionId,
+              textColor: textColor,
+              primaryColor: primaryColor,
+              isSidebar: isSidebar,
+              metadata: resume.metadata,
+              themeOverride: themeOverride,
+              isLast: i == visibleItems.length - 1,
+            ),
         ],
       );
     }

@@ -26,8 +26,8 @@ class ResumePreview extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(40),
                   child: Container(
-                    width: 595.0,
-                    height: 842.0,
+                    width: 690.0,
+                    height: 976.0,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
