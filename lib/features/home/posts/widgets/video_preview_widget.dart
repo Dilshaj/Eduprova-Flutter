@@ -23,7 +23,6 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
       ..initialize()
           .then((_) {
-            // Ensure the first frame is shown after the video is initialized.
             if (mounted) setState(() {});
           })
           .catchError((_) {
@@ -61,7 +60,7 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
         height: 200,
         child: Center(
           child: Column(
-            mainAxisSize: .min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               HugeIcon(
                 icon: HugeIcons.strokeRoundedAlert01,
@@ -95,7 +94,7 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
     return GestureDetector(
       onTap: _togglePlay,
       child: Stack(
-        alignment: .center,
+        alignment: Alignment.center,
         children: [
           AspectRatio(
             aspectRatio: _controller.value.aspectRatio,
@@ -107,7 +106,7 @@ class _VideoPreviewWidgetState extends State<VideoPreviewWidget> {
                 color: Colors.black45,
                 shape: BoxShape.circle,
               ),
-              padding: const .all(12),
+              padding: const EdgeInsets.all(12),
               child: const HugeIcon(
                 icon: HugeIcons.strokeRoundedPlay,
                 color: Colors.white,

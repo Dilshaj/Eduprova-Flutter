@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
-
 import 'package:shimmer/shimmer.dart';
 import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/core/utils/image_cache_manager.dart';
@@ -86,10 +85,10 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
           baseColor: themeExt.cardColor,
           highlightColor: theme.dividerColor,
           child: Container(
-            margin: const .symmetric(horizontal: 16),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: .circular(12),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
@@ -101,9 +100,9 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
         height: 400,
         child: Center(
           child: Padding(
-            padding: const .symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
-              mainAxisSize: .min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 HugeIcon(
                   icon: HugeIcons.strokeRoundedAlert01,
@@ -113,7 +112,7 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
                 const SizedBox(height: 8),
                 Text(
                   'Failed to load PDF: ${_errorMessage ?? "Unknown error"}',
-                  textAlign: .center,
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.error,
                   ),
@@ -126,8 +125,7 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
     }
 
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final availableWidth =
-        screenWidth - 32; // Assuming 16 padding on each side for Post card
+    final availableWidth = screenWidth - 32;
     final double maxItemWidth = availableWidth * 0.9;
 
     double targetHeight = 400.0;
@@ -143,8 +141,8 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
     _initPageController(viewportFraction);
 
     return Column(
-      mainAxisSize: .min,
-      crossAxisAlignment: .start,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           height: targetHeight,
@@ -158,23 +156,20 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
               });
             },
             itemBuilder: (context, index) {
-              final cachedImage = _imageCache[index];
-
               return FutureBuilder<MemoryImage?>(
                 future: _renderPage(index),
                 builder: (context, snapshot) {
-                  final image = snapshot.data ?? cachedImage;
+                  final image = snapshot.data ?? _imageCache[index];
 
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      image == null) {
+                  if (snapshot.connectionState == ConnectionState.waiting && image == null) {
                     return Shimmer.fromColors(
                       baseColor: themeExt.cardColor,
                       highlightColor: theme.dividerColor,
                       child: Container(
-                        margin: const .symmetric(horizontal: 8),
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: .circular(12),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     );
@@ -191,15 +186,15 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
                   }
 
                   return Padding(
-                    padding: const .symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Container(
                       decoration: BoxDecoration(
                         color: theme.scaffoldBackgroundColor,
-                        borderRadius: .circular(12),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: theme.dividerColor, width: 1),
                       ),
                       child: ClipRRect(
-                        borderRadius: .circular(11),
+                        borderRadius: BorderRadius.circular(11),
                         child: Image(image: image, fit: BoxFit.contain),
                       ),
                     ),
@@ -211,7 +206,7 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
         ),
         const SizedBox(height: 8),
         Padding(
-          padding: const .symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             '$_currentPage / ${_document!.pagesCount} pages',
             style: theme.textTheme.labelMedium?.copyWith(
@@ -229,13 +224,11 @@ class _PdfPreviewWidgetState extends State<PdfPreviewWidget> {
     }
 
     final page = await _document!.getPage(index + 1);
-
     final image = await page.render(
       width: page.width * 2,
       height: page.height * 2,
       format: PdfPageImageFormat.png,
     );
-
     await page.close();
 
     if (image?.bytes != null) {
