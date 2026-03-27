@@ -77,13 +77,11 @@ class GengarTemplate extends StatelessWidget {
                             children: [
                               for (final section in pageLayout.sidebar)
                                 if (section != 'summary')
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: ResumeSection(
-                                      sectionId: section,
-                                      resume: resume,
-                                      isSidebar: true,
-                                    ),
+                                  ResumeSection(
+                                    sectionId: section,
+                                    resume: resume,
+                                    isSidebar: true,
+                                    bottomPadding: 12,
                                   ),
                             ],
                           ),
@@ -99,14 +97,13 @@ class GengarTemplate extends StatelessWidget {
                   children: [
                     // Summary with primary/20 bg
                     if (isFirstPage)
-                      Container(
-                        width: double.infinity,
-                        color: primaryColor.withValues(alpha: 0.2),
+                      ResumeSection(
+                        sectionId: 'summary',
+                        resume: resume,
+                        isSidebar: false,
                         padding: EdgeInsets.all(margin),
-                        child: ResumeSection(
-                          sectionId: 'summary',
-                          resume: resume,
-                          isSidebar: false,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.2),
                         ),
                       ),
 
@@ -121,13 +118,11 @@ class GengarTemplate extends StatelessWidget {
                         children: [
                           for (final section in pageLayout.main)
                             if (section != 'summary')
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: ResumeSection(
-                                  sectionId: section,
-                                  resume: resume,
-                                  isSidebar: false,
-                                ),
+                              ResumeSection(
+                                sectionId: section,
+                                resume: resume,
+                                isSidebar: false,
+                                bottomPadding: 12,
                               ),
                         ],
                       ),

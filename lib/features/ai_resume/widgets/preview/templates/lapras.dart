@@ -27,22 +27,22 @@ class LaprasTemplate extends StatelessWidget {
     final margin = 20.0;
 
     return Padding(
-      padding: EdgeInsets.only(left: margin, right: margin, top: margin),
+      padding: .only(left: margin, right: margin, top: margin),
       child: Column(
         crossAxisAlignment: .start,
         children: [
           // Header in bordered box with picture left
           if (isFirstPage)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: .all(12),
               decoration: BoxDecoration(
-                border: Border.all(
+                border: .all(
                   color: ColorUtils.parseColor(
                     theme.text,
                     Colors.black,
                   ).withValues(alpha: 0.2),
                 ),
-                borderRadius: BorderRadius.circular(
+                borderRadius: .circular(
                   resume.picture.borderRadius.clamp(0, 30),
                 ),
               ),
@@ -56,18 +56,12 @@ class LaprasTemplate extends StatelessWidget {
 
           // Main sections in bordered cards
           for (final section in pageLayout.main)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _buildCardSection(section, primaryColor),
-            ),
+            _buildCardSection(section, primaryColor),
 
           // Sidebar sections
           if (!pageLayout.fullWidth)
             for (final section in pageLayout.sidebar)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildCardSection(section, primaryColor),
-              ),
+              _buildCardSection(section, primaryColor),
         ],
       ),
     );
@@ -80,21 +74,19 @@ class LaprasTemplate extends StatelessWidget {
     );
     final borderRadius = resume.picture.borderRadius.clamp(0.0, 30.0);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
+    return ResumeSection(
+      sectionId: sectionId,
+      resume: resume,
+      isSidebar: false,
+      bottomPadding: 16,
+      padding: .all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: textColor.withValues(alpha: 0.1)),
-        borderRadius: BorderRadius.circular(borderRadius),
+        border: .all(color: textColor.withValues(alpha: 0.1)),
+        borderRadius: .circular(borderRadius),
         color: ColorUtils.parseColor(
           resume.metadata.design.colors.background,
           Colors.white,
         ),
-      ),
-      child: ResumeSection(
-        sectionId: sectionId,
-        resume: resume,
-        isSidebar: false,
       ),
     );
   }

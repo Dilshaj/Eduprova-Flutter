@@ -45,27 +45,23 @@ class OnyxTemplate extends StatelessWidget {
 
           // Main sections
           for (final section in pageLayout.main)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ResumeSection(
-                sectionId: section,
-                resume: resume,
-                isSidebar: false,
-                themeOverride: const SectionTheme(hideHeadingBorder: true),
-              ),
+            ResumeSection(
+              sectionId: section,
+              resume: resume,
+              isSidebar: false,
+              bottomPadding: 12,
+              themeOverride: const SectionTheme(hideHeadingBorder: true),
             ),
 
           // Sidebar sections below
           if (!pageLayout.fullWidth)
             for (final section in pageLayout.sidebar)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ResumeSection(
-                  sectionId: section,
-                  resume: resume,
-                  isSidebar: false,
-                  themeOverride: const SectionTheme(hideHeadingBorder: true),
-                ),
+              ResumeSection(
+                sectionId: section,
+                resume: resume,
+                isSidebar: false,
+                bottomPadding: 12,
+                themeOverride: const SectionTheme(hideHeadingBorder: true),
               ),
         ],
       ),

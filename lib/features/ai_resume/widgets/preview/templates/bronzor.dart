@@ -26,7 +26,7 @@ class BronzorTemplate extends StatelessWidget {
     final margin = 20.0;
 
     return Padding(
-      padding: EdgeInsets.only(left: margin, right: margin, top: margin),
+      padding: .only(left: margin, right: margin, top: margin),
       child: Column(
         crossAxisAlignment: .center,
         children: [
@@ -41,40 +41,36 @@ class BronzorTemplate extends StatelessWidget {
 
           // Main sections with border-top headings
           for (final section in pageLayout.main)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.only(top: 4),
+            ResumeSection(
+              sectionId: section,
+              resume: resume,
+              isSidebar: false,
+              bottomPadding: 12,
+              padding: .only(top: 4),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: primaryColor)),
+                border: Border(top: .new(color: primaryColor)),
               ),
-              child: ResumeSection(
-                sectionId: section,
-                resume: resume,
-                isSidebar: false,
-                themeOverride: SectionTheme(
-                  headingLeft: true,
-                  hideHeadingBorder: true,
-                ),
+              themeOverride: SectionTheme(
+                headingLeft: true,
+                hideHeadingBorder: true,
               ),
             ),
 
           // Sidebar sections below
           if (!pageLayout.fullWidth)
             for (final section in pageLayout.sidebar)
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.only(top: 4),
+              ResumeSection(
+                sectionId: section,
+                resume: resume,
+                isSidebar: false,
+                bottomPadding: 12,
+                padding: .only(top: 4),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: primaryColor)),
+                  border: Border(top: .new(color: primaryColor)),
                 ),
-                child: ResumeSection(
-                  sectionId: section,
-                  resume: resume,
-                  isSidebar: false,
-                  themeOverride: SectionTheme(
-                    headingLeft: true,
-                    hideHeadingBorder: true,
-                  ),
+                themeOverride: SectionTheme(
+                  headingLeft: true,
+                  hideHeadingBorder: true,
                 ),
               ),
         ],

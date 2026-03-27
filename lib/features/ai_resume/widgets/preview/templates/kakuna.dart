@@ -41,32 +41,28 @@ class KakunaTemplate extends StatelessWidget {
 
           // Main sections
           for (final section in pageLayout.main)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ResumeSection(
-                sectionId: section,
-                resume: resume,
-                isSidebar: false,
-                alignment: .center,
-                headingDecoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: primaryColor)),
-                ),
+            ResumeSection(
+              sectionId: section,
+              resume: resume,
+              isSidebar: false,
+              alignment: .center,
+              bottomPadding: 12,
+              headingDecoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: primaryColor)),
               ),
             ),
 
           // Sidebar sections below (no sidebar layout)
           if (!pageLayout.fullWidth)
             for (final section in pageLayout.sidebar)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ResumeSection(
-                  sectionId: section,
-                  resume: resume,
-                  isSidebar: false,
-                  alignment: .center,
-                  headingDecoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: primaryColor)),
-                  ),
+              ResumeSection(
+                sectionId: section,
+                resume: resume,
+                isSidebar: false,
+                alignment: .center,
+                bottomPadding: 12,
+                headingDecoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: primaryColor)),
                 ),
               ),
         ],

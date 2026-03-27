@@ -52,16 +52,14 @@ class PikachuTemplate extends StatelessWidget {
                     ),
 
                   for (final section in pageLayout.sidebar)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ResumeSection(
-                        sectionId: section,
-                        resume: resume,
-                        isSidebar: true,
-                        headingDecoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: primaryColor, width: 2),
-                          ),
+                    ResumeSection(
+                      sectionId: section,
+                      resume: resume,
+                      isSidebar: true,
+                      bottomPadding: 12,
+                      headingDecoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: primaryColor, width: 2),
                         ),
                       ),
                     ),
@@ -106,16 +104,14 @@ class PikachuTemplate extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 for (final section in pageLayout.main)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: ResumeSection(
-                      sectionId: section,
-                      resume: resume,
-                      isSidebar: false,
-                      headingDecoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: primaryColor, width: 2),
-                        ),
+                  ResumeSection(
+                    sectionId: section,
+                    resume: resume,
+                    isSidebar: false,
+                    bottomPadding: 12,
+                    headingDecoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: primaryColor, width: 2),
                       ),
                     ),
                   ),

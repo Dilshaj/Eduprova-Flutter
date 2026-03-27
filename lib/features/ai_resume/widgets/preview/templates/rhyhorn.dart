@@ -39,25 +39,21 @@ class RhyhornTemplate extends StatelessWidget {
 
           // Main sections
           for (final section in pageLayout.main)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ResumeSection(
-                sectionId: section,
-                resume: resume,
-                isSidebar: false,
-              ),
+            ResumeSection(
+              sectionId: section,
+              resume: resume,
+              isSidebar: false,
+              bottomPadding: 12,
             ),
 
           // Sidebar sections below
           if (!pageLayout.fullWidth)
             for (final section in pageLayout.sidebar)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ResumeSection(
-                  sectionId: section,
-                  resume: resume,
-                  isSidebar: false,
-                ),
+              ResumeSection(
+                sectionId: section,
+                resume: resume,
+                isSidebar: false,
+                bottomPadding: 12,
               ),
         ],
       ),

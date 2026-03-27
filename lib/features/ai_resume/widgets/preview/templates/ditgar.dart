@@ -76,15 +76,13 @@ class DitgarTemplate extends StatelessWidget {
                             crossAxisAlignment: .start,
                             children: [
                               for (final section in pageLayout.sidebar)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: ResumeSection(
-                                    sectionId: section,
-                                    resume: resume,
-                                    isSidebar: true,
-                                    themeOverride: const SectionTheme(
-                                      hideHeading: true,
-                                    ),
+                                ResumeSection(
+                                  sectionId: section,
+                                  resume: resume,
+                                  isSidebar: true,
+                                  bottomPadding: 12,
+                                  themeOverride: const SectionTheme(
+                                    hideHeading: true,
                                   ),
                                 ),
                             ],
@@ -101,17 +99,12 @@ class DitgarTemplate extends StatelessWidget {
                   children: [
                     // Summary at top of main
                     if (isFirstPage)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: margin,
-                          right: margin,
-                          top: margin,
-                        ),
-                        child: ResumeSection(
-                          sectionId: 'summary',
-                          resume: resume,
-                          isSidebar: false,
-                        ),
+                      ResumeSection(
+                        sectionId: 'summary',
+                        resume: resume,
+                        isSidebar: false,
+                        bottomPadding:
+                            margin, // Using margin as padding for consistency with original
                       ),
 
                     Padding(
@@ -125,13 +118,11 @@ class DitgarTemplate extends StatelessWidget {
                         children: [
                           for (final section in pageLayout.main)
                             if (section != 'summary')
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: ResumeSection(
-                                  sectionId: section,
-                                  resume: resume,
-                                  isSidebar: false,
-                                ),
+                              ResumeSection(
+                                sectionId: section,
+                                resume: resume,
+                                isSidebar: false,
+                                bottomPadding: 12,
                               ),
                         ],
                       ),

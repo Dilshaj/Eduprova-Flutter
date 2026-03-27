@@ -58,13 +58,11 @@ class ChikoritaTemplate extends StatelessWidget {
                       if (isFirstPage) TemplateHeader(resume: resume),
                       const SizedBox(height: 16),
                       for (final section in pageLayout.main)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ResumeSection(
-                            sectionId: section,
-                            resume: resume,
-                            isSidebar: false,
-                          ),
+                        ResumeSection(
+                          sectionId: section,
+                          resume: resume,
+                          isSidebar: false,
+                          bottomPadding: 12,
                         ),
                     ],
                   ),
@@ -85,20 +83,18 @@ class ChikoritaTemplate extends StatelessWidget {
                       crossAxisAlignment: .start,
                       children: [
                         for (final section in pageLayout.sidebar)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ResumeSection(
-                              sectionId: section,
-                              resume: resume,
-                              isSidebar: true,
-                              themeOverride: SectionTheme(
-                                headingColor: bgColor,
-                                headingBorderColor: bgColor,
-                                iconColor: bgColor,
-                                textColor: bgColor,
-                                badgeColor: bgColor,
-                                badgeTextColor: bgColor,
-                              ),
+                          ResumeSection(
+                            sectionId: section,
+                            resume: resume,
+                            isSidebar: true,
+                            bottomPadding: 12,
+                            themeOverride: SectionTheme(
+                              headingColor: bgColor,
+                              headingBorderColor: bgColor,
+                              iconColor: bgColor,
+                              textColor: bgColor,
+                              badgeColor: bgColor,
+                              badgeTextColor: bgColor,
                             ),
                           ),
                       ],

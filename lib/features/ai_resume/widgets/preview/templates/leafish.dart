@@ -110,13 +110,11 @@ class LeafishTemplate extends StatelessWidget {
                     children: [
                       for (final section in pageLayout.main)
                         if (section != 'summary')
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ResumeSection(
-                              sectionId: section,
-                              resume: resume,
-                              isSidebar: false,
-                            ),
+                          ResumeSection(
+                            sectionId: section,
+                            resume: resume,
+                            isSidebar: false,
+                            bottomPadding: 12,
                           ),
                     ],
                   ),
@@ -132,13 +130,11 @@ class LeafishTemplate extends StatelessWidget {
                       children: [
                         for (final section in pageLayout.sidebar)
                           if (section != 'summary')
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ResumeSection(
-                                sectionId: section,
-                                resume: resume,
-                                isSidebar: true,
-                              ),
+                            ResumeSection(
+                              sectionId: section,
+                              resume: resume,
+                              isSidebar: true,
+                              bottomPadding: 12,
                             ),
                       ],
                     ),

@@ -129,12 +129,14 @@ class SectionItemRenderer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (item.position.isNotEmpty)
-                Text(
-                  item.position,
-                  style: TextStyle(
-                    fontSize: bodySize,
-                    fontStyle: FontStyle.italic,
-                    color: textColor.withValues(alpha: 0.8),
+                Expanded(
+                  child: Text(
+                    item.position,
+                    style: TextStyle(
+                      fontSize: bodySize,
+                      fontStyle: FontStyle.italic,
+                      color: textColor.withValues(alpha: 0.8),
+                    ),
                   ),
                 ),
               if (item.location.isNotEmpty)
@@ -202,11 +204,13 @@ class SectionItemRenderer extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${item.degree} in ${item.area}',
-                style: TextStyle(
-                  fontSize: bodySize,
-                  color: textColor.withValues(alpha: 0.8),
+              Expanded(
+                child: Text(
+                  '${item.degree} in ${item.area}',
+                  style: TextStyle(
+                    fontSize: bodySize,
+                    color: textColor.withValues(alpha: 0.8),
+                  ),
                 ),
               ),
               if (item.location.isNotEmpty)

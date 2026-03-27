@@ -112,13 +112,11 @@ class DittoTemplate extends StatelessWidget {
                       crossAxisAlignment: .start,
                       children: [
                         for (final section in pageLayout.sidebar)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ResumeSection(
-                              sectionId: section,
-                              resume: resume,
-                              isSidebar: true,
-                            ),
+                          ResumeSection(
+                            sectionId: section,
+                            resume: resume,
+                            isSidebar: true,
+                            bottomPadding: 12,
                           ),
                       ],
                     ),
@@ -133,13 +131,11 @@ class DittoTemplate extends StatelessWidget {
                     crossAxisAlignment: .start,
                     children: [
                       for (final section in pageLayout.main)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ResumeSection(
-                            sectionId: section,
-                            resume: resume,
-                            isSidebar: false,
-                          ),
+                        ResumeSection(
+                          sectionId: section,
+                          resume: resume,
+                          isSidebar: false,
+                          bottomPadding: 12,
                         ),
                     ],
                   ),

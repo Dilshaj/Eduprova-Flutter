@@ -36,6 +36,9 @@ class ResumeSection extends StatelessWidget {
   final BoxDecoration? headingDecoration;
   final Color? contentColor;
   final CrossAxisAlignment alignment;
+  final double bottomPadding;
+  final BoxDecoration? decoration;
+  final EdgeInsetsGeometry? padding;
 
   const ResumeSection({
     super.key,
@@ -47,6 +50,9 @@ class ResumeSection extends StatelessWidget {
     this.headingDecoration,
     this.contentColor,
     this.alignment = CrossAxisAlignment.start,
+    this.bottomPadding = 0,
+    this.decoration,
+    this.padding,
   });
 
   @override
@@ -68,8 +74,7 @@ class ResumeSection extends StatelessWidget {
 
     // Get section content based on ID
     final sectionData = _getSectionData();
-    if (sectionData == null) return Container(color: Colors.red, height: 2);
-    // if (sectionData == null) return const SizedBox.shrink();
+    if (sectionData == null) return const SizedBox.shrink();
 
     // Check if section is hidden
     bool isHidden = false;
@@ -86,9 +91,7 @@ class ResumeSection extends StatelessWidget {
         if (visibleItems.isEmpty) isHidden = true;
       }
     }
-    // if (isHidden) return const SizedBox.shrink();
-    if (isHidden)
-      return Container(color: const Color.fromARGB(255, 1, 30, 2), height: 2);
+    if (isHidden) return const SizedBox.shrink();
 
     // The heading component
     Widget? headingWidget;
@@ -146,8 +149,9 @@ class ResumeSection extends StatelessWidget {
     );
 
     // Left Layout (e.g. Bronzor) vs Standard Column Layout
+    Widget sectionWidget;
     if (themeOverride?.headingLeft == true && headingWidget != null) {
-      return Padding(
+      sectionWidget = Padding(
         padding: const EdgeInsets.only(top: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,11 +162,20 @@ class ResumeSection extends StatelessWidget {
           ],
         ),
       );
+    } else {
+      sectionWidget = Column(
+        crossAxisAlignment: alignment,
+        children: [?headingWidget, contentWidget],
+      );
     }
 
-    return Column(
-      crossAxisAlignment: alignment,
-      children: [?headingWidget, contentWidget],
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: Container(
+        decoration: decoration,
+        padding: padding,
+        child: sectionWidget,
+      ),
     );
   }
 
@@ -260,11 +273,8 @@ class ResumeSection extends StatelessWidget {
     if (sectionData is Section) {
       final items = sectionData.items as List;
       final visibleItems = items.where((item) => !item.hidden).toList();
-      // if (visibleItems.isEmpty) return const SizedBox.shrink();
-      if (visibleItems.isEmpty) {
-        print('visibleItems is empty');
-        return Container(color: Colors.pink, height: 2);
-      }
+      if (visibleItems.isEmpty) return const SizedBox.shrink();
+
       debugPrint(
         "@title: ${sectionData.title} has ${visibleItems.length} items",
       );

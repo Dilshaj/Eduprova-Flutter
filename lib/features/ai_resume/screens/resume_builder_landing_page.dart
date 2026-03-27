@@ -130,7 +130,7 @@ class ResumeBuilderLandingPage extends StatelessWidget {
                         _buildFeatureBadge(
                           context,
                           label: 'Instant Pdf Export',
-                          iconSymbol: LucideIcons.download,
+                          iconSymbol: LucideIcons.fileText,
                           backgroundColor: const Color(0xFFFFF1F2),
                           textColor: isDark
                               ? const Color(0xFFFFA5A5)
@@ -139,7 +139,7 @@ class ResumeBuilderLandingPage extends StatelessWidget {
                         _buildFeatureBadge(
                           context,
                           label: 'ATS Optimized',
-                          iconSymbol: LucideIcons.target,
+                          iconSymbol: LucideIcons.badgeCheck,
                           backgroundColor: const Color(0xFFF0FDF4),
                           textColor: isDark
                               ? const Color(0xFFA5FFA5)
@@ -201,7 +201,7 @@ class ResumeBuilderLandingPage extends StatelessWidget {
     final themeExt = Theme.of(context).extension<AppDesignExtension>()!;
 
     return Container(
-      padding: .symmetric(horizontal: 14, vertical: 8),
+      padding: .symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         // color: isDark ? textColor.withValues(alpha: 0.15) : backgroundColor,
         // color: isDark ? const Color.fromARGB(255, 30, 30, 30) : Colors.white,
@@ -229,10 +229,18 @@ class ResumeBuilderLandingPage extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            iconSymbol,
-            size: 16,
-            color: isDark ? textColor.withValues(alpha: 0.9) : textColor,
+          Container(
+            padding: .all(8),
+            decoration: BoxDecoration(
+              color: textColor.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+              // borderRadius: .circular(30),
+            ),
+            child: Icon(
+              iconSymbol,
+              size: 16,
+              color: isDark ? textColor.withValues(alpha: 0.9) : textColor,
+            ),
           ),
           const SizedBox(width: 6),
           Text(
