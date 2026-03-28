@@ -1,0 +1,79 @@
+Analyzing fluter_app...                                         
+
+   info - The import of 'package:flutter/cupertino.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/foundation.dart' - lib\core\network\api_client.dart:3:8 - unnecessary_import
+   info - 'ConcatenatingAudioSource' is deprecated and shouldn't be used. Use AudioPlayer.setAudioSources instead - lib\features\ai_grammar\providers\grammar_audio_player_provider.dart:10:9 - deprecated_member_use
+   info - 'ConcatenatingAudioSource' is deprecated and shouldn't be used. Use AudioPlayer.setAudioSources instead - lib\features\ai_grammar\providers\grammar_audio_player_provider.dart:10:46 - deprecated_member_use
+warning - The value of the field '_agentState' isn't used - lib\features\ai_grammar\widgets\coach_section.dart:40:10 - unused_field
+   info - 'ConcatenatingAudioSource' is deprecated and shouldn't be used. Use AudioPlayer.setAudioSources instead - lib\features\ai_interview\interview_bot\interview_bot_screen.dart:66:9 - deprecated_member_use
+   info - 'ConcatenatingAudioSource' is deprecated and shouldn't be used. Use AudioPlayer.setAudioSources instead - lib\features\ai_interview\interview_bot\interview_bot_screen.dart:66:46 - deprecated_member_use
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\home\home_screen.dart:1:8 - unnecessary_import
+warning - Unused import: 'package:eduprova/theme/theme.dart' - lib\features\home\home_screen.dart:11:8 - unused_import
+   info - Unnecessary use of multiple underscores - lib\features\home\liked\liked_posts_screen.dart:211:26 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\posts\widgets\comment_sheet.dart:157:47 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\posts\widgets\post_create_card.dart:47:39 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\posts\widgets\post_create_card.dart:47:43 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\posts\widgets\share_sheet.dart:64:37 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\saved\saved_posts_screen.dart:201:26 - unnecessary_underscores
+   info - The import of 'package:flutter/cupertino.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\home\search\search_screen.dart:2:8 - unnecessary_import
+   info - Don't use 'BuildContext's across async gaps - lib\features\home\search\search_screen.dart:299:53 - use_build_context_synchronously
+warning - The declaration '_buildPill' isn't referenced - lib\features\home\search\search_screen.dart:600:10 - unused_element
+warning - The declaration '_buildFilterChip' isn't referenced - lib\features\home\search\search_screen.dart:666:10 - unused_element
+   info - Unnecessary use of multiple underscores - lib\features\home\search\search_screen.dart:724:35 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\home\search\search_screen.dart:724:39 - unnecessary_underscores
+warning - Unused import: 'dart:math' - lib\features\home\storie\view_storie\storie_users_pager.dart:1:8 - unused_import
+warning - The value of the local variable 'opacity' isn't used - lib\features\home\storie\view_storie\storie_users_pager.dart:83:22 - unused_local_variable
+   info - The imported package 'http_parser' isn't a dependency of the importing package - lib\features\home\storie\view_storie\story_repository.dart:3:8 - depend_on_referenced_packages
+   info - The constant name 'posted_jobs' isn't a lowerCamelCase identifier - lib\features\jobs\providers\job_provider.dart:5:50 - constant_identifier_names
+   info - Unnecessary use of multiple underscores - lib\features\jobs\screens\job_details_screen.dart:491:73 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\jobs\screens\job_details_screen.dart:491:77 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\jobs\widgets\job_card.dart:235:27 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\jobs\widgets\job_card.dart:235:31 - unnecessary_underscores
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\features\jobs\widgets\job_filter_bar.dart:291:17 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\calendar\widgets\course_curriculum.dart:319:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\calendar\widgets\new_meeting.dart:339:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\communities_home_screen.dart:324:74 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\communities_home_screen.dart:506:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\communities_home_screen.dart:581:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\communities_home_screen.dart:696:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\communities_home_screen.dart:751:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\communities_home_screen.dart:764:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_categories.dart:105:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_categories.dart:135:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_categories.dart:218:73 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_categories.dart:249:73 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_categories.dart:251:80 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_categories.dart:350:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_group.dart:52:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_group.dart:74:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_group.dart:142:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_group.dart:145:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_group.dart:190:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\community_group.dart:193:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\create_community.dart:148:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\create_community.dart:160:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\create_community.dart:252:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\create_community.dart:264:69 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\create_event.dart:219:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\edit_community.dart:185:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\edit_community.dart:208:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\events.dart:108:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\events.dart:423:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\events.dart:431:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\files.dart:155:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\meeting_orientation.dart:355:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\members.dart:127:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\new_channel.dart:211:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\new_channel.dart:382:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\posts.dart:110:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\posts.dart:325:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\posts.dart:382:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\posts.dart:447:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\report.dart:105:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\scratch_page.dart:99:70 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\scratch_page.dart:219:75 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\scratch_page.dart:320:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\share.dart:87:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\communities\widgets\share.dart:107:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\messages-home\widgets\new_message.dart:124:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\messages_old\messages-home\widgets\shared_content.dart:364:46 - deprecated_member_use
+

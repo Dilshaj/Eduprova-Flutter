@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import 'stories_provider.dart';
 import 'status_progress_bar.dart';
 
@@ -28,6 +30,7 @@ class _StatusViewScreenState extends State<StatusViewScreen>
   VideoPlayerController? _videoController;
   int _currentIndex = 0;
   bool _isPaused = false;
+  bool _isLoadingContent = true;
 
   @override
   void initState() {
@@ -94,39 +97,89 @@ class _StatusViewScreenState extends State<StatusViewScreen>
   }
 
   Future<void> _loadVideo(StatusItem item) async {
-    final oldController = _videoController;
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(item.url));
-    await _videoController!.initialize();
-    oldController?.dispose();
+    _animController.stop();
+    _animController.reset();
 
-    _videoController!.addListener(() {
-      if (_videoController!.value.isPlaying) {
-        setState(() {}); // For progress
-      }
-      if (_videoController!.value.position >=
-              _videoController!.value.duration &&
-          _videoController!.value.duration.inMilliseconds > 0) {
-        if (!_isPaused && mounted && widget.pageOffset.abs() <= 0.01) {
-          _nextStatus();
-        }
-      }
+    setState(() {
+      _isLoadingContent = true;
     });
 
+    final oldController = _videoController;
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(item.url));
+
+    try {
+      await _videoController!.initialize();
+    } catch (e) {
+      debugPrint('Error initializing video: $e');
+    }
+
     if (mounted) {
-      setState(() {});
+      oldController?.dispose();
+
+      _videoController!.addListener(() {
+        if (_videoController!.value.isPlaying) {
+          setState(() {}); // For progress
+        }
+        if (_videoController!.value.position >=
+                _videoController!.value.duration &&
+            _videoController!.value.duration.inMilliseconds > 0) {
+          if (!_isPaused && mounted && widget.pageOffset.abs() <= 0.01) {
+            _nextStatus();
+          }
+        }
+      });
+
+      setState(() {
+        _isLoadingContent = false;
+      });
+
       if (widget.pageOffset.abs() <= 0.01 && !_isPaused) {
         _videoController!.play();
       }
     }
   }
 
-  void _loadImage(StatusItem item) {
+  Future<void> _loadImage(StatusItem item) async {
+    _animController.stop();
+    _animController.reset();
+
     if (_videoController != null) {
-      _videoController!.dispose();
+      await _videoController!.dispose();
       _videoController = null;
     }
+
     _animController.duration = item.duration;
+
+    setState(() {
+      _isLoadingContent = true;
+    });
+
+    // Wait for image loading
+    try {
+      final Completer<void> completer = Completer();
+      final ImageProvider imageProvider = CachedNetworkImageProvider(item.url);
+      final ImageStream stream = imageProvider.resolve(ImageConfiguration.empty);
+      late ImageStreamListener listener;
+      listener = ImageStreamListener(
+        (info, synchronousCall) {
+          if (!completer.isCompleted) completer.complete();
+        },
+        onError: (exception, stackTrace) {
+          if (!completer.isCompleted) completer.complete();
+        },
+      );
+      stream.addListener(listener);
+      await completer.future;
+      stream.removeListener(listener);
+    } catch (e) {
+      debugPrint('Error precaching image: $e');
+    }
+
     if (mounted) {
+      setState(() {
+        _isLoadingContent = false;
+      });
+
       if (widget.pageOffset.abs() <= 0.01 && !_isPaused) {
         _animController.forward();
       }
@@ -197,6 +250,8 @@ class _StatusViewScreenState extends State<StatusViewScreen>
   }
 
   double get _currentProgress {
+    if (_isLoadingContent) return 0.0;
+
     final item = widget.profile.statuses[_currentIndex];
     if (item.type == StatusType.video && _videoController != null) {
       if (!_videoController!.value.isInitialized) return 0.0;
@@ -224,13 +279,19 @@ class _StatusViewScreenState extends State<StatusViewScreen>
             children: [
               // Media Content
               if (item.type == StatusType.image)
-                Image.network(
-                  item.url,
+                CachedNetworkImage(
+                  imageUrl: item.url,
                   fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
+                  width: double.infinity,
+                  height: double.infinity,
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: Colors.grey[900]!,
+                    highlightColor: Colors.grey[800]!,
+                    child: Container(color: Colors.black),
+                  ),
+                  errorWidget: (context, url, error) => const Center(
+                    child: Icon(Icons.error, color: Colors.white),
+                  ),
                 )
               else if (item.type == StatusType.video &&
                   _videoController != null &&
@@ -242,7 +303,13 @@ class _StatusViewScreenState extends State<StatusViewScreen>
                   ),
                 )
               else
-                const Center(child: CircularProgressIndicator()),
+                Center(
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[900]!,
+                    highlightColor: Colors.grey[800]!,
+                    child: Container(color: Colors.black),
+                  ),
+                ),
 
               // Top Gradient for readability
               Positioned(
