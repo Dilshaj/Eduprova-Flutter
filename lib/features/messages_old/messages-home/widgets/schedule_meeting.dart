@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 import '../../models/meeting_model.dart';
 import '../../models/search_user_model.dart';
 import '../../repository/calling_repository.dart';
-import '../../widgets/participant_picker_screen.dart';
 
 class ScheduleMeetingScreen extends ConsumerStatefulWidget {
   const ScheduleMeetingScreen({super.key});
@@ -103,14 +104,13 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
   }
 
   Future<void> _pickParticipants() async {
-    final result = await Navigator.of(context).push<List<SearchUserModel>>(
-      MaterialPageRoute(
-        builder: (_) => ParticipantPickerScreen(
-          title: 'Add Participants',
-          submitLabel: 'Done',
-          initialSelected: _participants,
-        ),
-      ),
+    final result = await context.push<List<SearchUserModel>>(
+      AppRoutes.meetInvite,
+      extra: {
+        'title': 'Add Participants',
+        'submitLabel': 'Done',
+        'initialSelected': _participants,
+      },
     );
     if (result == null || !mounted) return;
     setState(() => _participants = result);
@@ -127,7 +127,7 @@ class _ScheduleMeetingScreenState extends ConsumerState<ScheduleMeetingScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft, color: Color(0xFF33334F)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Schedule Meeting',

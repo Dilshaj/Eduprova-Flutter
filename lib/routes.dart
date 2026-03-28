@@ -41,6 +41,14 @@ import 'package:eduprova/features/messages_old/messages/chat_screen.dart';
 // import 'package:eduprova/features/messages_old/messages/chat_profile_screen.dart';
 // import 'package:eduprova/features/messages_old/messages/messages_screen.dart';
 // import 'features/auth/providers/auth_provider.dart';
+import 'package:eduprova/features/messages_old/messages-home/widgets/meet.dart';
+import 'package:eduprova/features/messages_old/messages-home/widgets/create_room.dart';
+import 'package:eduprova/features/messages_old/messages-home/widgets/schedule_meeting.dart';
+import 'package:eduprova/features/messages_old/messages-home/widgets/join_meeting.dart';
+import 'package:eduprova/features/messages_old/messages/live_call_screen.dart';
+import 'package:eduprova/features/messages_old/widgets/participant_picker_screen.dart';
+import 'package:eduprova/features/messages_old/models/search_user_model.dart';
+import 'package:eduprova/features/messages_old/models/call_room_model.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -330,6 +338,51 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const GrammarCoachSessionScreen(),
           ),
         ],
+      ),
+
+      /*********************************************
+      *******************  Meet  *******************
+      *********************************************/
+      GoRoute(
+        path: AppRoutes.meet,
+        builder: (_, _) => const MeetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.meetCreate,
+        builder: (_, _) => const CreateRoomScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.meetSchedule,
+        builder: (_, _) => const ScheduleMeetingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.meetJoin,
+        builder: (_, _) => const JoinMeetingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.meetCall(':id'),
+        builder: (_, state) {
+          final id = state.pathParameters['id']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          return LiveCallScreen(
+            roomName: id,
+            initialRoom: extra?['initialRoom'] as CallRoomModel?,
+            initialVideo: extra?['initialVideo'] as bool? ?? true,
+            initialAudio: extra?['initialAudio'] as bool? ?? true,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.meetInvite,
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ParticipantPickerScreen(
+            title: extra?['title'] ?? 'Invite Participants',
+            submitLabel: extra?['submitLabel'] ?? 'Invite',
+            multiSelect: extra?['multiSelect'] ?? true,
+            initialSelected: extra?['initialSelected'] ?? const <SearchUserModel>[],
+          );
+        },
       ),
     ],
   );

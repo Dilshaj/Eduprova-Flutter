@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/theme/messages_theme_extension.dart';
 
-import 'meet.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import 'chat_avatar.dart';
 import '../../models/conversation_model.dart';
 import '../../models/search_user_model.dart';
@@ -199,7 +199,7 @@ class _MessagesHomeScreenState extends ConsumerState<MessagesHomeScreen> with Ti
   }
 
   void _goToMeet() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const MeetScreen()));
+    context.push(AppRoutes.meet);
   }
 
   @override

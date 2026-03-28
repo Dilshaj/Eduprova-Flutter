@@ -4,15 +4,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:eduprova/theme/theme.dart';
 import 'package:eduprova/theme/messages_theme_extension.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 
-import 'join_meeting.dart';
 import '../../models/meeting_model.dart';
 import '../../repository/calling_repository.dart';
-import '../../../auth/providers/auth_provider.dart';
-import 'create_room.dart';
-import 'schedule_meeting.dart';
+import 'package:go_router/go_router.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 
 class MeetScreen extends ConsumerStatefulWidget {
   const MeetScreen({super.key});
@@ -90,14 +87,13 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
   Widget build(BuildContext context) {
     final msgTheme = Theme.of(context).extension<MessagesThemeExtension>()!;
     final appTheme = Theme.of(context).extension<AppDesignExtension>()!;
-    final user = ref.watch(authProvider).user;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBFF), // Very light lavender background like image 1
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(user?.avatar, msgTheme),
+            _buildHeader(msgTheme),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _loadMeetings,
@@ -141,7 +137,7 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
     );
   }
 
-  Widget _buildHeader(String? profileImage, MessagesThemeExtension msgTheme) {
+  Widget _buildHeader(MessagesThemeExtension msgTheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       decoration: const BoxDecoration(
@@ -150,11 +146,11 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.grey[200],
-            backgroundImage: profileImage != null ? CachedNetworkImageProvider(profileImage) : null,
-            child: profileImage == null ? const Icon(LucideIcons.user, size: 20, color: Colors.grey) : null,
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(LucideIcons.chevronLeft, size: 28, color: Color(0xFF33334F)),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
           Text(
             'Meet',
@@ -181,7 +177,7 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
           label: 'Create link',
           iconColor: const Color(0xFF8B5CF6),
           bgColor: const Color(0xFFF5F3FF),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateRoomScreen())),
+          onTap: () => context.push(AppRoutes.meetCreate),
         ),
         const SizedBox(width: 12),
         _buildQuickActionCard(
@@ -189,7 +185,7 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
           label: 'Schedule',
           iconColor: const Color(0xFF3B82F6),
           bgColor: const Color(0xFFEFF6FF),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScheduleMeetingScreen())),
+          onTap: () => context.push(AppRoutes.meetSchedule),
         ),
         const SizedBox(width: 12),
         _buildQuickActionCard(
@@ -197,7 +193,7 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
           label: 'Join with ID',
           iconColor: const Color(0xFFEC4899),
           bgColor: const Color(0xFFFDF2F8),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const JoinMeetingScreen())),
+          onTap: () => context.push(AppRoutes.meetJoin),
         ),
       ],
     );
@@ -350,7 +346,7 @@ class _MeetScreenState extends ConsumerState<MeetScreen> {
           ),
           // Join Button
           GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const JoinMeetingScreen())),
+            onTap: () => context.push(AppRoutes.meetJoin),
             child: Container(
               width: 44,
               height: 44,

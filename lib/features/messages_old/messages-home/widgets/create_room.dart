@@ -4,14 +4,14 @@ import 'package:eduprova/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 
 import '../../../auth/providers/auth_provider.dart';
-import '../../messages/live_call_screen.dart';
 import '../../models/call_room_model.dart';
 import '../../models/search_user_model.dart';
 import '../../providers/chat_socket_provider.dart';
 import '../../repository/calling_repository.dart';
-import '../../widgets/participant_picker_screen.dart';
 
 class CreateRoomScreen extends ConsumerStatefulWidget {
   const CreateRoomScreen({super.key});
@@ -26,6 +26,8 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
   List<SearchUserModel> _participants = const [];
   bool _loading = false;
   String? _error;
+  bool _cameraEnabled = true;
+  bool _audioEnabled = true;
 
   Future<void> _createRoom() async {
     setState(() {
@@ -52,14 +54,13 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
   }
 
   Future<void> _pickParticipants() async {
-    final result = await Navigator.of(context).push<List<SearchUserModel>>(
-      MaterialPageRoute(
-        builder: (_) => ParticipantPickerScreen(
-          title: 'Add Participants',
-          submitLabel: 'Done',
-          initialSelected: _participants,
-        ),
-      ),
+    final result = await context.push<List<SearchUserModel>>(
+      AppRoutes.meetInvite,
+      extra: {
+        'title': 'Add Participants',
+        'submitLabel': 'Done',
+        'initialSelected': _participants,
+      },
     );
     if (result == null || !mounted) return;
     setState(() {
@@ -87,14 +88,13 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
     }
 
     if (!mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => LiveCallScreen(
-          initialRoom: room,
-          initialVideo: true,
-          initialAudio: true,
-        ),
-      ),
+    context.push(
+      AppRoutes.meetCall(room.roomName),
+      extra: {
+        'initialRoom': room,
+        'initialVideo': _cameraEnabled,
+        'initialAudio': _audioEnabled,
+      },
     );
   }
 
@@ -109,7 +109,7 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft, color: Color(0xFF33334F)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Create Instant Meeting',
@@ -149,6 +149,8 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
                   bgColor: const Color(0xFFF5F3FF),
                   onTap: () {},
                 ),
+                const SizedBox(height: 32),
+                _buildJoinOptions(),
                 const SizedBox(height: 40),
                 _buildStartMeetingButton(),
               ] else ...[
@@ -182,7 +184,7 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
         border: Border.all(color: const Color(0xFFF0F0FF)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3B82F6).withOpacity(0.05),
+            color: const Color(0xFF3B82F6).withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -303,7 +305,7 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
         border: Border.all(color: const Color(0xFFF0F0FF)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -449,11 +451,11 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
       width: double.infinity,
       height: 60,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: .circular(30),
         gradient: const LinearGradient(colors: [Color(0xFF0066FF), Color(0xFFE056FD)]),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0066FF).withOpacity(0.2),
+            color: const Color(0xFF0066FF).withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -464,10 +466,10 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(borderRadius: .circular(30)),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: .center,
           children: [
             Text(
               'Start Meeting',
@@ -480,4 +482,107 @@ class _CreateRoomScreenState extends ConsumerState<CreateRoomScreen> {
       ),
     );
   }
+
+  Widget _buildJoinOptions() {
+    return Column(
+      crossAxisAlignment: .start,
+      children: [
+        Text(
+          'JOIN OPTIONS',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+            color: const Color(0xFFBCBCCF),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _JoinOptionToggle(
+                icon: LucideIcons.video,
+                offIcon: LucideIcons.videoOff,
+                label: 'Camera',
+                enabled: _cameraEnabled,
+                onToggle: (v) => setState(() => _cameraEnabled = v),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _JoinOptionToggle(
+                icon: LucideIcons.mic,
+                offIcon: LucideIcons.micOff,
+                label: 'Microphone',
+                enabled: _audioEnabled,
+                onToggle: (v) => setState(() => _audioEnabled = v),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
+
+class _JoinOptionToggle extends StatelessWidget {
+  final IconData icon;
+  final IconData offIcon;
+  final String label;
+  final bool enabled;
+  final ValueChanged<bool> onToggle;
+
+  const _JoinOptionToggle({
+    required this.icon,
+    required this.offIcon,
+    required this.label,
+    required this.enabled,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled ? const Color(0xFF0066FF) : const Color(0xFFBCBCCF);
+    final bgColor = enabled ? const Color(0xFFEFF6FF) : const Color(0xFFF9F7FF);
+
+    return GestureDetector(
+      onTap: () => onToggle(!enabled),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: .symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: .circular(20),
+          border: Border.all(
+            color: enabled ? color.withValues(alpha: 0.2) : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(enabled ? icon : offIcon, color: color, size: 28),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: enabled ? const Color(0xFF33334F) : const Color(0xFF71719A),
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              enabled ? 'On' : 'Off',
+              style: GoogleFonts.inter(
+                color: enabled ? color : const Color(0xFFBCBCCF),
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

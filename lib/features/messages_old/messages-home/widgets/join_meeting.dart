@@ -2,8 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:eduprova/core/navigation/app_routes.dart';
 import '../../repository/calling_repository.dart';
-import '../../messages/live_call_screen.dart';
 
 class JoinMeetingScreen extends StatefulWidget {
   const JoinMeetingScreen({super.key});
@@ -36,14 +37,14 @@ class _JoinMeetingScreenState extends State<JoinMeetingScreen> {
     try {
       final room = await _repository.getToken(_meetingId);
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => LiveCallScreen(
-            initialRoom: room,
-            initialVideo: true,
-            initialAudio: true,
-          ),
-        ),
+      if (!mounted) return;
+      context.pushReplacement(
+        AppRoutes.meetCall(room.roomName),
+        extra: {
+          'initialRoom': room,
+          'initialVideo': true,
+          'initialAudio': true,
+        },
       );
     } catch (e) {
       if (!mounted) return;
@@ -64,7 +65,7 @@ class _JoinMeetingScreenState extends State<JoinMeetingScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft, color: Color(0xFF1E1E2D)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Join Meeting',

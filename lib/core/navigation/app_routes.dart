@@ -47,4 +47,12 @@ class AppRoutes {
   static const String grammarConversation = '/grammar/conversation';
   static const String grammarRoleplaySession = '/grammar/roleplay/session';
   static const String grammarCoachSession = '/grammar/coach/session';
+
+  // Meet & Calling
+  static const String meet = '/meet';
+  static const String meetCreate = '/meet/create';
+  static const String meetSchedule = '/meet/schedule';
+  static const String meetJoin = '/meet/join';
+  static const String meetInvite = '/meet/invite';
+  static String meetCall(String id) => '/meet/call/$id';
 }

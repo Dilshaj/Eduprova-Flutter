@@ -13,10 +13,10 @@ class ApiClient {
       return 'http://$override:4000';
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.122:4000';
+      return 'http://192.168.1.110:4000';
     }
     debugPrint('Using iOS/Web URL: http://localhost:4000');
-    return 'http://192.168.1.122:4000';
+    return 'http://192.168.1.110:4000';
   }
  
   static String? get baseUrlOverride => prefs.getString(_overrideUrlKey);
