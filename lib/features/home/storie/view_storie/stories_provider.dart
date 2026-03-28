@@ -51,7 +51,14 @@ class StoriesNotifier extends Notifier<AsyncValue<List<StatusProfile>>> {
     state = const .loading();
     try {
       final stories = await ref.read(storyRepositoryProvider).getFeed();
-      state = .data(stories);
+      // Sort: hasUnseen first
+      final sortedStories = List<StatusProfile>.from(stories)
+        ..sort((a, b) {
+          if (a.hasUnseen && !b.hasUnseen) return -1;
+          if (!a.hasUnseen && b.hasUnseen) return 1;
+          return 0;
+        });
+      state = .data(sortedStories);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
@@ -70,10 +77,33 @@ class StoriesNotifier extends Notifier<AsyncValue<List<StatusProfile>>> {
       rethrow;
     }
   }
+
+  Future<void> markAsSeen(String profileId) async {
+    final currentAsync = state;
+    if (currentAsync is AsyncData<List<StatusProfile>>) {
+      final profiles = currentAsync.value;
+      final updated = profiles.map((p) => p.id == profileId ? StatusProfile(
+        id: p.id,
+        name: p.name,
+        profileUrl: p.profileUrl,
+        statuses: p.statuses,
+        hasUnseen: false,
+      ) : p).toList();
+
+      // Sort immediately
+      updated.sort((a, b) {
+        if (a.hasUnseen && !b.hasUnseen) return -1;
+        if (!a.hasUnseen && b.hasUnseen) return 1;
+        return 0;
+      });
+
+      state = AsyncData(updated);
+    }
+  }
 }
 
 List<StatusProfile> getGreetingDummyStories() {
-  return [
+  final list = [
     StatusProfile(
       id: '1',
       name: 'Design',
@@ -123,4 +153,11 @@ List<StatusProfile> getGreetingDummyStories() {
       ],
     ),
   ];
+
+  return list
+    ..sort((a, b) {
+      if (a.hasUnseen && !b.hasUnseen) return -1;
+      if (!a.hasUnseen && b.hasUnseen) return 1;
+      return 0;
+    });
 }

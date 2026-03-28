@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:eduprova/theme/theme_model.dart';
 
 // --- Notification State Management ---
 
@@ -53,7 +54,7 @@ final notificationsProvider = Provider<List<NotificationItem>>((ref) {
     NotificationItem(
       id: '1',
       title: 'Your Mock Interview report is ready',
-      category: 'AI Tools',
+      category: 'Freelancing',
       timestamp: now.subtract(const Duration(minutes: 2)),
       icon: LucideIcons.sparkles,
       iconBg: Colors.white,
@@ -103,6 +104,14 @@ final notificationsProvider = Provider<List<NotificationItem>>((ref) {
       badgeIcon: LucideIcons.messageSquare,
       badgeColor: Colors.blue,
     ),
+    NotificationItem(
+      id: '7',
+      title: 'Freelance project: Mobile App redesign near you',
+      category: 'Freelancing',
+      timestamp: yesterday.subtract(const Duration(hours: 4)),
+      icon: LucideIcons.rocket,
+      iconBg: Colors.white,
+    ),
   ];
 });
 
@@ -121,20 +130,21 @@ class NotificationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final notifications = ref.watch(filteredNotificationsProvider);
     final selectedFilter = ref.watch(notificationFilterProvider);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: .start,
           children: [
-            _buildAppBar(context, isDark),
-            _NotificationFilters(selectedFilter: selectedFilter, isDark: isDark),
+            _buildAppBar(context, colorScheme),
+            _NotificationFilters(selectedFilter: selectedFilter),
             Expanded(
-              child: _buildNotificationList(notifications, isDark),
+              child: _buildNotificationList(notifications, colorScheme),
             ),
           ],
         ),
@@ -142,25 +152,22 @@ class NotificationScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, bool isDark) {
+  Widget _buildAppBar(BuildContext context, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
+      padding: .fromLTRB(8, 12, 20, 12),
       child: Row(
         children: [
           IconButton(
             onPressed: () => context.pop(),
-            icon: Icon(
-              LucideIcons.arrowLeft,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
-            ),
+            icon: Icon(LucideIcons.arrowLeft, color: colorScheme.onSurface),
           ),
           const SizedBox(width: 4),
           Text(
             'Notifications',
             style: GoogleFonts.inter(
               fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              fontWeight: .w800,
+              color: colorScheme.onSurface,
               letterSpacing: -1,
             ),
           ),
@@ -169,17 +176,16 @@ class NotificationScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotificationList(List<NotificationItem> items, bool isDark) {
+  Widget _buildNotificationList(List<NotificationItem> items, ColorScheme colorScheme) {
     if (items.isEmpty) {
       return Center(
         child: Text(
           'No notifications found',
-          style: GoogleFonts.inter(color: Colors.grey),
+          style: GoogleFonts.inter(color: colorScheme.onSurface.withValues(alpha: 0.7)),
         ),
       );
     }
 
-    // Simple grouping logic for Mock presentation
     final todayItems = items.where((i) => i.timestamp.isAfter(DateTime.now().subtract(const Duration(hours: 12)))).toList();
     final earlierItems = items.where((i) => !todayItems.contains(i)).toList();
 
@@ -188,15 +194,15 @@ class NotificationScreen extends ConsumerWidget {
       children: [
         if (todayItems.isNotEmpty) ...[
           const SizedBox(height: 24),
-          _SectionHeader(title: 'TODAY', isDark: isDark),
+          const _SectionHeader(title: 'TODAY'),
           const SizedBox(height: 16),
-          ...todayItems.map((item) => NotificationCard(item: item, isDark: isDark)),
+          ...todayItems.map((item) => NotificationCard(item: item)),
         ],
         if (earlierItems.isNotEmpty) ...[
           const SizedBox(height: 32),
-          _SectionHeader(title: 'YESTERDAY', isDark: isDark),
+          const _SectionHeader(title: 'YESTERDAY'),
           const SizedBox(height: 16),
-          ...earlierItems.map((item) => NotificationCard(item: item, isDark: isDark)),
+          ...earlierItems.map((item) => NotificationCard(item: item)),
         ],
         const SizedBox(height: 40),
       ],
@@ -204,65 +210,182 @@ class NotificationScreen extends ConsumerWidget {
   }
 }
 
-class _NotificationFilters extends ConsumerWidget {
+class _NotificationFilters extends ConsumerStatefulWidget {
   final String selectedFilter;
-  final bool isDark;
-  final List<String> filters = ['All', 'Courses', 'Social', 'Jobs', 'AI Tools'];
-
-  _NotificationFilters({required this.selectedFilter, required this.isDark});
+  const _NotificationFilters({required this.selectedFilter});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_NotificationFilters> createState() => _NotificationFiltersState();
+}
+
+class _NotificationFiltersState extends ConsumerState<_NotificationFilters> {
+  final List<String> _filters = const ['All', 'Social', 'Courses', 'Jobs', 'Freelancing'];
+  final List<GlobalKey> _keys = List.generate(5, (_) => GlobalKey());
+  final GlobalKey _stackKey = GlobalKey();
+  
+  double _pillLeft = 0;
+  double _pillWidth = 0;
+  bool _isMeasured = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _handleMeasurements();
+  }
+
+  @override
+  void didUpdateWidget(covariant _NotificationFilters oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedFilter != widget.selectedFilter) {
+      _handleMeasurements();
+    }
+  }
+
+  void _handleMeasurements() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final index = _filters.indexOf(widget.selectedFilter);
+      if (index == -1) return;
+
+      final RenderBox? chipBox = _keys[index].currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? stackBox = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+
+      if (chipBox != null && stackBox != null) {
+        final position = chipBox.localToGlobal(Offset.zero, ancestor: stackBox);
+        setState(() {
+          _pillLeft = position.dx;
+          _pillWidth = chipBox.size.width;
+          _isMeasured = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeExt = theme.extension<AppDesignExtension>()!;
+    final colorScheme = theme.colorScheme;
+
     return SizedBox(
-      height: 44,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: filters.length,
-        itemBuilder: (context, index) {
-          final isSelected = selectedFilter == filters[index];
-          return GestureDetector(
-            onTap: () => ref.read(notificationFilterProvider.notifier).setFilter(filters[index]),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(right: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                color: isSelected ? null : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9)),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Text(
-                  filters[index],
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected
-                        ? Colors.white
-                        : (isDark ? Colors.grey[400] : const Color(0xFF64748B)),
+      height: 48,
+      child: SingleChildScrollView(
+        scrollDirection: .horizontal,
+        padding: .symmetric(horizontal: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.brightness == .dark ? colorScheme.surfaceContainer : colorScheme.surfaceContainerHighest,
+            borderRadius: .circular(18),
+          ),
+          padding: .all(4),
+          child: Stack(
+            key: _stackKey,
+            alignment: .centerLeft,
+            children: [
+              // Perfection: The Sliding Pill
+              AnimatedPositioned(
+                duration: 350.ms,
+                curve: Curves.fastOutSlowIn,
+                left: _pillLeft,
+                width: _isMeasured ? _pillWidth : 0,
+                height: 40,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [themeExt.gradiantStart, themeExt.gradiantEnd],
+                      begin: .topLeft,
+                      end: .bottomRight,
+                    ),
+                    borderRadius: .circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: themeExt.gradiantEnd.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: .new(0, 2),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          );
-        },
+              // Chips Row - Labels only
+              Row(
+                mainAxisSize: .min,
+                children: [
+                  for (var i = 0; i < _filters.length; i++)
+                    _FilterChip(
+                      key: _keys[i],
+                      label: _filters[i],
+                      isSelected: widget.selectedFilter == _filters[i],
+                      onTap: () => ref.read(notificationFilterProvider.notifier).setFilter(_filters[i]),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     ).animate().fadeIn(delay: 100.ms).slideX(begin: 0.1);
   }
 }
 
+class _FilterChip extends StatefulWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_FilterChip> createState() => _FilterChipState();
+}
+
+class _FilterChipState extends State<_FilterChip> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: 200.ms,
+          padding: .symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            // Background is entirely handled by the track and the sliding pill
+            color: _isHovered && !widget.isSelected
+                ? colorScheme.onSurface.withValues(alpha: 0.1)
+                : Colors.transparent,
+            borderRadius: .circular(14),
+          ),
+          child: Text(
+            widget.label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: widget.isSelected ? .w700 : .w500,
+              color: widget.isSelected ? Colors.white : colorScheme.onSurface,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final bool isDark;
 
-  const _SectionHeader({required this.title, required this.isDark});
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -270,8 +393,8 @@ class _SectionHeader extends StatelessWidget {
       title,
       style: GoogleFonts.inter(
         fontSize: 12,
-        fontWeight: FontWeight.w800,
-        color: isDark ? Colors.grey[600] : const Color(0xFF94A3B8),
+        fontWeight: .w800,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         letterSpacing: 1.5,
       ),
     );
@@ -280,54 +403,55 @@ class _SectionHeader extends StatelessWidget {
 
 class NotificationCard extends StatelessWidget {
   final NotificationItem item;
-  final bool isDark;
 
-  const NotificationCard({super.key, required this.item, required this.isDark});
+  const NotificationCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeExt = theme.extension<AppDesignExtension>()!;
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: .only(bottom: 12),
+      padding: .all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(24),
+        color: themeExt.cardColor,
+        borderRadius: .circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-          width: 1,
+          color: themeExt.borderColor,
+          width: 0.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: themeExt.shadowColor,
+            blurRadius: 10,
+            offset: .new(0, 4),
+          ),
+        ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           // Left Icon/Avatar
           Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: .none,
             children: [
               Container(
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: item.iconBg ?? Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                  borderRadius: .circular(16),
                   image: item.avatarUrl != null
                       ? DecorationImage(
                           image: NetworkImage(item.avatarUrl!),
-                          fit: BoxFit.cover,
+                          fit: .cover,
                         )
-                      : null,
-                  boxShadow: item.icon != null
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
                       : null,
                 ),
                 child: item.icon != null
-                    ? Icon(item.icon, color: const Color(0xFF64748B), size: 22)
+                    ? Icon(item.icon, color: colorScheme.primary, size: 22)
                     : null,
               ),
               if (item.badgeIcon != null)
@@ -335,16 +459,11 @@ class NotificationCard extends StatelessWidget {
                   right: -4,
                   bottom: -4,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: .all(4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                        )
-                      ],
+                      color: colorScheme.surface,
+                      shape: .circle,
+                      border: Border.all(color: themeExt.borderColor),
                     ),
                     child: Icon(item.badgeIcon, size: 12, color: item.badgeColor),
                   ),
@@ -355,47 +474,33 @@ class NotificationCard extends StatelessWidget {
           // Content
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: .start,
               children: [
                 RichText(
                   text: TextSpan(
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       height: 1.4,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: colorScheme.onSurface,
                     ),
-                    children: _parseStyledText(item.title, isDark),
+                    children: _parseStyledText(item.title, colorScheme),
                   ),
                 ),
                 if (item.grade != null) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: .symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(8),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: .circular(8),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF10B981),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Grade: ${item.grade}',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF059669),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Grade: ${item.grade}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: .w700,
+                        color: colorScheme.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -406,8 +511,8 @@ class NotificationCard extends StatelessWidget {
                       item.category,
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF3B82F6),
+                        fontWeight: .w700,
+                        color: colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -415,8 +520,8 @@ class NotificationCard extends StatelessWidget {
                       width: 4,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[700] : const Color(0xFFCBD5E1),
-                        shape: BoxShape.circle,
+                        color: colorScheme.onSurface.withValues(alpha: 0.3),
+                        shape: .circle,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -424,8 +529,8 @@ class NotificationCard extends StatelessWidget {
                       _formatTimestamp(item.timestamp),
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.grey[500] : const Color(0xFF94A3B8),
+                        fontWeight: .w500,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -435,13 +540,13 @@ class NotificationCard extends StatelessWidget {
           ),
           if (item.isUnread)
             Padding(
-              padding: const EdgeInsets.only(top: 4, left: 8),
+              padding: .only(top: 4, left: 8),
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF3B82F6),
-                  shape: BoxShape.circle,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  shape: .circle,
                 ),
               ),
             ),
@@ -457,7 +562,7 @@ class NotificationCard extends StatelessWidget {
     return '${t.hour}:${t.minute.toString().padLeft(2, '0')} AM';
   }
 
-  List<TextSpan> _parseStyledText(String text, bool isDark) {
+  List<TextSpan> _parseStyledText(String text, ColorScheme colorScheme) {
     // [Styling logic remains the same for premium scannability]
     final boldWords = [
       'Mock Interview', 'Data Science', 'Rahul Gamer', 'UI design',

@@ -1,6 +1,7 @@
-import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'stories_provider.dart';
 import 'storie_view_screen.dart';
 
@@ -16,6 +17,7 @@ class StatusUsersPager extends ConsumerStatefulWidget {
 class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
   late PageController _pageController;
   double _currentPageValue = 0.0;
+  double _bgOpacity = 1.0;
 
   @override
   void initState() {
@@ -24,9 +26,32 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
     _currentPageValue = widget.initialIndex.toDouble();
     _pageController.addListener(() {
       if (mounted) {
-        setState(() {
-          _currentPageValue = _pageController.page ?? 0.0;
-        });
+        final double? page = _pageController.page;
+        if (page != null) {
+          setState(() {
+            _currentPageValue = page;
+          });
+          
+          // Precache next profile's first image for speed
+          final nextIndex = page.floor() + 1;
+          final profilesAsync = ref.read(statusProfilesProvider);
+          profilesAsync.whenData((profiles) {
+            final displayProfiles = profiles.isEmpty ? getGreetingDummyStories() : profiles;
+            if (nextIndex < displayProfiles.length) {
+              final firstStatus = displayProfiles[nextIndex].statuses.firstOrNull;
+              if (firstStatus?.type == StatusType.image) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    precacheImage(
+                      CachedNetworkImageProvider(firstStatus!.url),
+                      context,
+                    );
+                  }
+                });
+              }
+            }
+          });
+        }
       }
     });
   }
@@ -64,11 +89,19 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
     final profilesAsync = ref.watch(statusProfilesProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: profilesAsync.when(
-        data: (profiles) {
-          final displayProfiles = profiles.isEmpty ? getGreetingDummyStories() : profiles;
-          return PageView.builder(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Solid black background (hides home screen perfectly during viewing)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(_bgOpacity),
+            ),
+          ),
+          profilesAsync.when(
+            data: (profiles) {
+              final displayProfiles = profiles.isEmpty ? getGreetingDummyStories() : profiles;
+              return PageView.builder(
             controller: _pageController,
             itemCount: displayProfiles.length,
             itemBuilder: (context, index) {
@@ -106,6 +139,7 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
                       pageOffset: value,
                       onComplete: () => _onComplete(index, displayProfiles.length),
                       onPrevious: () => _onPrevious(index),
+                      onDrag: (opacity) => setState(() => _bgOpacity = opacity),
                     ),
                     if (value < 0)
                       IgnorePointer(
@@ -122,6 +156,8 @@ class _StatusUsersPagerState extends ConsumerState<StatusUsersPager> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, st) => const Center(child: Icon(Icons.error_outline)),
       ),
-    );
-  }
+    ],
+  ),
+);
+}
 }

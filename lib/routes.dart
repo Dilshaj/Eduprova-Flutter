@@ -154,9 +154,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.savedPosts, builder: (_, _) => const SavedPostsScreen()),
       GoRoute(
         path: AppRoutes.statusPager(':id'),
-        builder: (_, state) {
+        pageBuilder: (context, state) {
           final initialIndex = state.pathParameters['id']!;
-          return StatusUsersPager(initialIndex: int.parse(initialIndex));
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            opaque: false,
+            // Transparent barrier to handle dimming manually for dynamic reveal
+            barrierColor: Colors.transparent,
+            child: StatusUsersPager(initialIndex: int.parse(initialIndex)),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
         },
       ),
 

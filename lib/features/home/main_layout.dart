@@ -1,4 +1,5 @@
 import 'package:eduprova/core/navigation/app_routes.dart';
+import 'package:eduprova/core/providers/theme_provider.dart';
 import 'package:eduprova/features/auth/providers/auth_provider.dart';
 import 'package:eduprova/features/home/bottom_nav/bottom_nav3.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +58,30 @@ class MainLayout extends ConsumerWidget {
               // Header: Profile Info
               Row(
                 children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: textColor.withValues(alpha: 0.1),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const CircleAvatar(
+                      backgroundImage: NetworkImage(
+                        'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=200&fit=crop',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,28 +89,35 @@ class MainLayout extends ConsumerWidget {
                         Text(
                           'Rahul Gamer',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: textColor,
+                            letterSpacing: -0.5,
                           ),
                         ),
                         Text(
                           'Student',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: subTextColor,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(LucideIcons.plus, color: textColor, size: 22),
-                    onPressed: () {},
+                  _buildHeaderIcon(
+                    context,
+                    isDark ? LucideIcons.sun : LucideIcons.moon,
+                    isDark,
+                    onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
                   ),
-                  IconButton(
-                    icon: Icon(LucideIcons.squarePen, color: textColor, size: 20),
-                    onPressed: () {},
+                  const SizedBox(width: 10),
+                  _buildHeaderIcon(
+                    context,
+                    LucideIcons.pencil,
+                    isDark,
+                    onTap: () {},
                   ),
                 ],
               ),
@@ -98,6 +130,7 @@ class MainLayout extends ConsumerWidget {
                     child: _buildQuickActionButton(
                       context,
                       LucideIcons.heart,
+                      'Favourites',
                       cardColor,
                       textColor,
                       onTap: () {
@@ -111,6 +144,7 @@ class MainLayout extends ConsumerWidget {
                     child: _buildQuickActionButton(
                       context,
                       LucideIcons.bookmark,
+                      'Saved',
                       cardColor,
                       textColor,
                       onTap: () {
@@ -140,40 +174,9 @@ class MainLayout extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              // EDUPROVA CORE Section
-              _buildSectionHeader('EDUPROVA CORE', subTextColor!),
-              _buildSectionCard(
-                context,
-                [
-                  _buildDrawerItem(
-                    context,
-                    LucideIcons.house,
-                    'Home',
-                    const Color(0xFF3B82F6),
-                    isActive: navigationShell.currentIndex == 0,
-                    onTap: () {
-                      context.pop();
-                      navigationShell.goBranch(0);
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    LucideIcons.settings,
-                    'Settings',
-                    textColor,
-                    isLast: true,
-                    onTap: () {
-                      context.pop();
-                      context.push(AppRoutes.profileSettings);
-                    },
-                  ),
-                ],
-                cardColor,
-              ),
-              const SizedBox(height: 24),
 
               // COMMUNITY Section
-              _buildSectionHeader('COMMUNITY', subTextColor),
+              _buildSectionHeader('COMMUNITY', subTextColor!),
               _buildSectionCard(
                 context,
                 [
@@ -191,7 +194,7 @@ class MainLayout extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // AI TOOLS Section
-              _buildSectionHeader('AI TOOLS', subTextColor),
+              _buildSectionHeader('AI TOOLS', subTextColor!),
               _buildSectionCard(
                 context,
                 [
@@ -212,10 +215,20 @@ class MainLayout extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
-              // Logout Footer
+              // Settings & Logout Footer
               _buildSectionCard(
                 context,
                 [
+                  _buildDrawerItem(
+                    context,
+                    LucideIcons.settings,
+                    'Settings',
+                    textColor,
+                    onTap: () {
+                      context.pop();
+                      context.push(AppRoutes.profileSettings);
+                    },
+                  ),
                   InkWell(
                     onTap: () async {
                       Navigator.pop(context);
@@ -225,7 +238,7 @@ class MainLayout extends ConsumerWidget {
                     highlightColor: isDark
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
@@ -267,7 +280,7 @@ class MainLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActionButton(BuildContext context, IconData icon, Color cardColor, Color textColor, {VoidCallback? onTap}) {
+  Widget _buildQuickActionButton(BuildContext context, IconData icon, String label, Color cardColor, Color textColor, {VoidCallback? onTap}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap ?? () {},
@@ -277,13 +290,27 @@ class MainLayout extends ConsumerWidget {
           ? Colors.white.withValues(alpha: 0.05)
           : Colors.black.withValues(alpha: 0.03),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.black.withValues(alpha: 0.02)),
         ),
-        child: Icon(icon, color: textColor, size: 24),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: textColor, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -380,6 +407,21 @@ class MainLayout extends ConsumerWidget {
             color: Colors.black.withValues(alpha: 0.05),
           ),
       ],
+    );
+  }
+
+  Widget _buildHeaderIcon(BuildContext context, IconData icon, bool isDark, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: isDark ? Colors.white : const Color(0xFF1F2937), size: 18),
+      ),
     );
   }
 }

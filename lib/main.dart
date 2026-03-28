@@ -6,6 +6,7 @@ import 'package:eduprova/features/messages_old/widgets/incoming_call_overlay.dar
 import 'package:eduprova/theme/dark_theme.dart';
 import 'package:eduprova/theme/light_theme.dart';
 import 'package:eduprova/core/widgets/global_mini_player_overlay.dart';
+import 'package:eduprova/core/providers/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -26,11 +27,14 @@ class MainApp extends ConsumerWidget {
     ref.watch(authProvider);
     ref.watch(chatSocketProvider.select((state) => state.isConnected));
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
+
     return _AppLifecycleBridge(
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         theme: lightTheme,
         darkTheme: darkTheme,
+        themeMode: themeMode,
         builder: (context, child) {
           return ScrollConfiguration(
             behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
